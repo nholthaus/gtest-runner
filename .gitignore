@@ -1,3 +1,8 @@
+# Cmake build directories
+[Gg]enerate[d]
+[Bb]uild
+[Mm][Ss][Vv][Cc]*
+
 # Compiled Object files
 *.slo
 *.lo
