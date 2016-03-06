@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------------------
 // 
 ///	@PROJECT	gtest-gui
-/// @BRIEF		main window for the gtest gui
+/// @BRIEF		model definition for the test executables
 ///	@DETAILS	
 //
 //--------------------------------------------------------------------------------------------------
@@ -34,46 +34,65 @@
 // 
 //--------------------------------------------------------------------------------------------------
 
-#ifndef mainwindow_h__
-#define mainwindow_h__
+#ifndef qexecutablemodel_h__
+#define qexecutablemodel_h__
 
 //------------------------------
 //	INCLUDE
 //------------------------------
 
-// Qt
-#include <QMainWindow>
+#include <QScopedPointer>
+#include <QStandardItemModel>
 
 //------------------------------
 //	FORWARD DECLARATIONS
 //------------------------------
 
-class MainWindowPrivate;
+class QExecutableModelPrivate;
 
 //--------------------------------------------------------------------------------------------------
-//	CLASS: MainWindow
+//	CLASS: QExecutableModel
 //--------------------------------------------------------------------------------------------------
-/// @brief		main window for the gtest-gui
+/// @brief		model for test executables
 /// @details	
 //--------------------------------------------------------------------------------------------------
-class MainWindow : public QMainWindow
+class QExecutableModel : public QStandardItemModel
 {
 public:
 
-	explicit MainWindow();
-	virtual ~MainWindow();
-	
-	virtual void closeEvent(QCloseEvent *) override;
+	enum Roles
+	{
+		PathRole = Qt::ToolTipRole,
+		StateRole = Qt::UserRole,
+		LastModifiedRole = Qt::UserRole + 1,
+		ProgressRole = Qt::UserRole + 2,
+	};
+
+	enum States
+	{
+		NOT_RUNNING, 
+		RUNNING, 
+		PASSED, 
+		FAILED,
+	};
+
+	explicit QExecutableModel(QObject* parent = nullptr);
+	virtual ~QExecutableModel();
+
+	Q_INVOKABLE virtual int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+	Q_INVOKABLE virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
 protected:
 
-
+	
 	
 private:
 
-	Q_DECLARE_PRIVATE(MainWindow);
-	MainWindowPrivate*	d_ptr;
+	Q_DECLARE_PRIVATE(QExecutableModel);
 
-};	// CLASS: MainWindow
+	QScopedPointer<QExecutableModelPrivate>	d_ptr;
 
-#endif // mainwindow_h__
+
+};	// CLASS: QExecutableModel
+
+#endif // qexecutablemodel_h__

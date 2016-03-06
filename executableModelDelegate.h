@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------------------
 // 
 ///	@PROJECT	gtest-gui
-/// @BRIEF		main window for the gtest gui
+/// @BRIEF		Delegate definitions for the exectuable test model
 ///	@DETAILS	
 //
 //--------------------------------------------------------------------------------------------------
@@ -34,46 +34,36 @@
 // 
 //--------------------------------------------------------------------------------------------------
 
-#ifndef mainwindow_h__
-#define mainwindow_h__
+#ifndef executableModelDelegate_h__
+#define executableModelDelegate_h__
 
 //------------------------------
 //	INCLUDE
 //------------------------------
 
-// Qt
-#include <QMainWindow>
-
-//------------------------------
-//	FORWARD DECLARATIONS
-//------------------------------
-
-class MainWindowPrivate;
+#include <QStyledItemDelegate>
 
 //--------------------------------------------------------------------------------------------------
-//	CLASS: MainWindow
+//	CLASS: QExecutableModelDelegate
 //--------------------------------------------------------------------------------------------------
-/// @brief		main window for the gtest-gui
-/// @details	
+/// @brief		brief		delegate to display state icons for the executable test model
+/// @details	details
 //--------------------------------------------------------------------------------------------------
-class MainWindow : public QMainWindow
+class QExecutableModelDelegate : QStyledItemDelegate
 {
 public:
 
-	explicit MainWindow();
-	virtual ~MainWindow();
+	explicit QExecutableModelDelegate(QObject* parent = nullptr);
+	virtual ~QExecutableModelDelegate();
 	
-	virtual void closeEvent(QCloseEvent *) override;
-
 protected:
 
-
+	
 	
 private:
 
-	Q_DECLARE_PRIVATE(MainWindow);
-	MainWindowPrivate*	d_ptr;
 
-};	// CLASS: MainWindow
 
-#endif // mainwindow_h__
+};	// CLASS: QExecutableModelDelegate
+
+#endif // executableModelDelegate_h__

@@ -1,0 +1,10 @@
+<!DOCTYPE RCC><RCC version="1.0">
+	<qresource>
+		<file alias="icons/logo">resources/icons/logo.ico</file>
+    <file alias="images/logo">resources/images/logo.png</file>
+    <file alias="images/gray">resources/images/gray.png</file>
+    <file alias="images/green">resources/images/green.png</file>
+    <file alias="images/yellow">resources/images/yellow.png</file>
+    <file alias="images/red">resources/images/red.png</file>
+	</qresource>
+</RCC>

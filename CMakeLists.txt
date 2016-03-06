@@ -81,11 +81,15 @@ configure_file(appinfo.h.in appinfo.h @ONLY NEWLINE_STYLE UNIX)
 list(APPEND SOURCE_FILES
 main.cpp
 mainwindow.cpp
+executableModelDelegate.cpp
+qexecutablemodel.h
 )
 
 # .h files
 list(APPEND HEADER_FILES
 mainwindow.h
+executableModelDelegate.h
+qexecutablemodel.cpp
 )
 
 # on windows, append headers to source so they show up in visual studio
@@ -98,15 +102,21 @@ endif()
 #-------------------------------------------------------------------------------
 
 source_group(generated REGULAR_EXPRESSION ".*_automoc.cpp")
+source_group(resources REGULAR_EXPRESSION ".*[q]?rc")
 
 #-------------------------------------------------------------------------------
 #	RESOURCES
 #-------------------------------------------------------------------------------
 
 list(APPEND QT_RESOURCES
+	resources.qrc
 )
 
 qt5_add_resources(RESOURCES ${QT_RESOURCES})
+
+list(APPEND RESOURCES
+	resources.rc
+)
 
 #-------------------------------------------------------------------------------
 #	ADDITIONAL INCLUDE DIRECTORIES
