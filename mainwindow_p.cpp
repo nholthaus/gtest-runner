@@ -12,6 +12,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	executableListView(new QListView(q)),
 	executableModel(new QExecutableModel(q)),
 	addTestButton(new QPushButton(q)),
+	fileWatcher(new QFileSystemWatcher(q)),
 	testCaseTreeView(new QTreeView(q)),
 	statusBar(new QStatusBar(q))
 {
@@ -21,9 +22,30 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	connect(this, &MainWindowPrivate::testResultsReady, this, &MainWindowPrivate::loadTestResults, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, statusBar, &QStatusBar::clearMessage, Qt::QueuedConnection);
 
+	// switch testCase models when new tests are clicked
 	connect(executableListView, &QListView::clicked, [this](const QModelIndex& index)
 	{
 		selectTest(index.model()->data(index, QExecutableModel::PathRole).toString());
+	});
+
+	// run the test whenever the executable changes
+	QObject::connect(fileWatcher, &QFileSystemWatcher::fileChanged, [this](const QString& path)
+	{
+		qDebug() << "CHANGE:" << path;
+		statusBar->showMessage("Change detected: " + path + ". Re-running tests...");
+		runTestInThread(path);
+	
+	});
+
+	QObject::connect(fileWatcher, &QFileSystemWatcher::directoryChanged, [this](const QString& path)
+	{
+		// This could be caused by the re-build of a watched test (which cause additionally cause the
+		// watcher to stop watching it), so just in case add all the test paths back.
+		this->fileWatcher->addPaths(executablePaths);
+
+		qDebug() << "DIR CHANGE:" << this->fileWatcher->files() << this->fileWatcher->directories();
+
+		
 	});
 }
 
@@ -59,7 +81,10 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 
 	executableModel->appendRow(item);
 	executableModelHash.insert(path, QPersistentModelIndex(executableModel->index(executableModel->rowCount() - 1, 0)));
-	fileWatcherHash.insert(path, new QFileSystemWatcher(QStringList() << path, q_ptr));
+	
+	fileWatcher->addPath(fileinfo.dir().canonicalPath());
+	fileWatcher->addPath(path);
+	executablePaths << path;
 
 	bool previousResults = loadTestResults(path);
 	bool runAutomatically = (item->data(Qt::CheckStateRole) == Qt::Checked);
@@ -72,13 +97,6 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 		qDebug() << "RE-RUNNING";
 		this->runTestInThread(path);
 	}
-
-	// run the test whenever the executable changes
-	QObject::connect(fileWatcherHash[path], &QFileSystemWatcher::fileChanged, [this](const QString& path)
-	{
-		statusBar->showMessage("Change detected: " + path + ". Re-running tests...");
-		this->runTestInThread(path);
-	});
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -157,6 +175,7 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath)
 //--------------------------------------------------------------------------------------------------
 void MainWindowPrivate::selectTest(const QString& testPath)
 {
+	delete testCaseTreeView->model();
 	testCaseTreeView->setModel(new GTestModel(testResultsHash[testPath], testCaseTreeView));
 	testCaseTreeView->expandAll();
 	for (size_t i = 0; i < testCaseTreeView->model()->columnCount(); i++)

@@ -94,9 +94,10 @@ public:
 	QListView*								executableListView;						///< Widget to display and select gtest executables	
 	QExecutableModel*						executableModel;						///< Item model for test executables.
 	QPushButton*							addTestButton;							///< Button which adds a test to the monitored tests.
-	QHash<QString, QFileSystemWatcher*>		fileWatcherHash;						///< Hash table to store the file system watchers.
+	QFileSystemWatcher*						fileWatcher;						///< Hash table to store the file system watchers.
 	QHash<QString, QPersistentModelIndex>	executableModelHash;					///< Hash for finding entries in the executable model.
-	
+	QStringList								executablePaths;						///< String list of all the paths, which can be used to re-constitute the filewatcher after an executable rebuild.
+
 	QTreeView*								testCaseTreeView;						///< Tree view where the test results are displayed.
 	QHash<QString, QDomDocument>			testResultsHash;						///< Hash table storing the xml test results for each test path.
 
