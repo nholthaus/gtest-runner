@@ -1,8 +1,8 @@
 //--------------------------------------------------------------------------------------------------
 // 
-///	@PROJECT	gtest-gui
-/// @BRIEF		main window for the gtest gui
-///	@DETAILS	
+///	@PROJECT	project
+/// @BRIEF		brief
+///	@DETAILS	details
 //
 //--------------------------------------------------------------------------------------------------
 //
@@ -34,38 +34,52 @@
 // 
 //--------------------------------------------------------------------------------------------------
 
-#ifndef mainwindow_h__
-#define mainwindow_h__
+#ifndef gtestModel_h__
+#define gtestModel_h__
 
 //------------------------------
 //	INCLUDE
 //------------------------------
 
-// Qt
-#include <QMainWindow>
+#include <QAbstractItemModel>
+#include <QDomDocument>
+#include <QIcon>
+#include <QModelIndex>
 
-class MainWindowPrivate;
+#include "domitem.h"
 
-//--------------------------------------------------------------------------------------------------
-//	CLASS: MainWindow
-//--------------------------------------------------------------------------------------------------
-/// @brief		main window for the gtest-gui
-/// @details	
-//--------------------------------------------------------------------------------------------------
-class MainWindow : public QMainWindow
+class GTestModel : public QAbstractItemModel
 {
+	Q_OBJECT
+
 public:
 
-	explicit MainWindow();
-	virtual ~MainWindow();
-	
-	virtual void closeEvent(QCloseEvent *) override;
+	explicit GTestModel(QDomDocument document, QObject *parent = 0);
+	~GTestModel();
+
+	QVariant data(const QModelIndex &index, int role) const Q_DECL_OVERRIDE;
+	Qt::ItemFlags flags(const QModelIndex &index) const Q_DECL_OVERRIDE;
+	QVariant headerData(int section, Qt::Orientation orientation,
+		int role = Qt::DisplayRole) const Q_DECL_OVERRIDE;
+	QModelIndex index(int row, int column,
+		const QModelIndex &parent = QModelIndex()) const Q_DECL_OVERRIDE;
+	QModelIndex parent(const QModelIndex &child) const Q_DECL_OVERRIDE;
+	int rowCount(const QModelIndex &parent = QModelIndex()) const Q_DECL_OVERRIDE;
+	int columnCount(const QModelIndex &parent = QModelIndex()) const Q_DECL_OVERRIDE;
 
 private:
 
-	Q_DECLARE_PRIVATE(MainWindow);
-	MainWindowPrivate*	d_ptr;
+	void removeComments(QDomNode &node);
 
-};	// CLASS: MainWindow
+private:
 
-#endif // mainwindow_h__
+	QDomDocument domDocument;
+	DomItem *rootItem;
+
+	QIcon grayIcon;
+	QIcon greenIcon;
+	QIcon yellowIcon;
+	QIcon redIcon;
+};
+
+#endif // gtestModel_h__

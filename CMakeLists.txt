@@ -50,6 +50,8 @@ list(APPEND CMAKE_PREFIX_PATH ${QTDIR})
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Gui REQUIRED)
 find_package(Qt5Widgets REQUIRED)
+find_package(Qt5Xml REQUIRED)
+find_package(Qt5XmlPatterns REQUIRED)
 
 #-------------------------------------------------------------------------------
 #	COMPILE FLAGS
@@ -81,14 +83,22 @@ configure_file(appinfo.h.in appinfo.h @ONLY NEWLINE_STYLE UNIX)
 list(APPEND SOURCE_FILES
 main.cpp
 mainwindow.cpp
+mainwindow_p.cpp
 executableModelDelegate.cpp
+domitem.cpp
+dommodel.cpp
+gtestmodel.cpp
 qexecutablemodel.h
 )
 
 # .h files
 list(APPEND HEADER_FILES
 mainwindow.h
+mainwindow_p.h
 executableModelDelegate.h
+domitem.h
+dommodel.h
+gtestmodel.h
 qexecutablemodel.cpp
 )
 
@@ -137,6 +147,8 @@ list(APPEND LIBRARIES
 Qt5::Core
 Qt5::Gui
 Qt5::Widgets
+Qt5::Xml
+Qt5::XmlPatterns
 )
 
 # Remove duplicate library dependencies. 
