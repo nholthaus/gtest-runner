@@ -1,5 +1,6 @@
 #include "mainwindow_p.h"
 
+#include <QCryptographicHash>
 
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: MainWindowPrivate
@@ -18,6 +19,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 
 	connect(this, &MainWindowPrivate::setStatus, statusBar, &QStatusBar::setStatusTip, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, this, &MainWindowPrivate::loadTestResults, Qt::QueuedConnection);
+	connect(this, &MainWindowPrivate::testResultsReady, statusBar, &QStatusBar::clearMessage, Qt::QueuedConnection);
 
 	connect(executableListView, &QListView::clicked, [this](const QModelIndex& index)
 	{
@@ -31,7 +33,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 QString MainWindowPrivate::xmlPath(const QString& testPath) const
 {
 	QFileInfo testInfo(testPath);
-	return QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() + "/" + testInfo.baseName() + ".xml";
+	QString hash = QCryptographicHash::hash(testPath.toLatin1(), QCryptographicHash::Md5).toHex();
+	return QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first() + "/" + hash + ".xml";
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -52,33 +55,28 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	item->setData(fileinfo.lastModified(), QExecutableModel::LastModifiedRole);
 
 	// determine state
-	if (!xmlResults.exists())
-	{
-		item->setData(QExecutableModel::NOT_RUNNING);
-	}
-	else if (xmlResults.lastModified() < fileinfo.lastModified())
-	{
-		item->setData(QExecutableModel::NOT_RUNNING);
-	}
+	item->setData(QExecutableModel::NOT_RUNNING);
 
 	executableModel->appendRow(item);
 	executableModelHash.insert(path, QPersistentModelIndex(executableModel->index(executableModel->rowCount() - 1, 0)));
 	fileWatcherHash.insert(path, new QFileSystemWatcher(QStringList() << path, q_ptr));
 
+	bool previousResults = loadTestResults(path);
+	bool runAutomatically = (item->data(Qt::CheckStateRole) == Qt::Checked);
+	bool outOfDate = previousResults && (xmlResults.lastModified() < fileinfo.lastModified());
+
 	// if there are no previous results but the test is being watched, run the test
-	if (item->data(QExecutableModel::StateRole) == QExecutableModel::NOT_RUNNING && item->data(Qt::CheckStateRole) == Qt::Checked)
+	qDebug() << previousResults << runAutomatically << outOfDate;
+	if ((!previousResults || outOfDate) && runAutomatically)
 	{
+		qDebug() << "RE-RUNNING";
 		this->runTestInThread(path);
-	}
-	else
-	{
-		// otherwise load the previous results
-		this->loadTestResults(path);
 	}
 
 	// run the test whenever the executable changes
 	QObject::connect(fileWatcherHash[path], &QFileSystemWatcher::fileChanged, [this](const QString& path)
 	{
+		statusBar->showMessage("Change detected: " + path + ". Re-running tests...");
 		this->runTestInThread(path);
 	});
 }
@@ -95,10 +93,8 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest)
 		executableModel->setData(executableModelHash[pathToTest], QExecutableModel::RUNNING, QExecutableModel::StateRole);
 		QProcess testProcess;
 		QStringList arguments;
+		qDebug() << this->xmlPath(pathToTest);
 		arguments << "--gtest_output=xml:" + this->xmlPath(pathToTest);
-
-		emit setStatus("Change detected. Re-running " + pathToTest);
-		qApp->processEvents();
 
 		testProcess.start(pathToTest, arguments);
 		testProcess.waitForFinished(-1);
@@ -118,7 +114,6 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath)
 
 	if (!xmlInfo.exists())
 	{
-		QMessageBox::warning(q_ptr, "Error", "No file found at: " + xmlPath(testPath));
 		return false;
 	}
 
