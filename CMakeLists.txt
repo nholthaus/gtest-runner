@@ -89,6 +89,7 @@ domitem.cpp
 dommodel.cpp
 gtestmodel.cpp
 qexecutablemodel.h
+QBottomUpSortFilterProxy.h
 )
 
 # .h files
@@ -100,6 +101,7 @@ domitem.h
 dommodel.h
 gtestmodel.h
 qexecutablemodel.cpp
+QBottomUpSortFilterProxy.cpp
 )
 
 # on windows, append headers to source so they show up in visual studio

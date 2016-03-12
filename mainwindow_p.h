@@ -107,6 +107,7 @@ signals:
 
 	void testResultsReady(QString);													///< Signal emitted when new test results are ready
 	void setStatus(QString);
+	void showMessage(QString msg, int timeout = 0);
 
 public:
 

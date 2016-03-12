@@ -27,8 +27,6 @@ MainWindow::MainWindow() : QMainWindow(), d_ptr(new MainWindowPrivate(this))
 	d->executableDockFrame->layout()->addWidget(d->executableListView);
 	d->executableDockFrame->layout()->addWidget(d->addTestButton);
 
-	d->executableListView->setModel(d->executableModel);
-
 	d->addTestButton->setText("Add Test Executable...");
 	connect(d->addTestButton, &QPushButton::clicked, [&, d]()
 	{

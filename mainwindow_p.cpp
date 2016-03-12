@@ -18,26 +18,35 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 {
 	qRegisterMetaType<QVector<int>>("QVector<int>");
 
+	executableListView->setModel(executableModel);
+
 	connect(this, &MainWindowPrivate::setStatus, statusBar, &QStatusBar::setStatusTip, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, this, &MainWindowPrivate::loadTestResults, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, statusBar, &QStatusBar::clearMessage, Qt::QueuedConnection);
+	connect(this, &MainWindowPrivate::showMessage, statusBar, &QStatusBar::showMessage, Qt::QueuedConnection);
 
 	// switch testCase models when new tests are clicked
-	connect(executableListView, &QListView::clicked, [this](const QModelIndex& index)
+	connect(executableListView->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected)
 	{
-		selectTest(index.model()->data(index, QExecutableModel::PathRole).toString());
+		auto index = selected.indexes().first();
+		selectTest(index.data(QExecutableModel::PathRole).toString());
 	});
 
 	// run the test whenever the executable changes
-	QObject::connect(fileWatcher, &QFileSystemWatcher::fileChanged, [this](const QString& path)
+	connect(fileWatcher, &QFileSystemWatcher::fileChanged, [this](const QString& path)
 	{
 		qDebug() << "CHANGE:" << path;
-		statusBar->showMessage("Change detected: " + path + ". Re-running tests...");
-		runTestInThread(path);
-	
+		
+		// only auto-run if the test is checked
+		if (executableModelHash[path].data(Qt::CheckStateRole) == Qt::Checked)
+		{
+			emit showMessage("Change detected: " + path + ". Re-running tests...");
+			runTestInThread(path);
+		}
 	});
 
-	QObject::connect(fileWatcher, &QFileSystemWatcher::directoryChanged, [this](const QString& path)
+	// update filewatcher when directory changes
+	connect(fileWatcher, &QFileSystemWatcher::directoryChanged, [this](const QString& path)
 	{
 		// This could be caused by the re-build of a watched test (which cause additionally cause the
 		// watcher to stop watching it), so just in case add all the test paths back.
@@ -46,6 +55,27 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		qDebug() << "DIR CHANGE:" << this->fileWatcher->files() << this->fileWatcher->directories();
 
 		
+	});
+
+	// re-rerun tests when auto-testing is re-enabled
+	connect(executableModel, &QAbstractItemModel::dataChanged, [this](const QModelIndex & topLeft, const QModelIndex & bottomRight, const QVector<int> & roles)
+	{
+		if (topLeft.data(Qt::CheckStateRole) == Qt::Checked)
+		{
+			QString path = topLeft.data(QExecutableModel::PathRole).toString();
+			QFileInfo xml(xmlPath(path));
+			QFileInfo exe(path);
+
+			if (xml.lastModified() < exe.lastModified())
+			{
+				// out of date! re-run.
+				qDebug() << "CHECKED";
+				emit showMessage("Automatic testing enabled for: " + topLeft.data(Qt::DisplayRole).toString() + ". Re-running tests...");
+				runTestInThread(topLeft.data(QExecutableModel::PathRole).toString());
+				qDebug() << topLeft.data(QExecutableModel::PathRole).toString();
+			}
+			
+		}
 	});
 }
 
