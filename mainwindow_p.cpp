@@ -75,9 +75,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 
 	// run the test whenever the executable changes
 	connect(fileWatcher, &QFileSystemWatcher::fileChanged, [this](const QString& path)
-	{
-		qDebug() << "CHANGE:" << path;
-		
+	{	
 		// only auto-run if the test is checked
 		if (executableModelHash[path].data(Qt::CheckStateRole) == Qt::Checked)
 		{
@@ -92,10 +90,6 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		// This could be caused by the re-build of a watched test (which cause additionally cause the
 		// watcher to stop watching it), so just in case add all the test paths back.
 		this->fileWatcher->addPaths(executablePaths);
-
-		qDebug() << "DIR CHANGE:" << this->fileWatcher->files() << this->fileWatcher->directories();
-
-		
 	});
 
 	// re-rerun tests when auto-testing is re-enabled
@@ -110,10 +104,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 			if (xml.lastModified() < exe.lastModified())
 			{
 				// out of date! re-run.
-				qDebug() << "CHECKED";
 				emit showMessage("Automatic testing enabled for: " + topLeft.data(Qt::DisplayRole).toString() + ". Re-running tests...");
 				runTestInThread(topLeft.data(QExecutableModel::PathRole).toString());
-				qDebug() << topLeft.data(QExecutableModel::PathRole).toString();
 			}
 			
 		}
@@ -185,10 +177,8 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	bool outOfDate = previousResults && (xmlResults.lastModified() < fileinfo.lastModified());
 
 	// if there are no previous results but the test is being watched, run the test
-	qDebug() << previousResults << runAutomatically << outOfDate;
 	if ((!previousResults || outOfDate) && runAutomatically)
 	{
-		qDebug() << "RE-RUNNING";
 		this->runTestInThread(path);
 	}
 
@@ -200,14 +190,13 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 //--------------------------------------------------------------------------------------------------
 void MainWindowPrivate::runTestInThread(const QString& pathToTest)
 {
-	qDebug() << "RUNNING TEST";
 	std::thread t([this, pathToTest]
 	{
 		QFileInfo info(pathToTest);
 		executableModel->setData(executableModelHash[pathToTest], QExecutableModel::RUNNING, QExecutableModel::StateRole);
 		QProcess testProcess;
 		QStringList arguments;
-		qDebug() << this->xmlPath(pathToTest);
+
 		arguments << "--gtest_output=xml:" + this->xmlPath(pathToTest);
 
 		testProcess.start(pathToTest, arguments);
