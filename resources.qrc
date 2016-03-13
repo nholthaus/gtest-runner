@@ -8,5 +8,6 @@
     <file alias="images/red">resources/images/red.png</file>
     <file alias="images/fail">resources/images/fail.png</file>
     <file alias="schemas/gtest.xsd">resources/schemas/gtest.xsd</file>
+    <file alias="fonts/consolas">resources/fonts/consola.ttf</file>
 	</qresource>
 </RCC>

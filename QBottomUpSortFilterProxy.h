@@ -1,23 +1,37 @@
 //--------------------------------------------------------------------------------------------------
-//	
-//	Passive Correlator
-//	Group 108 - Tactical Defense Systems
-//	MIT Lincoln Laboratory
-//	244 Wood St.
-//	Lexington, MA 02420-9108
-//	
-//--------------------------------------------------------------------------------------------------
-//
-///	@file			QBottomUpSortFilterProxy.h
-///	@brief			Filter Proxy Model which searches from the bottom up
-/// @details		Unlike the traditional QSortFilterProxyModel, this model will match children, and show them and their parents if they match the filter
-///					Reference: http://www.qtcentre.org/archive/index.php/t-12390.html
+// 
+///	@PROJECT	gtest-gui
+/// @BRIEF		Filter proxy that does sorting on tree models
+///	@DETAILS	
 //
 //--------------------------------------------------------------------------------------------------
 //
-///	@author			Nic Holthaus
-/// @date			September 25, 2014
+// The MIT License (MIT)
 //
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software 
+// and associated documentation files (the "Software"), to deal in the Software without 
+// restriction, including without limitation the rights to use, copy, modify, merge, publish, 
+// distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the 
+// Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or 
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING 
+// BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+//--------------------------------------------------------------------------------------------------
+//
+// ATTRIBUTION:
+// Parts of this work have been adapted from: 
+//
+//--------------------------------------------------------------------------------------------------
+// 
+// Copyright (c) 2016 Nic Holthaus
+// 
 //--------------------------------------------------------------------------------------------------
 
 #ifndef QBottomUpSortFilterProxy_h__

@@ -88,8 +88,8 @@ executableModelDelegate.cpp
 domitem.cpp
 GTestFailureModel.cpp
 gtestmodel.cpp
-qexecutablemodel.h
-QBottomUpSortFilterProxy.h
+qexecutablemodel.cpp
+QBottomUpSortFilterProxy.cpp
 )
 
 # .h files
@@ -100,8 +100,9 @@ executableModelDelegate.h
 domitem.h
 GTestFailureModel.h
 gtestmodel.h
-qexecutablemodel.cpp
-QBottomUpSortFilterProxy.cpp
+qexecutablemodel.h
+QBottomUpSortFilterProxy.h
+QStdOutSyntaxHighlighter.h
 )
 
 # on windows, append headers to source so they show up in visual studio

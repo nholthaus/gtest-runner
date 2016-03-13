@@ -16,7 +16,9 @@ MainWindow::MainWindow() : QMainWindow(), d_ptr(new MainWindowPrivate(this))
 	this->setWindowIcon(QIcon(":images/logo"));
 
 	this->addDockWidget(Qt::LeftDockWidgetArea, d->executableDock);
+	this->addDockWidget(Qt::BottomDockWidgetArea, d->consoleDock);
 	this->addDockWidget(Qt::BottomDockWidgetArea, d->failureDock);
+
 	this->setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
 
 	// restore settings
@@ -39,5 +41,13 @@ void MainWindow::closeEvent(QCloseEvent* event)
 	Q_D(MainWindow);
 	d->saveSettings();
 	QMainWindow::closeEvent(event);
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: changeEvent
+//--------------------------------------------------------------------------------------------------
+void MainWindow::changeEvent(QEvent *e)
+{
+	QMainWindow::changeEvent(e);
 }
 

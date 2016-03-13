@@ -58,12 +58,14 @@ public:
 
 	explicit MainWindow();
 	virtual ~MainWindow();
-	
-	virtual void closeEvent(QCloseEvent *) override;
 
 private:
 
 	Q_DECLARE_PRIVATE(MainWindow);
+
+	virtual void closeEvent(QCloseEvent *) override;
+	virtual void changeEvent(QEvent *) override;
+
 	MainWindowPrivate*	d_ptr;
 
 };	// CLASS: MainWindow

@@ -96,9 +96,9 @@ QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 		switch (index.column())
 		{
 		case 1:
-			return (Qt::AlignHCenter | Qt::AlignVCenter);
+			return (int)(Qt::AlignHCenter | Qt::AlignVCenter);
 		default:
-			return (Qt::AlignLeft | Qt::AlignVCenter);
+			return (int)(Qt::AlignLeft | Qt::AlignVCenter);
 		}
 	case Qt::ToolTipRole:
 		return message;

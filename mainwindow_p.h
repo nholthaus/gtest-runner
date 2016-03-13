@@ -71,6 +71,7 @@
 #include <QStandardItemModel>
 #include <QStandardPaths>
 #include <QStatusBar>
+#include <QTextEdit>
 #include <QTreeView>
 
 #include <qglobal.h>
@@ -109,11 +110,15 @@ public:
 
 	QStatusBar*								statusBar;								///< status
 
+	QDockWidget*							consoleDock;							///< Console emulator
+	QTextEdit*								consoleTextEdit;						///< Console emulator text edit
+
 signals:
 
 	void testResultsReady(QString);													///< Signal emitted when new test results are ready
 	void setStatus(QString);
 	void showMessage(QString msg, int timeout = 0);
+	void testOutputReady(QString);
 
 public:
 

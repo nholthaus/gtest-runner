@@ -3,6 +3,7 @@
 #include "GTestFailureModel.h"
 #include <QCryptographicHash>
 #include <QDesktopServices>
+#include <QFontDatabase>
 #include <QHeaderView>
 
 //--------------------------------------------------------------------------------------------------
@@ -21,9 +22,14 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	statusBar(new QStatusBar(q)),
 	failureDock(new QDockWidget(q)),
 	failureTreeView(new QTreeView(q)),
-	failureProxyModel(new QBottomUpSortFilterProxy(q))
+	failureProxyModel(new QBottomUpSortFilterProxy(q)),
+	consoleDock(new QDockWidget(q)),
+	consoleTextEdit(new QTextEdit(q))
 {
 	qRegisterMetaType<QVector<int>>("QVector<int>");
+
+	QFontDatabase fontDB;
+	fontDB.addApplicationFont(":/consolas");
 
 	testCaseTreeView->setSortingEnabled(true);
 
@@ -49,6 +55,15 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 
 	failureTreeView->setModel(failureProxyModel);
 	failureTreeView->setAlternatingRowColors(true);
+
+	consoleDock->setObjectName("consoleDock");
+	consoleDock->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::RightDockWidgetArea);
+	consoleDock->setWindowTitle("Console");
+	consoleDock->setWidget(consoleTextEdit);
+
+	QFont consolas("consolas", 10);
+	consoleTextEdit->setFont(consolas);
+	consoleTextEdit->setStyleSheet("QTextEdit { background-color: black; color: white; }");
 
 	connect(this, &MainWindowPrivate::setStatus, statusBar, &QStatusBar::setStatusTip, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, this, &MainWindowPrivate::loadTestResults, Qt::QueuedConnection);
@@ -93,8 +108,9 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	});
 
 	// re-rerun tests when auto-testing is re-enabled
-	connect(executableModel, &QAbstractItemModel::dataChanged, [this](const QModelIndex & topLeft, const QModelIndex & bottomRight, const QVector<int> & roles)
+	connect(executableModel, &QAbstractItemModel::dataChanged, this, [this](const QModelIndex & topLeft, const QModelIndex & bottomRight, const QVector<int> & roles)
 	{
+		qDebug() << roles;
 		if (topLeft.data(Qt::CheckStateRole) == Qt::Checked)
 		{
 			QString path = topLeft.data(QExecutableModel::PathRole).toString();
@@ -109,7 +125,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 			}
 			
 		}
-	});
+	}, Qt::QueuedConnection);
 
 	// create a failure model when a test is clicked
 	connect(testCaseTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected)
@@ -133,6 +149,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		if (index.isValid())
 			QDesktopServices::openUrl(QUrl::fromLocalFile(index.data(GTestFailureModel::PathRole).toString()));
 	});
+
+	connect(this, &MainWindowPrivate::testOutputReady, consoleTextEdit, &QTextEdit::append, Qt::QueuedConnection);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -202,8 +220,17 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest)
 		testProcess.start(pathToTest, arguments);
 		testProcess.waitForFinished(-1);
 
+		QString output = testProcess.readAllStandardOutput();
+
 		emit testResultsReady(pathToTest);
-		qApp->processEvents();
+
+		if (!output.isEmpty())
+		{
+			output.prepend(QDateTime::currentDateTime().toString() + "\n");
+			emit testOutputReady(output);
+		}
+		
+		qApp->processEvents();	
 	});
 	t.detach();
 }
@@ -243,14 +270,14 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath)
 	}
 
 	// set executable icon
-	if (doc.elementsByTagName("testsuites").item(0).attributes().namedItem("failures").nodeValue().toInt())
-	{
-		executableModel->setData(executableModelHash[testPath], QExecutableModel::FAILED, QExecutableModel::StateRole);
-	}
-	else
-	{
-		executableModel->setData(executableModelHash[testPath], QExecutableModel::PASSED, QExecutableModel::StateRole);
-	}
+// 	if (doc.elementsByTagName("testsuites").item(0).attributes().namedItem("failures").nodeValue().toInt())
+// 	{
+// 		executableModel->setData(executableModelHash[testPath], QExecutableModel::FAILED, QExecutableModel::StateRole);
+// 	}
+// 	else
+// 	{
+// 		executableModel->setData(executableModelHash[testPath], QExecutableModel::PASSED, QExecutableModel::StateRole);
+// 	}
 
 	return true;
 }
