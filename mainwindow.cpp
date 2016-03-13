@@ -15,12 +15,13 @@ MainWindow::MainWindow() : QMainWindow(), d_ptr(new MainWindowPrivate(this))
 	this->setCentralWidget(d->testCaseTreeView);
 	this->setWindowIcon(QIcon(":images/logo"));
 
+	this->setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
+	this->setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
+
 	this->addDockWidget(Qt::LeftDockWidgetArea, d->executableDock);
 	this->addDockWidget(Qt::BottomDockWidgetArea, d->consoleDock);
 	this->addDockWidget(Qt::BottomDockWidgetArea, d->failureDock);
 	this->tabifyDockWidget(d->consoleDock, d->failureDock);
-
-	this->setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
 
 	// restore settings
 	d->loadSettings();

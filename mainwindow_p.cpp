@@ -229,7 +229,8 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest)
 		testProcess.waitForFinished(-1);
 
 		QString output = testProcess.readAllStandardOutput();
-		testProcess.close();
+		testProcess.closeReadChannel(QProcess::StandardOutput);
+		qApp->processEvents();
 
 		emit testResultsReady(pathToTest);
 
@@ -238,7 +239,7 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest)
 			output.prepend(QDateTime::currentDateTime().toString() + "\n");
 			emit testOutputReady(output);
 		}
-		
+
 		qApp->processEvents();	
 	});
 	t.detach();
