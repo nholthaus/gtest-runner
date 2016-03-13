@@ -6,6 +6,7 @@
     <file alias="images/green">resources/images/green.png</file>
     <file alias="images/yellow">resources/images/yellow.png</file>
     <file alias="images/red">resources/images/red.png</file>
+    <file alias="images/fail">resources/images/fail.png</file>
     <file alias="schemas/gtest.xsd">resources/schemas/gtest.xsd</file>
 	</qresource>
 </RCC>

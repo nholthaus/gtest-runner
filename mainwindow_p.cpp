@@ -2,6 +2,7 @@
 
 #include "GTestFailureModel.h"
 #include <QCryptographicHash>
+#include <QHeaderView>
 
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: MainWindowPrivate
@@ -46,6 +47,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	failureDock->setWidget(failureTreeView);
 
 	failureTreeView->setModel(failureProxyModel);
+	failureTreeView->setAlternatingRowColors(true);
 
 	connect(this, &MainWindowPrivate::setStatus, statusBar, &QStatusBar::setStatusTip, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, this, &MainWindowPrivate::loadTestResults, Qt::QueuedConnection);
@@ -124,8 +126,12 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 
 		failureTreeView->setSortingEnabled(false);
 		delete failureProxyModel->sourceModel();
-		failureProxyModel->setSourceModel(new GTestFailureModel(item, testCaseTreeView));
+		failureProxyModel->setSourceModel(new GTestFailureModel(item));
 		failureTreeView->setSortingEnabled(true);
+		for (int i = 0; i < failureProxyModel->columnCount(); ++i)
+		{
+			failureTreeView->resizeColumnToContents(i);
+		}
 	});
 
 }
@@ -261,7 +267,7 @@ void MainWindowPrivate::selectTest(const QString& testPath)
 	delete testCaseProxyModel->sourceModel();
 	delete failureProxyModel->sourceModel();
 	testCaseTreeView->setSortingEnabled(false);
-	testCaseProxyModel->setSourceModel(new GTestModel(testResultsHash[testPath], testCaseTreeView));
+	testCaseProxyModel->setSourceModel(new GTestModel(testResultsHash[testPath]));
 	failureProxyModel->clear();
 	testCaseTreeView->setSortingEnabled(true);
 	testCaseTreeView->expandAll();

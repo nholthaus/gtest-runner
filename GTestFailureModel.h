@@ -43,6 +43,7 @@
 
 #include <QAbstractItemModel>
 #include <QDomDocument>
+#include <QIcon>
 #include <QModelIndex>
 
 class DomItem;
@@ -69,6 +70,8 @@ public:
 private:
 
 	DomItem *rootItem;
+
+	QIcon failIcon;
 };
 
 #endif // DOMMODEL_H

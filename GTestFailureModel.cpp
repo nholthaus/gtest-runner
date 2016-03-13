@@ -1,50 +1,11 @@
-/****************************************************************************
-**
-** Copyright (C) 2015 The Qt Company Ltd.
-** Contact: http://www.qt.io/licensing/
-**
-** This file is part of the examples of the Qt Toolkit.
-**
-** $QT_BEGIN_LICENSE:BSD$
-** You may use this file under the terms of the BSD license as follows:
-**
-** "Redistribution and use in source and binary forms, with or without
-** modification, are permitted provided that the following conditions are
-** met:
-**   * Redistributions of source code must retain the above copyright
-**     notice, this list of conditions and the following disclaimer.
-**   * Redistributions in binary form must reproduce the above copyright
-**     notice, this list of conditions and the following disclaimer in
-**     the documentation and/or other materials provided with the
-**     distribution.
-**   * Neither the name of The Qt Company Ltd nor the names of its
-**     contributors may be used to endorse or promote products derived
-**     from this software without specific prior written permission.
-**
-**
-** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-** "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-** LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-** A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-** OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-** SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-** LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-** OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
-**
-** $QT_END_LICENSE$
-**
-****************************************************************************/
-
 #include "domitem.h"
 #include "GTestFailureModel.h"
 
 #include <QtXml>
+#include <QRegExp>
 
 GTestFailureModel::GTestFailureModel(DomItem* root, QObject *parent)
-	: QAbstractItemModel(parent)
+	: QAbstractItemModel(parent), failIcon(":/images/fail")
 {
 	rootItem = new DomItem(root->node(), 0);
 }
@@ -56,7 +17,7 @@ GTestFailureModel::~GTestFailureModel()
 
 int GTestFailureModel::columnCount(const QModelIndex &/*parent*/) const
 {
-	return 3;
+	return 8;
 }
 
 QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
@@ -64,27 +25,81 @@ QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 	if (!index.isValid())
 		return QVariant();
 
-	if (role != Qt::DisplayRole)
-		return QVariant();
-
 	DomItem *item = static_cast<DomItem*>(index.internalPointer());
+	QString message = item->node().attributes().namedItem("message").nodeValue();
 
-	QDomNode node = item->node();
-	QStringList attributes;
-	QDomNamedNodeMap attributeMap = node.attributes();
+	static QRegExp filerx("(.*)[:]([0-9]+)");
+	static QRegExp valueofrx("[Vv]alue of: ([^,\n]*)|[VDd]eath test: ([^,\n]*)");
+	static QRegExp actualrx("[Aa]ctual[:][ ]([^,\n]*)|[Rr]esult[:][ ]([^,\n]*)|(Failed)");
+	static QRegExp expectedrx("[Ee]xpected[:][ ]([^,\n]*)|[Ee]rror msg[:]\n(.*)");
+	static QRegExp whichisrx("[Ww]hich is: ([^,\n]*)");
+	static QRegExp nearrx("The difference between (.*) and (.*) is (.*), which exceeds (.*), where\n(.*) evaluates to(.*),\n(.*) evaluates to(.*), and\n(.*) evaluates to(.*).");
+	static QRegExp predrx("\n(.*) evaluates to (.*), where\n(.*)");
 
-	switch (index.column()) {
-	case 0:
-		return node.nodeName();
-	case 1:
-		for (int i = 0; i < attributeMap.count(); ++i) {
-			QDomNode attribute = attributeMap.item(i);
-			attributes << attribute.nodeName() + "=\""
-				+ attribute.nodeValue() + "\"";
+	switch (role)
+	{
+	case Qt::DisplayRole:
+		switch (index.column())
+		{
+		case 0:
+			filerx.indexIn(message);
+			return QFileInfo(filerx.cap(1)).fileName();
+		case 1:
+			filerx.indexIn(message);
+			return filerx.cap(2);
+			break;
+		case 2:
+			valueofrx.indexIn(message);
+			for (int i = 1; i <= valueofrx.captureCount(); ++i)
+				if (!valueofrx.cap(i).isEmpty()) return valueofrx.cap(i);
+			nearrx.indexIn(message);
+			if(!nearrx.cap(7).isEmpty()) return nearrx.cap(7);
+			return predrx.cap(1);
+		case 3:
+			actualrx.indexIn(message);
+			for (int i = 1; i <= actualrx.captureCount(); ++i)
+				if (!actualrx.cap(i).isEmpty()) return actualrx.cap(i);
+			nearrx.indexIn(message);
+			if (!nearrx.cap(8).isEmpty()) return nearrx.cap(8);
+			predrx.indexIn(message);
+			return predrx.cap(2);
+		case 4:
+			expectedrx.indexIn(message);
+			for (int i = 1; i <= expectedrx.captureCount(); ++i)
+				if (!expectedrx.cap(i).isEmpty()) return expectedrx.cap(i);
+			nearrx.indexIn(message);
+			if (!nearrx.cap(5).isEmpty()) return nearrx.cap(5);
+			predrx.indexIn(message);
+			if (!predrx.cap(1).isEmpty()) return "true";
+			return QVariant();
+		case 5:
+			whichisrx.indexIn(message);
+			for (int i = 1; i <= whichisrx.captureCount(); ++i)
+				if (!whichisrx.cap(i).isEmpty()) return whichisrx.cap(i);
+			nearrx.indexIn(message);
+			if (!nearrx.cap(6).isEmpty()) return nearrx.cap(6);
+			predrx.indexIn(message);
+			return predrx.cap(3);
+		case 6:
+			nearrx.indexIn(message);
+			return nearrx.cap(3);
+		case 7:
+			nearrx.indexIn(message);
+			return nearrx.cap(10);
+		default:
+			return QVariant();
 		}
-		return attributes.join(' ');
-	case 2:
-		return node.nodeValue().split("\n").join(' ');
+	case Qt::DecorationRole:
+		if (index.column() == 0) return failIcon;
+		return QVariant();
+	case Qt::TextAlignmentRole:
+		switch (index.column())
+		{
+		case 1:
+			return Qt::AlignHCenter | Qt::AlignVCenter;
+		default:
+			return Qt::AlignLeft | Qt::AlignVCenter;
+		}
 	default:
 		return QVariant();
 	}
@@ -104,11 +119,21 @@ QVariant GTestFailureModel::headerData(int section, Qt::Orientation orientation,
 	if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
 		switch (section) {
 		case 0:
-			return tr("Name");
+			return tr("File Name");
 		case 1:
-			return tr("Attributes");
+			return tr("Line");
 		case 2:
-			return tr("Value");
+			return tr("Value of");
+		case 3:
+			return tr("Actual");
+		case 4:
+			return tr("Expected");
+		case 5:
+			return tr("Which is");
+		case 6:
+			return tr("Difference");
+		case 7:
+			return tr("Tolerance");
 		default:
 			return QVariant();
 		}
