@@ -2,6 +2,7 @@
 
 #include "GTestFailureModel.h"
 #include <QCryptographicHash>
+#include <QDesktopServices>
 #include <QHeaderView>
 
 //--------------------------------------------------------------------------------------------------
@@ -134,6 +135,12 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		}
 	});
 
+	// open file on double-click
+	connect(failureTreeView, &QTreeView::doubleClicked, [this](const QModelIndex& index)
+	{
+		if (index.isValid())
+			QDesktopServices::openUrl(QUrl::fromLocalFile(index.data(GTestFailureModel::PathRole).toString()));
+	});
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -154,8 +161,8 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	QFileInfo fileinfo(path);
 
 	if (!fileinfo.exists())
-
 		return;
+
 	QFileInfo xmlResults(xmlPath(path));
 	QStandardItem* item = new QStandardItem(fileinfo.baseName());
 	item->setCheckable(true);

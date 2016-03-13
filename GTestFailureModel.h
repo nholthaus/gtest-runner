@@ -54,6 +54,14 @@ class GTestFailureModel : public QAbstractItemModel
 
 public:
 
+	enum Roles
+	{
+		PathRole = Qt::UserRole,
+		LineRole = Qt::UserRole + 1,
+	};
+
+public:
+
 	explicit GTestFailureModel(DomItem* root, QObject *parent = 0);
 	~GTestFailureModel();
 

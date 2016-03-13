@@ -96,10 +96,18 @@ QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 		switch (index.column())
 		{
 		case 1:
-			return Qt::AlignHCenter | Qt::AlignVCenter;
+			return (Qt::AlignHCenter | Qt::AlignVCenter);
 		default:
-			return Qt::AlignLeft | Qt::AlignVCenter;
+			return (Qt::AlignLeft | Qt::AlignVCenter);
 		}
+	case Qt::ToolTipRole:
+		return message;
+	case PathRole:
+		filerx.indexIn(message);
+		return QFileInfo(filerx.cap(1)).canonicalFilePath();
+	case LineRole:
+		filerx.indexIn(message);
+		return filerx.cap(2);
 	default:
 		return QVariant();
 	}
@@ -157,7 +165,9 @@ const
 
 	DomItem *childItem = parentItem->child(row);
 	if (childItem)
+	{
 		return createIndex(row, column, childItem);
+	}
 	else
 		return QModelIndex();
 }
@@ -188,5 +198,17 @@ int GTestFailureModel::rowCount(const QModelIndex &parent) const
 	else
 		parentItem = static_cast<DomItem*>(parent.internalPointer());
 
-	return parentItem->node().childNodes().count();
+	if (parentItem == rootItem)
+	{
+		int count = 0;
+		QDomNodeList failures = parentItem->node().childNodes();
+		for (auto i = 0; i < failures.count(); ++i)
+		{
+			if (failures.at(i).nodeName() == "failure") ++count;
+		}
+		return count;
+	}
+	else
+		return 0;
+
 }
