@@ -47,14 +47,14 @@
 
 class DomItem;
 
-class DomModel : public QAbstractItemModel
+class GTestFailureModel : public QAbstractItemModel
 {
 	Q_OBJECT
 
 public:
 
-	explicit DomModel(QDomDocument document, QObject *parent = 0);
-	~DomModel();
+	explicit GTestFailureModel(DomItem* root, QObject *parent = 0);
+	~GTestFailureModel();
 
 	QVariant data(const QModelIndex &index, int role) const Q_DECL_OVERRIDE;
 	Qt::ItemFlags flags(const QModelIndex &index) const Q_DECL_OVERRIDE;
@@ -67,7 +67,7 @@ public:
 	int columnCount(const QModelIndex &parent = QModelIndex()) const Q_DECL_OVERRIDE;
 
 private:
-	QDomDocument domDocument;
+
 	DomItem *rootItem;
 };
 

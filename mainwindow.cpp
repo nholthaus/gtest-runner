@@ -15,28 +15,9 @@ MainWindow::MainWindow() : QMainWindow(), d_ptr(new MainWindowPrivate(this))
 	this->setCentralWidget(d->testCaseTreeView);
 	this->setWindowIcon(QIcon(":images/logo"));
 
-	d->testCaseTreeView->setSortingEnabled(true);
-
-	d->executableDock->setObjectName("executableDock");
-	d->executableDock->setAllowedAreas(Qt::LeftDockWidgetArea);
-	d->executableDock->setWindowTitle("Test Executables");
-	d->executableDock->setWidget(d->executableDockFrame);
 	this->addDockWidget(Qt::LeftDockWidgetArea, d->executableDock);
-
-	d->executableDockFrame->setLayout(new QVBoxLayout);
-	d->executableDockFrame->layout()->addWidget(d->executableListView);
-	d->executableDockFrame->layout()->addWidget(d->addTestButton);
-
-	d->addTestButton->setText("Add Test Executable...");
-	connect(d->addTestButton, &QPushButton::clicked, [&, d]()
-	{
-		QString filename = QFileDialog::getOpenFileName(d->q_ptr, "Select Test Executable", QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first(), "Text Executables (*.exe)");
-		
-		if (filename.isEmpty())
-			return;
-
-		d->addTestExecutable(filename);
-	});
+	this->addDockWidget(Qt::BottomDockWidgetArea, d->failureDock);
+	this->setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
 
 	// restore settings
 	d->loadSettings();

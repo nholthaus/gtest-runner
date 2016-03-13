@@ -86,7 +86,7 @@ mainwindow.cpp
 mainwindow_p.cpp
 executableModelDelegate.cpp
 domitem.cpp
-dommodel.cpp
+GTestFailureModel.cpp
 gtestmodel.cpp
 qexecutablemodel.h
 QBottomUpSortFilterProxy.h
@@ -98,7 +98,7 @@ mainwindow.h
 mainwindow_p.h
 executableModelDelegate.h
 domitem.h
-dommodel.h
+GTestFailureModel.h
 gtestmodel.h
 qexecutablemodel.cpp
 QBottomUpSortFilterProxy.cpp

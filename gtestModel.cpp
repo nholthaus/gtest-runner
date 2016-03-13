@@ -191,6 +191,10 @@ int GTestModel::rowCount(const QModelIndex &parent) const
 	else
 		parentItem = static_cast<DomItem*>(parent.internalPointer());
 
+	// don't show failure nodes in the test model. They'll go in a separate model.
+	if (parentItem->node().toElement().firstChild().nodeName() == "failure")
+		return 0;
+
 	return parentItem->node().childNodes().count();
 }
 

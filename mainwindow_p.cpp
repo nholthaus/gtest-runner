@@ -1,5 +1,6 @@
 #include "mainwindow_p.h"
 
+#include "GTestFailureModel.h"
 #include <QCryptographicHash>
 
 //--------------------------------------------------------------------------------------------------
@@ -11,19 +12,56 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	executableDockFrame(new QFrame(q)),
 	executableListView(new QListView(q)),
 	executableModel(new QExecutableModel(q)),
+	testCaseProxyModel(new QBottomUpSortFilterProxy(q)),
 	addTestButton(new QPushButton(q)),
 	fileWatcher(new QFileSystemWatcher(q)),
 	testCaseTreeView(new QTreeView(q)),
-	statusBar(new QStatusBar(q))
+	statusBar(new QStatusBar(q)),
+	failureDock(new QDockWidget(q)),
+	failureTreeView(new QTreeView(q)),
+	failureProxyModel(new QBottomUpSortFilterProxy(q))
 {
 	qRegisterMetaType<QVector<int>>("QVector<int>");
 
+	testCaseTreeView->setSortingEnabled(true);
+
+	executableDock->setObjectName("executableDock");
+	executableDock->setAllowedAreas(Qt::LeftDockWidgetArea);
+	executableDock->setWindowTitle("Test Executables");
+	executableDock->setWidget(executableDockFrame);
+
 	executableListView->setModel(executableModel);
+
+	executableDockFrame->setLayout(new QVBoxLayout);
+	executableDockFrame->layout()->addWidget(executableListView);
+	executableDockFrame->layout()->addWidget(addTestButton);
+
+	addTestButton->setText("Add Test Executable...");
+
+	testCaseTreeView->setModel(testCaseProxyModel);
+
+	failureDock->setObjectName("failureDock");
+	failureDock->setAllowedAreas(Qt::BottomDockWidgetArea);
+	failureDock->setWindowTitle("Failures");
+	failureDock->setWidget(failureTreeView);
+
+	failureTreeView->setModel(failureProxyModel);
 
 	connect(this, &MainWindowPrivate::setStatus, statusBar, &QStatusBar::setStatusTip, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, this, &MainWindowPrivate::loadTestResults, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, statusBar, &QStatusBar::clearMessage, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::showMessage, statusBar, &QStatusBar::showMessage, Qt::QueuedConnection);
+
+	// Open dialog when 'add test' is clicked
+	connect(addTestButton, &QPushButton::clicked, [&]()
+	{
+		QString filename = QFileDialog::getOpenFileName(q_ptr, "Select Test Executable", QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first(), "Text Executables (*.exe)");
+
+		if (filename.isEmpty())
+			return;
+
+		addTestExecutable(filename);
+	});
 
 	// switch testCase models when new tests are clicked
 	connect(executableListView->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected)
@@ -77,6 +115,19 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 			
 		}
 	});
+
+	// create a failure model when a test is clicked
+	connect(testCaseTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected)
+	{
+		auto index = testCaseProxyModel->mapToSource(selected.indexes().first());
+		DomItem* item = static_cast<DomItem*>(index.internalPointer());
+
+		failureTreeView->setSortingEnabled(false);
+		delete failureProxyModel->sourceModel();
+		failureProxyModel->setSourceModel(new GTestFailureModel(item, testCaseTreeView));
+		failureTreeView->setSortingEnabled(true);
+	});
+
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -127,6 +178,8 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 		qDebug() << "RE-RUNNING";
 		this->runTestInThread(path);
 	}
+
+	executableListView->setCurrentIndex(executableModel->indexFromItem(item));
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -205,8 +258,12 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath)
 //--------------------------------------------------------------------------------------------------
 void MainWindowPrivate::selectTest(const QString& testPath)
 {
-	delete testCaseTreeView->model();
-	testCaseTreeView->setModel(new GTestModel(testResultsHash[testPath], testCaseTreeView));
+	delete testCaseProxyModel->sourceModel();
+	delete failureProxyModel->sourceModel();
+	testCaseTreeView->setSortingEnabled(false);
+	testCaseProxyModel->setSourceModel(new GTestModel(testResultsHash[testPath], testCaseTreeView));
+	failureProxyModel->clear();
+	testCaseTreeView->setSortingEnabled(true);
 	testCaseTreeView->expandAll();
 	for (size_t i = 0; i < testCaseTreeView->model()->columnCount(); i++)
 	{

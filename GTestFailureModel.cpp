@@ -39,28 +39,27 @@
 ****************************************************************************/
 
 #include "domitem.h"
-#include "dommodel.h"
+#include "GTestFailureModel.h"
 
 #include <QtXml>
 
-DomModel::DomModel(QDomDocument document, QObject *parent)
-	: QAbstractItemModel(parent), domDocument(document)
+GTestFailureModel::GTestFailureModel(DomItem* root, QObject *parent)
+	: QAbstractItemModel(parent)
 {
-
-	rootItem = new DomItem(domDocument, 0);
+	rootItem = new DomItem(root->node(), 0);
 }
 
-DomModel::~DomModel()
+GTestFailureModel::~GTestFailureModel()
 {
 	delete rootItem;
 }
 
-int DomModel::columnCount(const QModelIndex &/*parent*/) const
+int GTestFailureModel::columnCount(const QModelIndex &/*parent*/) const
 {
 	return 3;
 }
 
-QVariant DomModel::data(const QModelIndex &index, int role) const
+QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 {
 	if (!index.isValid())
 		return QVariant();
@@ -91,7 +90,7 @@ QVariant DomModel::data(const QModelIndex &index, int role) const
 	}
 }
 
-Qt::ItemFlags DomModel::flags(const QModelIndex &index) const
+Qt::ItemFlags GTestFailureModel::flags(const QModelIndex &index) const
 {
 	if (!index.isValid())
 		return 0;
@@ -99,7 +98,7 @@ Qt::ItemFlags DomModel::flags(const QModelIndex &index) const
 	return QAbstractItemModel::flags(index);
 }
 
-QVariant DomModel::headerData(int section, Qt::Orientation orientation,
+QVariant GTestFailureModel::headerData(int section, Qt::Orientation orientation,
 	int role) const
 {
 	if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
@@ -118,7 +117,7 @@ QVariant DomModel::headerData(int section, Qt::Orientation orientation,
 	return QVariant();
 }
 
-QModelIndex DomModel::index(int row, int column, const QModelIndex &parent)
+QModelIndex GTestFailureModel::index(int row, int column, const QModelIndex &parent)
 const
 {
 	if (!hasIndex(row, column, parent))
@@ -138,7 +137,7 @@ const
 		return QModelIndex();
 }
 
-QModelIndex DomModel::parent(const QModelIndex &child) const
+QModelIndex GTestFailureModel::parent(const QModelIndex &child) const
 {
 	if (!child.isValid())
 		return QModelIndex();
@@ -152,7 +151,7 @@ QModelIndex DomModel::parent(const QModelIndex &child) const
 	return createIndex(parentItem->row(), 0, parentItem);
 }
 
-int DomModel::rowCount(const QModelIndex &parent) const
+int GTestFailureModel::rowCount(const QModelIndex &parent) const
 {
 	if (parent.column() > 0)
 		return 0;
