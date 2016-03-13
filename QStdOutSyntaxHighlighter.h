@@ -63,16 +63,15 @@ public:
 	{
 		HighlightingRule rule;
 
-// 		errorFormat.setFontWeight(QFont::Bold);
-// 		errorFormat.setForeground(QColor("#ff7f7f"));
-// 		rule.pattern = QRegExp("ERROR:.*");
-// 		rule.format = errorFormat;
-// 		highlightingRules.append(rule);
+ 		blockFormat.setForeground(QColor("#00ff00"));
+ 		rule.pattern = QRegExp("\\[.*\\]");
+ 		rule.format = blockFormat;
+		highlightingRules.append(rule);
 
-// 		connectionFormat.setForeground(QColor("#FFD700"));
-// 		rule.pattern = QRegExp(".*Connection.*");
-// 		rule.format = connectionFormat;
-// 		highlightingRules.append(rule);
+		errorFormat.setForeground(QColor("#ff0000"));
+		rule.pattern = QRegExp("\\[.*FAILED.*\\]");
+		rule.format = errorFormat;
+		highlightingRules.append(rule);
 	}
 
 	void highlightBlock(const QString &text) override
@@ -97,8 +96,8 @@ private:
 	};
 	QVector<HighlightingRule>	highlightingRules;
 
-// 	QTextCharFormat				errorFormat;														///< Highlight style for errors.
-// 	QTextCharFormat				connectionFormat;													///< Highlight style for network connection related messages.
+	QTextCharFormat				errorFormat;													///< Highlight style for errors.
+	QTextCharFormat				blockFormat;													///< Highlight style for network connection related messages.
 
 };
 

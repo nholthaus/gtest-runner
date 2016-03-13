@@ -1,4 +1,5 @@
 #include "mainwindow_p.h"
+#include "QStdOutSyntaxHighlighter.h"
 
 #include "GTestFailureModel.h"
 #include <QCryptographicHash>
@@ -24,7 +25,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	failureTreeView(new QTreeView(q)),
 	failureProxyModel(new QBottomUpSortFilterProxy(q)),
 	consoleDock(new QDockWidget(q)),
-	consoleTextEdit(new QTextEdit(q))
+	consoleTextEdit(new QTextEdit(q)),
+	consoleHighlighter(new QStdOutSyntaxHighlighter(consoleTextEdit))
 {
 	qRegisterMetaType<QVector<int>>("QVector<int>");
 
@@ -64,6 +66,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	QFont consolas("consolas", 10);
 	consoleTextEdit->setFont(consolas);
 	consoleTextEdit->setStyleSheet("QTextEdit { background-color: black; color: white; }");
+	consoleTextEdit->setReadOnly(true);
 
 	connect(this, &MainWindowPrivate::setStatus, statusBar, &QStatusBar::setStatusTip, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, this, &MainWindowPrivate::loadTestResults, Qt::QueuedConnection);

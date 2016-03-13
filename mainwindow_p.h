@@ -43,6 +43,7 @@
 #include "mainwindow.h"
 #include "qexecutablemodel.h"
 #include "QBottomUpSortFilterProxy.h"
+#include "QStdOutSyntaxHighlighter.h"
 #include "appinfo.h"
 #include "gtestModel.h"
 
@@ -112,6 +113,7 @@ public:
 
 	QDockWidget*							consoleDock;							///< Console emulator
 	QTextEdit*								consoleTextEdit;						///< Console emulator text edit
+	QStdOutSyntaxHighlighter*				consoleHighlighter;						///< Console syntax highlighter.
 
 signals:
 

@@ -18,6 +18,7 @@ MainWindow::MainWindow() : QMainWindow(), d_ptr(new MainWindowPrivate(this))
 	this->addDockWidget(Qt::LeftDockWidgetArea, d->executableDock);
 	this->addDockWidget(Qt::BottomDockWidgetArea, d->consoleDock);
 	this->addDockWidget(Qt::BottomDockWidgetArea, d->failureDock);
+	this->tabifyDockWidget(d->consoleDock, d->failureDock);
 
 	this->setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
 
