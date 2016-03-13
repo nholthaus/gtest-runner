@@ -113,8 +113,11 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	// re-rerun tests when auto-testing is re-enabled
 	connect(executableModel, &QAbstractItemModel::dataChanged, this, [this](const QModelIndex & topLeft, const QModelIndex & bottomRight, const QVector<int> & roles)
 	{
-		qDebug() << roles;
-		if (topLeft.data(Qt::CheckStateRole) == Qt::Checked)
+		QString path = topLeft.data(QExecutableModel::PathRole).toString();
+		Qt::CheckState prevState = executableCheckedStateHash[path];
+		// Only re-run IFF the check box state goes from unchecked to checked AND
+		// the data has gotten out of date since the checkbox was off.
+		if (topLeft.data(Qt::CheckStateRole) == Qt::Checked && prevState == Qt::Unchecked)
 		{
 			QString path = topLeft.data(QExecutableModel::PathRole).toString();
 			QFileInfo xml(xmlPath(path));
@@ -125,9 +128,11 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 				// out of date! re-run.
 				emit showMessage("Automatic testing enabled for: " + topLeft.data(Qt::DisplayRole).toString() + ". Re-running tests...");
 				runTestInThread(topLeft.data(QExecutableModel::PathRole).toString());
-			}
-			
+			}			
 		}
+
+		// update previous state
+		executableCheckedStateHash[path] = (Qt::CheckState)topLeft.data(Qt::CheckStateRole).toInt();
 	}, Qt::QueuedConnection);
 
 	// create a failure model when a test is clicked
@@ -224,6 +229,7 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest)
 		testProcess.waitForFinished(-1);
 
 		QString output = testProcess.readAllStandardOutput();
+		testProcess.close();
 
 		emit testResultsReady(pathToTest);
 
@@ -273,14 +279,14 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath)
 	}
 
 	// set executable icon
-// 	if (doc.elementsByTagName("testsuites").item(0).attributes().namedItem("failures").nodeValue().toInt())
-// 	{
-// 		executableModel->setData(executableModelHash[testPath], QExecutableModel::FAILED, QExecutableModel::StateRole);
-// 	}
-// 	else
-// 	{
-// 		executableModel->setData(executableModelHash[testPath], QExecutableModel::PASSED, QExecutableModel::StateRole);
-// 	}
+	if (doc.elementsByTagName("testsuites").item(0).attributes().namedItem("failures").nodeValue().toInt())
+	{
+		executableModel->setData(executableModelHash[testPath], QExecutableModel::FAILED, QExecutableModel::StateRole);
+	}
+	else
+	{
+		executableModel->setData(executableModelHash[testPath], QExecutableModel::PASSED, QExecutableModel::StateRole);
+	}
 
 	return true;
 }
@@ -343,6 +349,7 @@ void MainWindowPrivate::loadSettings()
 		Qt::CheckState checked = static_cast<Qt::CheckState>(settings.value("checked").toInt());
 		QDateTime lastModified = settings.value("lastModified").toDateTime();
 		addTestExecutable(path, checked, lastModified);
+		executableCheckedStateHash[path] = checked;
 	}
 	settings.endArray();
 }

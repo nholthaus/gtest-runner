@@ -1,7 +1,7 @@
 
 #include "mainwindow_p.h"
 
-
+#include <QDesktopWidget>
 
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: MainWindow
@@ -50,5 +50,15 @@ void MainWindow::closeEvent(QCloseEvent* event)
 void MainWindow::changeEvent(QEvent *e)
 {
 	QMainWindow::changeEvent(e);
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: sizeHint
+//--------------------------------------------------------------------------------------------------
+QSize MainWindow::sizeHint() const
+{
+	QDesktopWidget* desktop = QApplication::desktop();
+	qDebug() << desktop->screen(desktop->primaryScreen())->size() << 0.25 * desktop->screen(desktop->primaryScreen())->size();
+	return 0.5 * desktop->screen(desktop->primaryScreen())->size();
 }
 
