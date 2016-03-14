@@ -72,6 +72,11 @@ public:
 		rule.pattern = QRegExp("\\[.*FAILED.*\\]");
 		rule.format = errorFormat;
 		highlightingRules.append(rule);
+
+		errorFormat.setForeground(QColor("#ffd700"));
+		rule.pattern = QRegExp("TEST RUN COMPLETED:.*");
+		rule.format = errorFormat;
+		highlightingRules.append(rule);
 	}
 
 	void highlightBlock(const QString &text) override
@@ -98,7 +103,7 @@ private:
 
 	QTextCharFormat				errorFormat;													///< Highlight style for errors.
 	QTextCharFormat				blockFormat;													///< Highlight style for network connection related messages.
-
+	QTextCharFormat				timestampFormat;												///< highlight style for timestamps
 };
 
 #endif // QStdErrSyntaxHighlighter_h__

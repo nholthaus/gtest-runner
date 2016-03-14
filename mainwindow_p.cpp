@@ -204,14 +204,10 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	connect(this, &MainWindowPrivate::testOutputReady, this, [this](QString text)
 	{
 		// add the new test output
-		consoleTextEdit->append(text);
-
-		// scroll to the bottom
-		QTextCursor cursor = consoleTextEdit->textCursor();
-		cursor.atEnd();
-		consoleTextEdit->setTextCursor(cursor);
+		consoleTextEdit->moveCursor(QTextCursor::End);
+		consoleTextEdit->insertPlainText(text);
+		consoleTextEdit->moveCursor(QTextCursor::End);
 		consoleTextEdit->ensureCursorVisible();
-
 	}, Qt::QueuedConnection);
 
 	// open the GUI when a tray message is clicked
@@ -282,6 +278,8 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 {
 	std::thread t([this, pathToTest, notify]
 	{
+		QEventLoop loop;
+
 		QFileInfo info(pathToTest);
 		executableModel->setData(executableModelHash[pathToTest], QExecutableModel::RUNNING, QExecutableModel::StateRole);
 		QProcess testProcess;
@@ -290,21 +288,34 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 		arguments << "--gtest_output=xml:" + this->xmlPath(pathToTest);
 
 		testProcess.start(pathToTest, arguments);
-		testProcess.waitForFinished(-1);
 
-		QString output = testProcess.readAllStandardOutput();
-		testProcess.closeReadChannel(QProcess::StandardOutput);
-		qApp->processEvents();
+		bool first = true;
 
-		emit testResultsReady(pathToTest, notify);
-
-		if (!output.isEmpty())
+		// print test output as it becomes available
+		connect(&testProcess, &QProcess::readyReadStandardOutput, &loop, [&]
 		{
-			output.append("\nTEST RUN COMPLETED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n");
-			emit testOutputReady(output);
-		}
+			if (first)
+			{
+				// get the number of tests
+				first = false;
+			}
 
-		qApp->processEvents();	
+			emit testOutputReady(testProcess.readAllStandardOutput());
+		});
+
+		// when the process finished, read any remaining output then quit the loop
+		connect(&testProcess, static_cast<void (QProcess::*)(int)>(&QProcess::finished), &loop, [&]
+		{
+			QString output = testProcess.readAllStandardOutput();
+			output.append("\nTEST RUN COMPLETED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n\n");
+			
+			emit testOutputReady(output);
+			emit testResultsReady(pathToTest, notify);
+			
+			loop.exit();
+		});
+
+		loop.exec();
 	});
 	t.detach();
 }
