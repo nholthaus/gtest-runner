@@ -33,7 +33,6 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	consoleTextEdit(new QTextEdit(q)),
 	consoleHighlighter(new QStdOutSyntaxHighlighter(consoleTextEdit)),
 	systemTrayIcon(new QSystemTrayIcon(QIcon(":/images/logo"), q)),
-	notificationsEnabled(true),
 	mostRecentFailurePath("")
 {
 	qRegisterMetaType<QVector<int>>("QVector<int>");
@@ -91,6 +90,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 
 	createExecutableContextMenu();
 	createTestMenu();
+	createOptionsMenu();
 	createWindowMenu();
 
 	connect(this, &MainWindowPrivate::setStatus, statusBar, &QStatusBar::setStatusTip, Qt::QueuedConnection);
@@ -118,7 +118,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		if (executableModelHash[path].data(Qt::CheckStateRole) == Qt::Checked)
 		{
 			emit showMessage("Change detected: " + path + ". Re-running tests...");
-			runTestInThread(path, notificationsEnabled);
+			runTestInThread(path, true);
 		}
 	});
 
@@ -147,7 +147,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 			{
 				// out of date! re-run.
 				emit showMessage("Automatic testing enabled for: " + topLeft.data(Qt::DisplayRole).toString() + ". Re-running tests...");
-				runTestInThread(topLeft.data(QExecutableModel::PathRole).toString(), notificationsEnabled);
+				runTestInThread(topLeft.data(QExecutableModel::PathRole).toString(), true);
 			}			
 		}
 
@@ -351,7 +351,7 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath, bool notify)
 		mostRecentFailurePath = testPath;
 		// only show notifications AFTER the initial startup, otherwise the user
 		// could get a ton of messages every time they open the program. The messages
-		if (notify)
+		if (notify && notifyOnFailureAction->isChecked())
 		{
 			systemTrayIcon->showMessage("Test Failure", QFileInfo(testPath).baseName() + " failed with " + QString::number(numErrors) + " errors.");
 		}
@@ -359,6 +359,10 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath, bool notify)
 	else
 	{
 		executableModel->setData(executableModelHash[testPath], QExecutableModel::PASSED, QExecutableModel::StateRole);
+		if(notify && notifyOnSuccessAction->isChecked())
+		{
+			systemTrayIcon->showMessage("Test Succeeded", QFileInfo(testPath).baseName() + " ran with no errors.");
+		}
 	}
 
 	return true;
@@ -410,6 +414,13 @@ void MainWindowPrivate::saveSettings() const
 		settings.setValue("lastModified", executableModel->data(executableModel->index(row, 0), QExecutableModel::LastModifiedRole).toDateTime());
 	}
 	settings.endArray();
+
+	settings.beginGroup("options");
+	{
+		settings.setValue("notifyOnFailure", notifyOnFailureAction->isChecked());
+		settings.setValue("notifyOnSuccess", notifyOnSuccessAction->isChecked());
+	}
+	settings.endGroup();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -432,6 +443,13 @@ void MainWindowPrivate::loadSettings()
 		addTestExecutable(path, checked, lastModified);
 	}
 	settings.endArray();
+
+	settings.beginGroup("options");
+	{
+		if (!settings.value("notifyOnFailure").isNull()) notifyOnFailureAction->setChecked(settings.value("notifyOnFailure").toBool());
+		if (!settings.value("notifyOnSuccess").isNull()) notifyOnSuccessAction->setChecked(settings.value("notifyOnSuccess").toBool());
+	}
+	settings.endGroup();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -567,6 +585,28 @@ void MainWindowPrivate::createTestMenu()
 		if(index.isValid())
 			runTestInThread(index.data(QExecutableModel::PathRole).toString(), false);
 	});
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: createOptionsMenu
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::createOptionsMenu()
+{
+	Q_Q(MainWindow);
+
+	optionsMenu = new QMenu("Options", q);
+
+	notifyOnFailureAction = new QAction("Notify on auto-run Failure", optionsMenu);
+	notifyOnSuccessAction = new QAction("Notify on auto-run Success", optionsMenu);
+	notifyOnFailureAction->setCheckable(true);
+	notifyOnFailureAction->setChecked(true);
+	notifyOnSuccessAction->setCheckable(true);
+	notifyOnSuccessAction->setChecked(false);
+
+	optionsMenu->addAction(notifyOnFailureAction);
+	optionsMenu->addAction(notifyOnSuccessAction);
+
+	q->menuBar()->addMenu(optionsMenu);
 }
 
 //--------------------------------------------------------------------------------------------------

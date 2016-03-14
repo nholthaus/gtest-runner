@@ -130,16 +130,19 @@ public:
 	QMenu*									executableContextMenu;					///< context menu for the executable list view.
 	QAction*								runTestAction;							///< Manually forces a test-run.
 	QAction*								removeTestAction;						///< Removes a test from being watched.
+	
+	QMenu*									optionsMenu;							///< Menu to set system options
+	QAction*								notifyOnFailureAction;					///< Enable failure notifications
+	QAction*								notifyOnSuccessAction;					///< Enable success notifications
 
 	QMenu*									windowMenu;								///< Menu to display/change dock visibility.
 
 	QMenu*									testMenu;								///< Menu for test-related actions
 	QAction*								addTestAction;							///< Opens a dialog to add a test executable.
 	QAction*								selectAndRemoveTestAction;				///< Remove a test after choosing it from a list.
-	QAction*								selectAndRunTest;						///< Run a test after selecting it from a list.
+	QAction*								selectAndRunTest;						///< Run a test after selecting it from a list.																	///< program options.
 
 	// state variables
-	bool									notificationsEnabled;					///< True if system tray notifications should be generated on test failure.
 	QString									mostRecentFailurePath;					///< Stores the path [key] of the most recently failed test.
 
 signals:
@@ -173,6 +176,7 @@ protected:
 
 	void createExecutableContextMenu();
 	void createTestMenu();
+	void createOptionsMenu();
 	void createWindowMenu();
 
 	QModelIndex getTestIndexDialog(const QString& label);
