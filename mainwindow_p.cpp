@@ -45,10 +45,6 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	centralFrame->layout()->addWidget(testCaseTreeView);
 	centralFrame->layout()->setContentsMargins(0, 5, 0, 0);
 
-	testCaseFilterEdit->setPlaceholderText("Filter Test Output...");
-
-	testCaseTreeView->setSortingEnabled(true);
-
 	executableDock->setObjectName("executableDock");
 	executableDock->setAllowedAreas(Qt::LeftDockWidgetArea);
 	executableDock->setWindowTitle("Test Executables");
@@ -62,7 +58,11 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 
 	addTestButton->setText("Add Test Executable...");
 
+	testCaseFilterEdit->setPlaceholderText("Filter Test Output...");
 	testCaseFilterEdit->setClearButtonEnabled(true);
+
+	testCaseTreeView->setSortingEnabled(true);
+	testCaseTreeView->sortByColumn(GTestModel::TestNumber, Qt::AscendingOrder);
 	testCaseTreeView->setModel(testCaseProxyModel);
 
 	testCaseProxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);

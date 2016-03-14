@@ -62,12 +62,14 @@ public:
 	enum Sections
 	{
 		Name = 0,
+		TestNumber,
 		Failures,
 		Time,
 		Tests,
 		Errors,
 		Disabled,
 		Timestamp,
+		Last		// always leave this as the last one.
 	};
 
 public:

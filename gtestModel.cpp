@@ -19,7 +19,7 @@ GTestModel::~GTestModel()
 
 int GTestModel::columnCount(const QModelIndex &/*parent*/) const
 {
-	return 7;
+	return Last;
 }
 
 QVariant GTestModel::data(const QModelIndex &index, int role) const
@@ -38,25 +38,24 @@ QVariant GTestModel::data(const QModelIndex &index, int role) const
 	case Qt::DisplayRole:
 		switch (index.column())
 		{
-			//name
-		case 0:
+		case Name:
 			return attributeMap.namedItem("name").nodeValue();
-			// failures
-		case 1:
+		case TestNumber:
+			return item->row();
+		case Failures:
 			if (attributeMap.namedItem("failures").isNull())
 				return node.childNodes().count();
 			else
 				return attributeMap.namedItem("failures").nodeValue();
-			// time
-		case 2:
+		case Time:
 			return attributeMap.namedItem("time").nodeValue().toDouble() * 1000;
-		case 3:
+		case Tests:
 			return attributeMap.namedItem("tests").nodeValue();
-		case 4:
+		case Errors:
 			return attributeMap.namedItem("errors").nodeValue();
-		case 5:
+		case Disabled:
 			return attributeMap.namedItem("disabled").nodeValue();
-		case 6:
+		case Timestamp:
 			return attributeMap.namedItem("timestamp").nodeValue();
 		default:
 			return QVariant();
@@ -88,6 +87,8 @@ QVariant GTestModel::data(const QModelIndex &index, int role) const
 		{
 		case Name:
 			return Qt::AlignLeft;
+		case TestNumber:
+			return Qt::AlignCenter;
 		case Failures:
 			return Qt::AlignCenter;
 		case Time:
@@ -127,6 +128,8 @@ QVariant GTestModel::headerData(int section, Qt::Orientation orientation,
 		switch (section) {
 		case Name:
 			return tr("Name");
+		case TestNumber:
+			return tr("Test #");
 		case Failures:
 			return tr("Failures");
 		case Time:
