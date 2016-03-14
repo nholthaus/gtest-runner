@@ -177,6 +177,13 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		}
 	});
 
+	// open failure dock on test double-click
+	connect(testCaseTreeView, &QTreeView::doubleClicked, [this](const QModelIndex& index)
+	{
+		if (index.isValid())
+			failureDock->show();
+	});
+
 	// open file on double-click
 	connect(failureTreeView, &QTreeView::doubleClicked, [this](const QModelIndex& index)
 	{
@@ -283,7 +290,7 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 		emit testResultsReady(pathToTest, notify);
 
 		if (!output.isEmpty())
-		{//Mon Mar 14 09:38:12 2016
+		{
 			output.append("\nTEST RUN COMPLETED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n");
 			emit testOutputReady(output);
 		}
@@ -434,8 +441,19 @@ void MainWindowPrivate::createExecutableContextMenu()
 	executableContextMenu->addAction(removeTestAction);
 
 	executableListView->setContextMenuPolicy(Qt::CustomContextMenu);
+	
 	connect(executableListView, &QListView::customContextMenuRequested, [this, q](const QPoint& pos)
 	{
-		executableContextMenu->exec(executableListView->mapToGlobal(pos));
+		QModelIndex indexUnderMouse = executableListView->indexAt(pos);
+		if (indexUnderMouse.isValid())
+		{
+			executableContextMenu->exec(executableListView->mapToGlobal(pos));
+		}
+	});
+
+	connect(runTestAction, &QAction::triggered, [this]
+	{
+		QString path = executableListView->currentIndex().data(QExecutableModel::PathRole).toString();
+		runTestInThread(path, false);
 	});
 }
