@@ -19,6 +19,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	testCaseProxyModel(new QBottomUpSortFilterProxy(q)),
 	addTestButton(new QPushButton(q)),
 	fileWatcher(new QFileSystemWatcher(q)),
+	centralFrame(new QFrame(q)),
+	testCaseFilterEdit(new QLineEdit(q)),
 	testCaseTreeView(new QTreeView(q)),
 	statusBar(new QStatusBar(q)),
 	failureDock(new QDockWidget(q)),
@@ -32,6 +34,13 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 
 	QFontDatabase fontDB;
 	fontDB.addApplicationFont(":/consolas");
+
+	centralFrame->setLayout(new QVBoxLayout);
+	centralFrame->layout()->addWidget(testCaseFilterEdit);
+	centralFrame->layout()->addWidget(testCaseTreeView);
+	centralFrame->layout()->setContentsMargins(0, 5, 0, 0);
+
+	testCaseFilterEdit->setPlaceholderText("Filter Test Output...");
 
 	testCaseTreeView->setSortingEnabled(true);
 
@@ -50,6 +59,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 
 	testCaseTreeView->setModel(testCaseProxyModel);
 
+	testCaseProxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
+
 	failureDock->setObjectName("failureDock");
 	failureDock->setAllowedAreas(Qt::BottomDockWidgetArea);
 	failureDock->setWindowTitle("Failures");
@@ -60,7 +71,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 
 	consoleDock->setObjectName("consoleDock");
 	consoleDock->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::RightDockWidgetArea);
-	consoleDock->setWindowTitle("Console");
+	consoleDock->setWindowTitle("Console Output");
 	consoleDock->setWidget(consoleTextEdit);
 
 	QFont consolas("consolas", 10);
@@ -135,6 +146,13 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		executableCheckedStateHash[path] = (Qt::CheckState)topLeft.data(Qt::CheckStateRole).toInt();
 	}, Qt::QueuedConnection);
 
+	// filter test results when the filter is changed
+	connect(testCaseFilterEdit, &QLineEdit::textChanged, this, [this](const QString& text)
+	{
+		testCaseProxyModel->setFilterRegExp(text);
+		testCaseTreeView->expandAll();
+	});
+
 	// create a failure model when a test is clicked
 	connect(testCaseTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected)
 	{
@@ -158,7 +176,12 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 			QDesktopServices::openUrl(QUrl::fromLocalFile(index.data(GTestFailureModel::PathRole).toString()));
 	});
 
-	connect(this, &MainWindowPrivate::testOutputReady, consoleTextEdit, &QTextEdit::append, Qt::QueuedConnection);
+	// display test output in the console window
+	connect(this, &MainWindowPrivate::testOutputReady, this, [this](QString text)
+	{
+		consoleTextEdit->append(text);
+		consoleTextEdit->ensureCursorVisible();
+	}, Qt::QueuedConnection);
 }
 
 //--------------------------------------------------------------------------------------------------

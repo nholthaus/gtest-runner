@@ -12,7 +12,7 @@ MainWindow::MainWindow() : QMainWindow(), d_ptr(new MainWindowPrivate(this))
 
 	this->setStatusBar(d->statusBar);
 
-	this->setCentralWidget(d->testCaseTreeView);
+	this->setCentralWidget(d->centralFrame);
 	this->setWindowIcon(QIcon(":images/logo"));
 
 	this->setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);

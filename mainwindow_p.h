@@ -62,6 +62,7 @@
 #include <QFrame>
 #include <QHash>
 #include <QLayout>
+#include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
 #include <QPersistentModelIndex>
@@ -102,12 +103,14 @@ public:
 	QHash<QString, Qt::CheckState>			executableCheckedStateHash;				///< Hash of the previous state of the checkboxes.
 	QStringList								executablePaths;						///< String list of all the paths, which can be used to re-constitute the filewatcher after an executable rebuild.
 
+	QFrame*									centralFrame;							///< Central widget frame.
+	QLineEdit*								testCaseFilterEdit;						///< Line edit for filtering test cases.
 	QTreeView*								testCaseTreeView;						///< Tree view where the test results are displayed.
 	QHash<QString, QDomDocument>			testResultsHash;						///< Hash table storing the xml test results for each test path.
 	QBottomUpSortFilterProxy*				testCaseProxyModel;						///< Sort/filter proxy for the test-case mode.
 
 	QDockWidget*							failureDock;							///< Dock widget for reporting failures.
-	QTreeView*								failureTreeView;							///< Tree view for failures.
+	QTreeView*								failureTreeView;						///< Tree view for failures.
 	QBottomUpSortFilterProxy*				failureProxyModel;						///< Proxy model for sorting failures.
 
 	QStatusBar*								statusBar;								///< status
