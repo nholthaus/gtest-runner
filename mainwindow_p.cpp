@@ -106,8 +106,11 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	// switch testCase models when new tests are clicked
 	connect(executableListView->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected)
 	{
-		auto index = selected.indexes().first();
-		selectTest(index.data(QExecutableModel::PathRole).toString());
+		if(!selected.isEmpty())
+		{
+			auto index = selected.indexes().first();
+			selectTest(index.data(QExecutableModel::PathRole).toString());
+		}
 	});
 
 	// run the test whenever the executable changes
@@ -455,5 +458,26 @@ void MainWindowPrivate::createExecutableContextMenu()
 	{
 		QString path = executableListView->currentIndex().data(QExecutableModel::PathRole).toString();
 		runTestInThread(path, false);
+	});
+
+	connect(removeTestAction, &QAction::triggered, [this]
+	{
+		// remove all data related to this test
+		QModelIndex index = executableListView->currentIndex();
+		QString path = index.data(QExecutableModel::PathRole).toString();
+
+		executablePaths.removeAll(path);
+		executableModelHash.remove(path);
+		testResultsHash.remove(path);
+		fileWatcher->removePath(path);
+		
+		QAbstractItemModel* oldFailureModel = failureProxyModel->sourceModel();
+		QAbstractItemModel* oldtestCaseModel = testCaseProxyModel->sourceModel();
+		failureProxyModel->setSourceModel(new GTestFailureModel(nullptr));
+		testCaseProxyModel->setSourceModel(new GTestModel(QDomDocument()));
+		delete oldFailureModel;
+		delete oldtestCaseModel;
+
+		executableModel->removeRow(index.row(), index.parent());
 	});
 }

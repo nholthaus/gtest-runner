@@ -5,14 +5,20 @@
 #include <QRegExp>
 
 GTestFailureModel::GTestFailureModel(DomItem* root, QObject *parent)
-	: QAbstractItemModel(parent), failIcon(":/images/fail")
+	: QAbstractItemModel(parent), failIcon(":/images/fail"), rootItem(nullptr)
 {
-	rootItem = new DomItem(root->node(), 0);
+	if(root)
+	{
+		rootItem = new DomItem(root->node(), 0);
+	}
 }
 
 GTestFailureModel::~GTestFailureModel()
 {
-	delete rootItem;
+	if(rootItem)
+	{
+		delete rootItem;
+	}
 }
 
 int GTestFailureModel::columnCount(const QModelIndex &/*parent*/) const
@@ -198,7 +204,7 @@ int GTestFailureModel::rowCount(const QModelIndex &parent) const
 	else
 		parentItem = static_cast<DomItem*>(parent.internalPointer());
 
-	if (parentItem == rootItem)
+	if (parentItem == rootItem && rootItem)
 	{
 		int count = 0;
 		QDomNodeList failures = parentItem->node().childNodes();
