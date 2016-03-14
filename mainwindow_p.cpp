@@ -28,7 +28,10 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	failureProxyModel(new QBottomUpSortFilterProxy(q)),
 	consoleDock(new QDockWidget(q)),
 	consoleTextEdit(new QTextEdit(q)),
-	consoleHighlighter(new QStdOutSyntaxHighlighter(consoleTextEdit))
+	consoleHighlighter(new QStdOutSyntaxHighlighter(consoleTextEdit)),
+	systemTrayIcon(new QSystemTrayIcon(QIcon(":/images/logo"), q)),
+	notificationsEnabled(true),
+	mostRecentFailurePath("")
 {
 	qRegisterMetaType<QVector<int>>("QVector<int>");
 
@@ -79,6 +82,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	consoleTextEdit->setStyleSheet("QTextEdit { background-color: black; color: white; }");
 	consoleTextEdit->setReadOnly(true);
 
+	systemTrayIcon->show();
+
 	connect(this, &MainWindowPrivate::setStatus, statusBar, &QStatusBar::setStatusTip, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, this, &MainWindowPrivate::loadTestResults, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, statusBar, &QStatusBar::clearMessage, Qt::QueuedConnection);
@@ -109,7 +114,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		if (executableModelHash[path].data(Qt::CheckStateRole) == Qt::Checked)
 		{
 			emit showMessage("Change detected: " + path + ". Re-running tests...");
-			runTestInThread(path);
+			runTestInThread(path, notificationsEnabled);
 		}
 	});
 
@@ -138,7 +143,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 			{
 				// out of date! re-run.
 				emit showMessage("Automatic testing enabled for: " + topLeft.data(Qt::DisplayRole).toString() + ". Re-running tests...");
-				runTestInThread(topLeft.data(QExecutableModel::PathRole).toString());
+				runTestInThread(topLeft.data(QExecutableModel::PathRole).toString(), notificationsEnabled);
 			}			
 		}
 
@@ -179,9 +184,25 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	// display test output in the console window
 	connect(this, &MainWindowPrivate::testOutputReady, this, [this](QString text)
 	{
+		// add the new test output
 		consoleTextEdit->append(text);
+
+		// scroll to the bottom
+		QTextCursor cursor = consoleTextEdit->textCursor();
+		cursor.atEnd();
+		consoleTextEdit->setTextCursor(cursor);
 		consoleTextEdit->ensureCursorVisible();
+
 	}, Qt::QueuedConnection);
+
+	// open the GUI when a tray message is clicked
+	connect(systemTrayIcon, &QSystemTrayIcon::messageClicked, [this]
+	{		
+		q_ptr->setWindowState(Qt::WindowActive);
+		q_ptr->raise();
+		if (!mostRecentFailurePath.isEmpty())
+			selectTest(mostRecentFailurePath);
+	});
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -222,7 +243,7 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	fileWatcher->addPath(path);
 	executablePaths << path;
 
-	bool previousResults = loadTestResults(path);
+	bool previousResults = loadTestResults(path, false);
 	bool runAutomatically = (item->data(Qt::CheckStateRole) == Qt::Checked);
 	bool outOfDate = previousResults && (xmlResults.lastModified() < lastModified);
 
@@ -231,16 +252,16 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	// if there are no previous results but the test is being watched, run the test
 	if ((!previousResults || outOfDate) && runAutomatically)
 	{
-		this->runTestInThread(path);
+		this->runTestInThread(path, false);
 	}
 }
 
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: runTestInThread
 //--------------------------------------------------------------------------------------------------
-void MainWindowPrivate::runTestInThread(const QString& pathToTest)
+void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 {
-	std::thread t([this, pathToTest]
+	std::thread t([this, pathToTest, notify]
 	{
 		QFileInfo info(pathToTest);
 		executableModel->setData(executableModelHash[pathToTest], QExecutableModel::RUNNING, QExecutableModel::StateRole);
@@ -256,7 +277,7 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest)
 		testProcess.closeReadChannel(QProcess::StandardOutput);
 		qApp->processEvents();
 
-		emit testResultsReady(pathToTest);
+		emit testResultsReady(pathToTest, notify);
 
 		if (!output.isEmpty())
 		{
@@ -272,7 +293,7 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest)
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: loadTestResults
 //--------------------------------------------------------------------------------------------------
-bool MainWindowPrivate::loadTestResults(const QString& testPath)
+bool MainWindowPrivate::loadTestResults(const QString& testPath, bool notify)
 {
 	QFileInfo xmlInfo(xmlPath(testPath));
 
@@ -304,9 +325,17 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath)
 	}
 
 	// set executable icon
-	if (doc.elementsByTagName("testsuites").item(0).attributes().namedItem("failures").nodeValue().toInt())
+	int numErrors = doc.elementsByTagName("testsuites").item(0).attributes().namedItem("failures").nodeValue().toInt();
+	if (numErrors)
 	{
 		executableModel->setData(executableModelHash[testPath], QExecutableModel::FAILED, QExecutableModel::StateRole);
+		mostRecentFailurePath = testPath;
+		// only show notifications AFTER the initial startup, otherwise the user
+		// could get a ton of messages every time they open the program. The messages
+		if (notify)
+		{
+			systemTrayIcon->showMessage("Test Failure", QFileInfo(testPath).baseName() + " failed with " + QString::number(numErrors) + " errors.");
+		}
 	}
 	else
 	{
@@ -328,6 +357,14 @@ void MainWindowPrivate::selectTest(const QString& testPath)
 	failureProxyModel->clear();
 	testCaseTreeView->setSortingEnabled(true);
 	testCaseTreeView->expandAll();
+	
+	// make sure the right entry is selected
+	QModelIndexList indices = executableModel->match(executableModel->index(0,0), QExecutableModel::PathRole, testPath);
+	if (indices.size())
+	{
+		executableListView->setCurrentIndex(indices.first());
+	}
+	
 	for (size_t i = 0; i < testCaseTreeView->model()->columnCount(); i++)
 	{
 		testCaseTreeView->resizeColumnToContents(i);

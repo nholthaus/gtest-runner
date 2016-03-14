@@ -73,6 +73,7 @@
 #include <QStandardItemModel>
 #include <QStandardPaths>
 #include <QStatusBar>
+#include <QSystemTrayIcon>
 #include <QTextEdit>
 #include <QTreeView>
 
@@ -119,9 +120,15 @@ public:
 	QTextEdit*								consoleTextEdit;						///< Console emulator text edit
 	QStdOutSyntaxHighlighter*				consoleHighlighter;						///< Console syntax highlighter.
 
+	QSystemTrayIcon*						systemTrayIcon;							///< System Tray Icon.
+
+	// state variables
+	bool									notificationsEnabled;					///< True if system tray notifications should be generated on test failure.
+	QString									mostRecentFailurePath;					///< Stores the path [key] of the most recently failed test.
+
 signals:
 
-	void testResultsReady(QString);													///< Signal emitted when new test results are ready
+	void testResultsReady(QString path, bool notify);								///< Signal emitted when new test results are ready
 	void setStatus(QString);
 	void showMessage(QString msg, int timeout = 0);
 	void testOutputReady(QString);
@@ -134,9 +141,9 @@ public:
 
 	void addTestExecutable(const QString& path, Qt::CheckState checked, QDateTime lastModified);
 
-	void runTestInThread(const QString& pathToTest);
+	void runTestInThread(const QString& pathToTest, bool notify);
 
-	bool loadTestResults(const QString& testPath);
+	bool loadTestResults(const QString& testPath, bool notify);
 
 	void selectTest(const QString& testPath);
 
