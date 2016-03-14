@@ -1,13 +1,14 @@
-#include "mainwindow_p.h"
-#include "QStdOutSyntaxHighlighter.h"
-
 #include "GTestFailureModel.h"
+#include "QStdOutSyntaxHighlighter.h"
+#include "mainwindow_p.h"
+
 #include <QCryptographicHash>
 #include <QDesktopServices>
 #include <QFontDatabase>
 #include <QHeaderView>
-#include <QStyle>
+#include <QInputDialog>
 #include <QMenuBar>
+#include <QStyle>
 
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: MainWindowPrivate
@@ -434,6 +435,33 @@ void MainWindowPrivate::loadSettings()
 }
 
 //--------------------------------------------------------------------------------------------------
+//	FUNCTION: removeTest
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::removeTest(QModelIndex &index)
+{
+	QString path = index.data(QExecutableModel::PathRole).toString();
+
+	if (QMessageBox::question(this->q_ptr, QString("Remove Test?"), "Do you want to remove test " + QFileInfo(path).baseName() + "?",
+		QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+	{
+		// remove all data related to this test
+		executablePaths.removeAll(path);
+		executableModelHash.remove(path);
+		testResultsHash.remove(path);
+		fileWatcher->removePath(path);
+
+		QAbstractItemModel* oldFailureModel = failureProxyModel->sourceModel();
+		QAbstractItemModel* oldtestCaseModel = testCaseProxyModel->sourceModel();
+		failureProxyModel->setSourceModel(new GTestFailureModel(nullptr));
+		testCaseProxyModel->setSourceModel(new GTestModel(QDomDocument()));
+		delete oldFailureModel;
+		delete oldtestCaseModel;
+
+		executableModel->removeRow(index.row(), index.parent());
+	}
+}
+
+//--------------------------------------------------------------------------------------------------
 //	FUNCTION: createExecutableContextMenu
 //--------------------------------------------------------------------------------------------------
 void MainWindowPrivate::createExecutableContextMenu()
@@ -467,27 +495,7 @@ void MainWindowPrivate::createExecutableContextMenu()
 
 	connect(removeTestAction, &QAction::triggered, [this]
 	{
-		QModelIndex index = executableListView->currentIndex();
-		QString path = index.data(QExecutableModel::PathRole).toString();
-
-		if(QMessageBox::question(this->q_ptr, QString("Remove Test?"), "Do you want to remove test " + QFileInfo(path).baseName() + "?", 
-			QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
-		{
-			// remove all data related to this test
-			executablePaths.removeAll(path);
-			executableModelHash.remove(path);
-			testResultsHash.remove(path);
-			fileWatcher->removePath(path);
-
-			QAbstractItemModel* oldFailureModel = failureProxyModel->sourceModel();
-			QAbstractItemModel* oldtestCaseModel = testCaseProxyModel->sourceModel();
-			failureProxyModel->setSourceModel(new GTestFailureModel(nullptr));
-			testCaseProxyModel->setSourceModel(new GTestModel(QDomDocument()));
-			delete oldFailureModel;
-			delete oldtestCaseModel;
-
-			executableModel->removeRow(index.row(), index.parent());
-		}
+		removeTest(executableListView->currentIndex());
 	});
 }
 
@@ -501,12 +509,15 @@ void MainWindowPrivate::createTestMenu()
 	testMenu = new QMenu("Test", q);
 
 	addTestAction = new QAction("Add Test...", testMenu);
-
+	selectAndRemoveTestAction = new QAction("Remove Test...", testMenu);
+	
 	testMenu->addAction(addTestAction);
+	testMenu->addSeparator();
+	testMenu->addAction(selectAndRemoveTestAction);
 
 	q->menuBar()->addMenu(testMenu);
 
-	connect(addTestAction, &QAction::triggered,	[&]()
+	connect(addTestAction, &QAction::triggered,	[this]()
 	{
 		QString filename = QFileDialog::getOpenFileName(q_ptr, "Select Test Executable", QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first(), "Text Executables (*.exe)");
 
@@ -514,6 +525,22 @@ void MainWindowPrivate::createTestMenu()
 			return;
 
 		addTestExecutable(filename, Qt::Checked, QFileInfo(filename).lastModified());
+	});
+
+	connect(selectAndRemoveTestAction, &QAction::triggered, [this]
+	{
+		QStringList tests;
+		for (int i = 0; i < executableModel->rowCount(); ++i)
+		{
+			tests << executableModel->index(i, 0).data().toString();
+		}
+		QString selected = QInputDialog::getItem(this->q_ptr, "Select Test", "Select test to remove:", tests, 0, false);
+
+		QModelIndexList matches = executableModel->match(executableModel->index(0,0), Qt::DisplayRole, selected);
+		if (matches.size())
+		{
+			removeTest(matches.first());
+		}
 	});
 }
 

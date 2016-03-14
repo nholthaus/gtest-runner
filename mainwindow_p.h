@@ -135,6 +135,7 @@ public:
 
 	QMenu*									testMenu;								///< Menu for test-related actions
 	QAction*								addTestAction;							///< Opens a dialog to add a test executable.
+	QAction*								selectAndRemoveTestAction;				///< Remove a test after choosing it from a list.
 
 	// state variables
 	bool									notificationsEnabled;					///< True if system tray notifications should be generated on test failure.
@@ -164,6 +165,8 @@ public:
 	void saveSettings() const;
 
 	void loadSettings();
+
+	void removeTest(QModelIndex &index);
 
 protected:
 
