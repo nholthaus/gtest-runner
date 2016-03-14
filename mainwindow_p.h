@@ -129,7 +129,7 @@ public:
 
 	QString xmlPath(const QString& testPath) const;
 
-	void addTestExecutable(const QString& path, Qt::CheckState checked = Qt::Checked, QDateTime lastModified = QDateTime::currentDateTime());
+	void addTestExecutable(const QString& path, Qt::CheckState checked, QDateTime lastModified);
 
 	void runTestInThread(const QString& pathToTest);
 

@@ -77,11 +77,11 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	connect(addTestButton, &QPushButton::clicked, [&]()
 	{
 		QString filename = QFileDialog::getOpenFileName(q_ptr, "Select Test Executable", QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first(), "Text Executables (*.exe)");
-
+		
 		if (filename.isEmpty())
 			return;
-
-		addTestExecutable(filename);
+	
+		addTestExecutable(filename, Qt::Checked, QFileInfo(filename).lastModified());
 	});
 
 	// switch testCase models when new tests are clicked
@@ -181,15 +181,16 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	if (!fileinfo.exists())
 		return;
 
+	executableCheckedStateHash[path] = checked;
+
 	QFileInfo xmlResults(xmlPath(path));
 	QStandardItem* item = new QStandardItem(fileinfo.baseName());
+
+	item->setData(path, QExecutableModel::PathRole);
+	item->setData(lastModified, QExecutableModel::LastModifiedRole);
+	item->setData(QExecutableModel::NOT_RUNNING);	
 	item->setCheckable(true);
 	item->setCheckState(checked);
-	item->setData(path, QExecutableModel::PathRole);
-	item->setData(fileinfo.lastModified(), QExecutableModel::LastModifiedRole);
-
-	// determine state
-	item->setData(QExecutableModel::NOT_RUNNING);
 
 	executableModel->appendRow(item);
 	executableModelHash.insert(path, QPersistentModelIndex(executableModel->index(executableModel->rowCount() - 1, 0)));
@@ -200,15 +201,15 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 
 	bool previousResults = loadTestResults(path);
 	bool runAutomatically = (item->data(Qt::CheckStateRole) == Qt::Checked);
-	bool outOfDate = previousResults && (xmlResults.lastModified() < fileinfo.lastModified());
+	bool outOfDate = previousResults && (xmlResults.lastModified() < lastModified);
+
+	executableListView->setCurrentIndex(executableModel->indexFromItem(item));
 
 	// if there are no previous results but the test is being watched, run the test
 	if ((!previousResults || outOfDate) && runAutomatically)
 	{
 		this->runTestInThread(path);
 	}
-
-	executableListView->setCurrentIndex(executableModel->indexFromItem(item));
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -236,7 +237,7 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest)
 
 		if (!output.isEmpty())
 		{
-			output.prepend(QDateTime::currentDateTime().toString() + "\n");
+			output.append("\nTEST RUN COMPLETED: " + QDateTime::currentDateTime().toString() + "\n");
 			emit testOutputReady(output);
 		}
 
@@ -350,7 +351,6 @@ void MainWindowPrivate::loadSettings()
 		Qt::CheckState checked = static_cast<Qt::CheckState>(settings.value("checked").toInt());
 		QDateTime lastModified = settings.value("lastModified").toDateTime();
 		addTestExecutable(path, checked, lastModified);
-		executableCheckedStateHash[path] = checked;
 	}
 	settings.endArray();
 }
