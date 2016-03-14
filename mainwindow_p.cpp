@@ -7,6 +7,7 @@
 #include <QFontDatabase>
 #include <QHeaderView>
 #include <QStyle>
+#include <QMenuBar>
 
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: MainWindowPrivate
@@ -86,6 +87,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	systemTrayIcon->show();
 
 	createExecutableContextMenu();
+	createViewMenu();
 
 	connect(this, &MainWindowPrivate::setStatus, statusBar, &QStatusBar::setStatusTip, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, this, &MainWindowPrivate::loadTestResults, Qt::QueuedConnection);
@@ -484,4 +486,19 @@ void MainWindowPrivate::createExecutableContextMenu()
 			executableModel->removeRow(index.row(), index.parent());
 		}
 	});
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: createViewMenu
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::createViewMenu()
+{
+	Q_Q(MainWindow);
+
+	windowMenu = new QMenu("Window", q);
+	windowMenu->addAction(executableDock->toggleViewAction());
+	windowMenu->addAction(failureDock->toggleViewAction());
+	windowMenu->addAction(consoleDock->toggleViewAction());
+	
+	q->menuBar()->addMenu(windowMenu);
 }

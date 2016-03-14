@@ -131,6 +131,8 @@ public:
 	QAction*								runTestAction;							///< Manually forces a test-run.
 	QAction*								removeTestAction;						///< Removes a test from being watched.
 
+	QMenu*									windowMenu;								///< Menu to display/change dock visibility.
+
 	// state variables
 	bool									notificationsEnabled;					///< True if system tray notifications should be generated on test failure.
 	QString									mostRecentFailurePath;					///< Stores the path [key] of the most recently failed test.
@@ -163,6 +165,8 @@ public:
 protected:
 
 	void createExecutableContextMenu();
+
+	void createViewMenu();
 
 };	// CLASS: MainWindowPrivate
 
