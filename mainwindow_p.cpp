@@ -378,7 +378,7 @@ void MainWindowPrivate::selectTest(const QString& testPath)
 		executableListView->setCurrentIndex(indices.first());
 	}
 	
-	for (size_t i = 0; i < testCaseTreeView->model()->columnCount(); i++)
+	for (int i = 0; i < testCaseTreeView->model()->columnCount(); i++)
 	{
 		testCaseTreeView->resizeColumnToContents(i);
 	}
@@ -462,22 +462,26 @@ void MainWindowPrivate::createExecutableContextMenu()
 
 	connect(removeTestAction, &QAction::triggered, [this]
 	{
-		// remove all data related to this test
 		QModelIndex index = executableListView->currentIndex();
 		QString path = index.data(QExecutableModel::PathRole).toString();
 
-		executablePaths.removeAll(path);
-		executableModelHash.remove(path);
-		testResultsHash.remove(path);
-		fileWatcher->removePath(path);
-		
-		QAbstractItemModel* oldFailureModel = failureProxyModel->sourceModel();
-		QAbstractItemModel* oldtestCaseModel = testCaseProxyModel->sourceModel();
-		failureProxyModel->setSourceModel(new GTestFailureModel(nullptr));
-		testCaseProxyModel->setSourceModel(new GTestModel(QDomDocument()));
-		delete oldFailureModel;
-		delete oldtestCaseModel;
+		if(QMessageBox::question(this->q_ptr, QString("Remove Test?"), "Do you want to remove test " + QFileInfo(path).baseName() + "?", 
+			QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+		{
+			// remove all data related to this test
+			executablePaths.removeAll(path);
+			executableModelHash.remove(path);
+			testResultsHash.remove(path);
+			fileWatcher->removePath(path);
 
-		executableModel->removeRow(index.row(), index.parent());
+			QAbstractItemModel* oldFailureModel = failureProxyModel->sourceModel();
+			QAbstractItemModel* oldtestCaseModel = testCaseProxyModel->sourceModel();
+			failureProxyModel->setSourceModel(new GTestFailureModel(nullptr));
+			testCaseProxyModel->setSourceModel(new GTestModel(QDomDocument()));
+			delete oldFailureModel;
+			delete oldtestCaseModel;
+
+			executableModel->removeRow(index.row(), index.parent());
+		}
 	});
 }
