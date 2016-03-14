@@ -133,6 +133,9 @@ public:
 
 	QMenu*									windowMenu;								///< Menu to display/change dock visibility.
 
+	QMenu*									testMenu;								///< Menu for test-related actions
+	QAction*								addTestAction;							///< Opens a dialog to add a test executable.
+
 	// state variables
 	bool									notificationsEnabled;					///< True if system tray notifications should be generated on test failure.
 	QString									mostRecentFailurePath;					///< Stores the path [key] of the most recently failed test.
@@ -166,7 +169,9 @@ protected:
 
 	void createExecutableContextMenu();
 
-	void createViewMenu();
+	void createTestMenu();
+
+	void createWindowMenu();
 
 };	// CLASS: MainWindowPrivate
 

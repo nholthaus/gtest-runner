@@ -118,7 +118,11 @@ Qt::ItemFlags GTestModel::flags(const QModelIndex &index) const
 	if (!index.isValid())
 		return 0;
 
-	return QAbstractItemModel::flags(index);
+	switch (index.column())
+	{
+	default:
+		return QAbstractItemModel::flags(index);;
+	}
 }
 
 QVariant GTestModel::headerData(int section, Qt::Orientation orientation,

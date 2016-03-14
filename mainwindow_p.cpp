@@ -51,6 +51,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	executableDock->setWidget(executableDockFrame);
 
 	executableListView->setModel(executableModel);
+	executableListView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
 	executableDockFrame->setLayout(new QVBoxLayout);
 	executableDockFrame->layout()->addWidget(executableListView);
@@ -88,7 +89,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	systemTrayIcon->show();
 
 	createExecutableContextMenu();
-	createViewMenu();
+	createTestMenu();
+	createWindowMenu();
 
 	connect(this, &MainWindowPrivate::setStatus, statusBar, &QStatusBar::setStatusTip, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, this, &MainWindowPrivate::loadTestResults, Qt::QueuedConnection);
@@ -96,15 +98,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	connect(this, &MainWindowPrivate::showMessage, statusBar, &QStatusBar::showMessage, Qt::QueuedConnection);
 
 	// Open dialog when 'add test' is clicked
-	connect(addTestButton, &QPushButton::clicked, [&]()
-	{
-		QString filename = QFileDialog::getOpenFileName(q_ptr, "Select Test Executable", QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first(), "Text Executables (*.exe)");
-		
-		if (filename.isEmpty())
-			return;
-	
-		addTestExecutable(filename, Qt::Checked, QFileInfo(filename).lastModified());
-	});
+	connect(addTestButton, &QPushButton::clicked, addTestAction, &QAction::trigger);
 
 	// switch testCase models when new tests are clicked
 	connect(executableListView->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected)
@@ -498,9 +492,35 @@ void MainWindowPrivate::createExecutableContextMenu()
 }
 
 //--------------------------------------------------------------------------------------------------
+//	FUNCTION: createTestMenu
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::createTestMenu()
+{
+	Q_Q(MainWindow);
+
+	testMenu = new QMenu("Test", q);
+
+	addTestAction = new QAction("Add Test...", testMenu);
+
+	testMenu->addAction(addTestAction);
+
+	q->menuBar()->addMenu(testMenu);
+
+	connect(addTestAction, &QAction::triggered,	[&]()
+	{
+		QString filename = QFileDialog::getOpenFileName(q_ptr, "Select Test Executable", QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first(), "Text Executables (*.exe)");
+
+		if (filename.isEmpty())
+			return;
+
+		addTestExecutable(filename, Qt::Checked, QFileInfo(filename).lastModified());
+	});
+}
+
+//--------------------------------------------------------------------------------------------------
 //	FUNCTION: createViewMenu
 //--------------------------------------------------------------------------------------------------
-void MainWindowPrivate::createViewMenu()
+void MainWindowPrivate::createWindowMenu()
 {
 	Q_Q(MainWindow);
 
