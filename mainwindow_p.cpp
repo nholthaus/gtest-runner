@@ -439,11 +439,16 @@ void MainWindowPrivate::loadSettings()
 //--------------------------------------------------------------------------------------------------
 void MainWindowPrivate::removeTest(QModelIndex &index)
 {
+	if (!index.isValid())
+		return;
+
 	QString path = index.data(QExecutableModel::PathRole).toString();
 
 	if (QMessageBox::question(this->q_ptr, QString("Remove Test?"), "Do you want to remove test " + QFileInfo(path).baseName() + "?",
 		QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
+		executableListView->setCurrentIndex(index);
+
 		// remove all data related to this test
 		executablePaths.removeAll(path);
 		executableModelHash.remove(path);
@@ -459,6 +464,27 @@ void MainWindowPrivate::removeTest(QModelIndex &index)
 
 		executableModel->removeRow(index.row(), index.parent());
 	}
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: getTestDialog
+//--------------------------------------------------------------------------------------------------
+QModelIndex MainWindowPrivate::getTestIndexDialog(const QString& label)
+{
+	bool ok;
+	QStringList tests;
+
+	for (int i = 0; i < executableModel->rowCount(); ++i)
+	{
+		tests << executableModel->index(i, 0).data().toString();
+	}
+	QString selected = QInputDialog::getItem(this->q_ptr, "Select Test", label, tests, 0, false, &ok);
+
+	QModelIndexList matches = executableModel->match(executableModel->index(0, 0), Qt::DisplayRole, selected);
+	if (ok && matches.size())
+		return matches.first();
+	else
+		return QModelIndex();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -508,12 +534,15 @@ void MainWindowPrivate::createTestMenu()
 
 	testMenu = new QMenu("Test", q);
 
-	addTestAction = new QAction("Add Test...", testMenu);
-	selectAndRemoveTestAction = new QAction("Remove Test...", testMenu);
-	
+	addTestAction = new QAction(q->style()->standardIcon(QStyle::SP_FileIcon), "Add Test...", testMenu);
+	selectAndRemoveTestAction = new QAction(q->style()->standardIcon(QStyle::SP_DialogCloseButton), "Remove Test...", testMenu);
+	selectAndRunTest = new QAction(q->style()->standardIcon(QStyle::SP_BrowserReload), "Run Test...", testMenu);
+	selectAndRunTest->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_F5));
+
 	testMenu->addAction(addTestAction);
-	testMenu->addSeparator();
 	testMenu->addAction(selectAndRemoveTestAction);
+	testMenu->addSeparator();
+	testMenu->addAction(selectAndRunTest);
 
 	q->menuBar()->addMenu(testMenu);
 
@@ -529,18 +558,14 @@ void MainWindowPrivate::createTestMenu()
 
 	connect(selectAndRemoveTestAction, &QAction::triggered, [this]
 	{
-		QStringList tests;
-		for (int i = 0; i < executableModel->rowCount(); ++i)
-		{
-			tests << executableModel->index(i, 0).data().toString();
-		}
-		QString selected = QInputDialog::getItem(this->q_ptr, "Select Test", "Select test to remove:", tests, 0, false);
+		removeTest(getTestIndexDialog("Select test to remove:"));
+	});
 
-		QModelIndexList matches = executableModel->match(executableModel->index(0,0), Qt::DisplayRole, selected);
-		if (matches.size())
-		{
-			removeTest(matches.first());
-		}
+	connect(selectAndRunTest, &QAction::triggered, [this]
+	{
+		QModelIndex index = getTestIndexDialog("Select Test to run:");
+		if(index.isValid())
+			runTestInThread(index.data(QExecutableModel::PathRole).toString(), false);
 	});
 }
 
