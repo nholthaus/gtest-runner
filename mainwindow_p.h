@@ -49,6 +49,7 @@
 
 #include <thread>
 
+#include <QAction>
 #include <QApplication>
 #include <QDateTime>
 #include <QDebug>
@@ -64,6 +65,7 @@
 #include <QLayout>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QMenu>
 #include <QMessageBox>
 #include <QPersistentModelIndex>
 #include <QProcess>
@@ -92,6 +94,8 @@ class MainWindowPrivate : public QObject
 public:
 
 	Q_DECLARE_PUBLIC(MainWindow);
+
+	// GUI components
 
 	MainWindow*								q_ptr;
 	QDockWidget*							executableDock;							///< Dock Widget for the gtest executable selector.
@@ -122,6 +126,11 @@ public:
 
 	QSystemTrayIcon*						systemTrayIcon;							///< System Tray Icon.
 
+	// Menus
+	QMenu*									executableContextMenu;					///< context menu for the executable list view.
+	QAction*								runTestAction;							///< Manually forces a test-run.
+	QAction*								removeTestAction;						///< Removes a test from being watched.
+
 	// state variables
 	bool									notificationsEnabled;					///< True if system tray notifications should be generated on test failure.
 	QString									mostRecentFailurePath;					///< Stores the path [key] of the most recently failed test.
@@ -150,6 +159,10 @@ public:
 	void saveSettings() const;
 
 	void loadSettings();
+
+protected:
+
+	void createExecutableContextMenu();
 
 };	// CLASS: MainWindowPrivate
 

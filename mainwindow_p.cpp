@@ -6,6 +6,7 @@
 #include <QDesktopServices>
 #include <QFontDatabase>
 #include <QHeaderView>
+#include <QStyle>
 
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: MainWindowPrivate
@@ -83,6 +84,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	consoleTextEdit->setReadOnly(true);
 
 	systemTrayIcon->show();
+
+	createExecutableContextMenu();
 
 	connect(this, &MainWindowPrivate::setStatus, statusBar, &QStatusBar::setStatusTip, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, this, &MainWindowPrivate::loadTestResults, Qt::QueuedConnection);
@@ -280,8 +283,8 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 		emit testResultsReady(pathToTest, notify);
 
 		if (!output.isEmpty())
-		{
-			output.append("\nTEST RUN COMPLETED: " + QDateTime::currentDateTime().toString() + "\n");
+		{//Mon Mar 14 09:38:12 2016
+			output.append("\nTEST RUN COMPLETED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n");
 			emit testOutputReady(output);
 		}
 
@@ -413,4 +416,26 @@ void MainWindowPrivate::loadSettings()
 		addTestExecutable(path, checked, lastModified);
 	}
 	settings.endArray();
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: createExecutableContextMenu
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::createExecutableContextMenu()
+{
+	Q_Q(MainWindow);
+
+	executableContextMenu = new QMenu(executableListView);
+
+	runTestAction = new QAction(q->style()->standardIcon(QStyle::SP_BrowserReload), "Run Test...", executableContextMenu);
+	removeTestAction = new QAction(q->style()->standardIcon(QStyle::SP_DialogCloseButton), "Remove Test", executableContextMenu);
+
+	executableContextMenu->addAction(runTestAction);
+	executableContextMenu->addAction(removeTestAction);
+
+	executableListView->setContextMenuPolicy(Qt::CustomContextMenu);
+	connect(executableListView, &QListView::customContextMenuRequested, [this, q](const QPoint& pos)
+	{
+		executableContextMenu->exec(executableListView->mapToGlobal(pos));
+	});
 }
