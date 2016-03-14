@@ -54,6 +54,24 @@ class GTestModel : public QAbstractItemModel
 
 public:
 
+	enum Roles
+	{
+		FailureRole = Qt::UserRole,
+	};
+
+	enum Sections
+	{
+		Name = 0,
+		Failures,
+		Time,
+		Tests,
+		Errors,
+		Disabled,
+		Timestamp,
+	};
+
+public:
+
 	explicit GTestModel(QDomDocument document, QObject *parent = 0);
 	~GTestModel();
 

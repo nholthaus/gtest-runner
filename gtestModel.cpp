@@ -86,23 +86,25 @@ QVariant GTestModel::data(const QModelIndex &index, int role) const
 	case Qt::TextAlignmentRole:
 		switch (index.column())
 		{
-		case 0:
+		case Name:
 			return Qt::AlignLeft;
-		case 1:
+		case Failures:
 			return Qt::AlignCenter;
-		case 2:
+		case Time:
 			return Qt::AlignCenter;
-		case  3:
+		case Tests:
 			return Qt::AlignCenter;
-		case 4:
+		case Errors:
 			return Qt::AlignCenter;
-		case 5:
+		case Disabled:
 			return Qt::AlignCenter;
-		case 6:
+		case Timestamp:
 			return Qt::AlignLeft;
 		default:
 			return Qt::AlignLeft;
 		}
+	case FailureRole:
+		return data(this->index(index.row(), Failures, index.parent()), Qt::DisplayRole);
 	default:
 		return QVariant();
 	}
@@ -123,19 +125,19 @@ QVariant GTestModel::headerData(int section, Qt::Orientation orientation,
 {
 	if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
 		switch (section) {
-		case 0:
+		case Name:
 			return tr("Name");
-		case 1:
+		case Failures:
 			return tr("Failures");
-		case 2:
+		case Time:
 			return tr("Time (ms)");
-		case 3:
+		case Tests:
 			return tr("Tests");
-		case 4:
+		case Errors:
 			return tr("Errors");
-		case 5:
+		case Disabled:
 			return tr("Disabled");
-		case 6:
+		case Timestamp:
 			return tr("Timestamp");
 		default:
 			return QVariant();

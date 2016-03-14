@@ -62,6 +62,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 
 	addTestButton->setText("Add Test Executable...");
 
+	testCaseFilterEdit->setClearButtonEnabled(true);
 	testCaseTreeView->setModel(testCaseProxyModel);
 
 	testCaseProxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
@@ -171,6 +172,14 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	{
 		auto index = testCaseProxyModel->mapToSource(selected.indexes().first());
 		DomItem* item = static_cast<DomItem*>(index.internalPointer());
+
+		if (index.isValid())
+		{
+			if (index.data(GTestModel::FailureRole).toInt() > 0)
+				failureTreeView->header()->show();
+			else
+				failureTreeView->header()->hide();
+		}
 
 		failureTreeView->setSortingEnabled(false);
 		delete failureProxyModel->sourceModel();
