@@ -73,7 +73,7 @@ set(APPLICATION_VERSION ${BRANCH})
 set(APPLICATION_ORGANIZATION "Menari Softworks")
 set(APPLICATION_ORGANIZATION_DOMAIN "https://github.com/nholthaus/gtest-gui")
 
-configure_file(appinfo.h.in appinfo.h @ONLY NEWLINE_STYLE UNIX)
+configure_file(src/appinfo.h.in appinfo.h @ONLY NEWLINE_STYLE UNIX)
 
 #-------------------------------------------------------------------------------
 #	SOURCE CODE
@@ -81,28 +81,28 @@ configure_file(appinfo.h.in appinfo.h @ONLY NEWLINE_STYLE UNIX)
 
 # .cpp files
 list(APPEND SOURCE_FILES
-main.cpp
-mainwindow.cpp
-mainwindow_p.cpp
-executableModelDelegate.cpp
-domitem.cpp
-GTestFailureModel.cpp
-gtestmodel.cpp
-qexecutablemodel.cpp
-QBottomUpSortFilterProxy.cpp
+src/main.cpp
+src/mainwindow.cpp
+src/mainwindow_p.cpp
+src/executableModelDelegate.cpp
+src/domitem.cpp
+src/GTestFailureModel.cpp
+src/gtestmodel.cpp
+src/qexecutablemodel.cpp
+src/QBottomUpSortFilterProxy.cpp
 )
 
 # .h files
 list(APPEND HEADER_FILES
-mainwindow.h
-mainwindow_p.h
-executableModelDelegate.h
-domitem.h
-GTestFailureModel.h
-gtestmodel.h
-qexecutablemodel.h
-QBottomUpSortFilterProxy.h
-QStdOutSyntaxHighlighter.h
+src/mainwindow.h
+src/mainwindow_p.h
+src/executableModelDelegate.h
+src/domitem.h
+src/GTestFailureModel.h
+src/gtestmodel.h
+src/qexecutablemodel.h
+src/QBottomUpSortFilterProxy.h
+src/QStdOutSyntaxHighlighter.h
 )
 
 # on windows, append headers to source so they show up in visual studio
@@ -115,20 +115,22 @@ endif()
 #-------------------------------------------------------------------------------
 
 source_group(generated REGULAR_EXPRESSION ".*_automoc.cpp")
-source_group(resources REGULAR_EXPRESSION ".*[q]?rc")
+source_group(resources REGULAR_EXPRESSION ".*[.][q]?rc")
+source_group(source REGULAR_EXPRESSION ".*[.]cpp")
+source_group(headers REGULAR_EXPRESSION ".*[.]h")
 
 #-------------------------------------------------------------------------------
 #	RESOURCES
 #-------------------------------------------------------------------------------
 
 list(APPEND QT_RESOURCES
-	resources.qrc
+	resources/resources.qrc
 )
 
 qt5_add_resources(RESOURCES ${QT_RESOURCES})
 
 list(APPEND RESOURCES
-	resources.rc
+	resources/resources.rc
 )
 
 #-------------------------------------------------------------------------------
