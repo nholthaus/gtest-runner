@@ -151,6 +151,7 @@ signals:
 	void setStatus(QString);
 	void showMessage(QString msg, int timeout = 0);
 	void testOutputReady(QString);
+	void testProgress(QString path, int complete, int total);
 
 public:
 

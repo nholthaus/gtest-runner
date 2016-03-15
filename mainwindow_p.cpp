@@ -210,6 +210,12 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		consoleTextEdit->ensureCursorVisible();
 	}, Qt::QueuedConnection);
 
+	// update test progress
+	connect(this, &MainWindowPrivate::testProgress, this, [this](QString test, int complete, int total)
+	{
+		qDebug() << test << complete << total << ((double)complete / total) * 100;
+	});
+
 	// open the GUI when a tray message is clicked
 	connect(systemTrayIcon, &QSystemTrayIcon::messageClicked, [this]
 	{		
@@ -290,17 +296,33 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 		testProcess.start(pathToTest, arguments);
 
 		bool first = true;
+		int tests = 0;
+		int progress = 0;
 
 		// print test output as it becomes available
-		connect(&testProcess, &QProcess::readyReadStandardOutput, &loop, [&]
+		connect(&testProcess, &QProcess::readyReadStandardOutput, &loop, [&, pathToTest]
 		{
+			QString output = testProcess.readAllStandardOutput();
+			
+			// parse the first output line for the number of tests so we can
+			// keep track of progress
 			if (first)
 			{
 				// get the number of tests
+				static QRegExp rx("([0-9]+) tests");
+				rx.indexIn(output);
+				tests = rx.cap(1).toInt();			
 				first = false;
 			}
+			else
+			{
+				static QRegExp rx("(\\[.*OK.*\\]|\\[.*FAILED.*\\])");
+				if (rx.indexIn(output) != -1)
+					progress++;
+			}
 
-			emit testOutputReady(testProcess.readAllStandardOutput());
+			emit testProgress(pathToTest, progress, tests);
+			emit testOutputReady(output);
 		});
 
 		// when the process finished, read any remaining output then quit the loop
@@ -311,6 +333,7 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 			
 			emit testOutputReady(output);
 			emit testResultsReady(pathToTest, notify);
+			emit testProgress(pathToTest, 0, 0);
 			
 			loop.exit();
 		});
