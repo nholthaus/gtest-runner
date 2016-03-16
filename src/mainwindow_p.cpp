@@ -277,6 +277,8 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 
 	executableListView->setCurrentIndex(executableModel->indexFromItem(item));
 
+	testRunningHash[path] = false;
+
 	// if there are no previous results but the test is being watched, run the test
 	if ((!previousResults || outOfDate) && runAutomatically)
 	{
@@ -289,74 +291,81 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 //--------------------------------------------------------------------------------------------------
 void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 {
-	std::thread t([this, pathToTest, notify]
+	if (!testRunningHash[pathToTest])
 	{
-		QEventLoop loop;
+		testRunningHash[pathToTest] = true;
 
-		QFileInfo info(pathToTest);
-		executableModel->setData(executableModelHash[pathToTest], QExecutableModel::RUNNING, QExecutableModel::StateRole);
-		QProcess testProcess;
-		QStringList arguments;
-
-		bool first = true;
-		int tests = 0;
-		int progress = 0;
-
-		// when the process finished, read any remaining output then quit the loop
-		connect(&testProcess, static_cast<void (QProcess::*)(int)>(&QProcess::finished), &loop, [&]
+		std::thread t([this, pathToTest, notify]
 		{
-			QString output = testProcess.readAllStandardOutput();
-			output.append("\nTEST RUN COMPLETED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n\n");
+			QEventLoop loop;
 
-			emit testOutputReady(output);
-			emit testResultsReady(pathToTest, notify);
-			emit testProgress(pathToTest, 0, 0);
+			QFileInfo info(pathToTest);
+			executableModel->setData(executableModelHash[pathToTest], QExecutableModel::RUNNING, QExecutableModel::StateRole);
+			QProcess testProcess;
+			QStringList arguments;
 
-			loop.exit();
-		});
-		
-		// SET GTEST ARGS
-		arguments << "--gtest_output=xml:" + this->xmlPath(pathToTest);
+			bool first = true;
+			int tests = 0;
+			int progress = 0;
 
-		testProcess.start(pathToTest, arguments);
-
-		// get the first line of output. If we don't get it in a timely manner, the test is
-		// probably bugged out so kill it.
-		if (!testProcess.waitForReadyRead(500))
-		{
-			testProcess.kill();
-			return;
-		}
-
-		// print test output as it becomes available
-		connect(&testProcess, &QProcess::readyReadStandardOutput, &loop, [&, pathToTest]
-		{
-			QString output = testProcess.readAllStandardOutput();
-
-			// parse the first output line for the number of tests so we can
-			// keep track of progress
-			if (first)
+			// when the process finished, read any remaining output then quit the loop
+			connect(&testProcess, static_cast<void (QProcess::*)(int)>(&QProcess::finished), &loop, [&]
 			{
-				// get the number of tests
-				static QRegExp rx("([0-9]+) tests");
-				rx.indexIn(output);
-				tests = rx.cap(1).toInt();
-				first = false;
-			}
-			else
+				QString output = testProcess.readAllStandardOutput();
+				output.append("\nTEST RUN COMPLETED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n\n");
+
+				emit testOutputReady(output);
+				emit testResultsReady(pathToTest, notify);
+				emit testProgress(pathToTest, 0, 0);
+
+				loop.exit();
+			});
+
+			// SET GTEST ARGS
+			arguments << "--gtest_output=xml:" + this->xmlPath(pathToTest);
+
+			testProcess.start(pathToTest, arguments);
+
+			// get the first line of output. If we don't get it in a timely manner, the test is
+			// probably bugged out so kill it.
+			if (!testProcess.waitForReadyRead(500))
 			{
-				static QRegExp rx("(\\[.*OK.*\\]|\\[.*FAILED.*\\])");
-				if (rx.indexIn(output) != -1)
-					progress++;
+				testProcess.kill();
+				return;
 			}
 
-			emit testProgress(pathToTest, progress, tests);
-			emit testOutputReady(output);
-		});
+			// print test output as it becomes available
+			connect(&testProcess, &QProcess::readyReadStandardOutput, &loop, [&, pathToTest]
+			{
+				QString output = testProcess.readAllStandardOutput();
 
-		loop.exec();
-	});
-	t.detach();
+				// parse the first output line for the number of tests so we can
+				// keep track of progress
+				if (first)
+				{
+					// get the number of tests
+					static QRegExp rx("([0-9]+) tests");
+					rx.indexIn(output);
+					tests = rx.cap(1).toInt();
+					first = false;
+				}
+				else
+				{
+					static QRegExp rx("(\\[.*OK.*\\]|\\[.*FAILED.*\\])");
+					if (rx.indexIn(output) != -1)
+						progress++;
+				}
+
+				emit testProgress(pathToTest, progress, tests);
+				emit testOutputReady(output);
+			});
+
+			loop.exec();
+
+			testRunningHash[pathToTest] = false;
+		});
+		t.detach();
+	}
 }
 
 //--------------------------------------------------------------------------------------------------
