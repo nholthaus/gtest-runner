@@ -104,14 +104,11 @@ public:
 	QExecutableModel*						executableModel;						///< Item model for test executables.
 	QPushButton*							addTestButton;							///< Button which adds a test to the monitored tests.
 	QFileSystemWatcher*						fileWatcher;							///< Hash table to store the file system watchers.
-	QHash<QString, QPersistentModelIndex>	executableModelHash;					///< Hash for finding entries in the executable model.
-	QHash<QString, Qt::CheckState>			executableCheckedStateHash;				///< Hash of the previous state of the checkboxes.
 	QStringList								executablePaths;						///< String list of all the paths, which can be used to re-constitute the filewatcher after an executable rebuild.
 
 	QFrame*									centralFrame;							///< Central widget frame.
 	QLineEdit*								testCaseFilterEdit;						///< Line edit for filtering test cases.
 	QTreeView*								testCaseTreeView;						///< Tree view where the test results are displayed.
-	QHash<QString, QDomDocument>			testResultsHash;						///< Hash table storing the xml test results for each test path.
 	QBottomUpSortFilterProxy*				testCaseProxyModel;						///< Sort/filter proxy for the test-case mode.
 
 	QDockWidget*							failureDock;							///< Dock widget for reporting failures.
@@ -144,6 +141,10 @@ public:
 
 	// state variables
 	QString									mostRecentFailurePath;					///< Stores the path [key] of the most recently failed test.
+	QHash<QString, QPersistentModelIndex>	executableModelHash;					///< Hash for finding entries in the executable model.
+	QHash<QString, Qt::CheckState>			executableCheckedStateHash;				///< Hash of the previous state of the checkboxes.
+	QHash<QString, QDomDocument>			testResultsHash;						///< Hash table storing the xml test results for each test path.
+	QHash<QString, bool>					testRunningHash;						///< Stores whether the given test is actively running.
 
 signals:
 
