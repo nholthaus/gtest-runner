@@ -8,6 +8,7 @@
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QMenuBar>
+#include <QTimer>
 #include <QStyle>
 
 //--------------------------------------------------------------------------------------------------
@@ -118,9 +119,15 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		if (executableModelHash[path].data(Qt::CheckStateRole) == Qt::Checked)
 		{
 			emit showMessage("Change detected: " + path + ". Re-running tests...");
-			runTestInThread(path, true);
+			// add a little delay to avoid running multiple instances of the same test build,
+			// and to avoid running the file before visual studio is done writting it.
+			QTimer::singleShot(500, [this, path] {emit runTestInThread(path, true); });
 		}
 	});
+
+	// run test when signaled to. Queued connection so that multiple quick invocations will
+	// be collapsed together.
+	connect(this, &MainWindowPrivate::runTest, this, &MainWindowPrivate::runTestInThread, Qt::QueuedConnection);
 
 	// update filewatcher when directory changes
 	connect(fileWatcher, &QFileSystemWatcher::directoryChanged, [this](const QString& path)
@@ -291,19 +298,41 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 		QProcess testProcess;
 		QStringList arguments;
 
+		bool first = true;
+		int tests = 0;
+		int progress = 0;
+
+		// when the process finished, read any remaining output then quit the loop
+		connect(&testProcess, static_cast<void (QProcess::*)(int)>(&QProcess::finished), &loop, [&]
+		{
+			QString output = testProcess.readAllStandardOutput();
+			output.append("\nTEST RUN COMPLETED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n\n");
+
+			emit testOutputReady(output);
+			emit testResultsReady(pathToTest, notify);
+			emit testProgress(pathToTest, 0, 0);
+
+			loop.exit();
+		});
+		
+		// SET GTEST ARGS
 		arguments << "--gtest_output=xml:" + this->xmlPath(pathToTest);
 
 		testProcess.start(pathToTest, arguments);
 
-		bool first = true;
-		int tests = 0;
-		int progress = 0;
+		// get the first line of output. If we don't get it in a timely manner, the test is
+		// probably bugged out so kill it.
+		if (!testProcess.waitForReadyRead(500))
+		{
+			testProcess.kill();
+			return;
+		}
 
 		// print test output as it becomes available
 		connect(&testProcess, &QProcess::readyReadStandardOutput, &loop, [&, pathToTest]
 		{
 			QString output = testProcess.readAllStandardOutput();
-			
+
 			// parse the first output line for the number of tests so we can
 			// keep track of progress
 			if (first)
@@ -311,7 +340,7 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 				// get the number of tests
 				static QRegExp rx("([0-9]+) tests");
 				rx.indexIn(output);
-				tests = rx.cap(1).toInt();			
+				tests = rx.cap(1).toInt();
 				first = false;
 			}
 			else
@@ -323,19 +352,6 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 
 			emit testProgress(pathToTest, progress, tests);
 			emit testOutputReady(output);
-		});
-
-		// when the process finished, read any remaining output then quit the loop
-		connect(&testProcess, static_cast<void (QProcess::*)(int)>(&QProcess::finished), &loop, [&]
-		{
-			QString output = testProcess.readAllStandardOutput();
-			output.append("\nTEST RUN COMPLETED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n\n");
-			
-			emit testOutputReady(output);
-			emit testResultsReady(pathToTest, notify);
-			emit testProgress(pathToTest, 0, 0);
-			
-			loop.exit();
 		});
 
 		loop.exec();
@@ -395,7 +411,7 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath, bool notify)
 		executableModel->setData(executableModelHash[testPath], QExecutableModel::PASSED, QExecutableModel::StateRole);
 		if(notify && notifyOnSuccessAction->isChecked())
 		{
-			systemTrayIcon->showMessage("Test Succeeded", QFileInfo(testPath).baseName() + " ran with no errors.");
+			systemTrayIcon->showMessage("Test Successful", QFileInfo(testPath).baseName() + " ran with no errors.");
 		}
 	}
 
