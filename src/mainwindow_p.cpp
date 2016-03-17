@@ -115,14 +115,31 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	// run the test whenever the executable changes
 	connect(fileWatcher, &QFileSystemWatcher::fileChanged, [this](const QString& path)
 	{	
-		// only auto-run if the test is checked
-		if (executableModelHash[path].data(Qt::CheckStateRole) == Qt::Checked)
+		QModelIndex m = executableModelHash[path];
+		if (m.isValid())
 		{
-			emit showMessage("Change detected: " + path + ". Re-running tests...");
-			// add a little delay to avoid running multiple instances of the same test build,
-			// and to avoid running the file before visual studio is done writting it.
-			QTimer::singleShot(500, [this, path] {emit runTestInThread(path, true); });
+			QStandardItem* exeItem = executableModel->itemFromIndex(m);
+			exeItem->setData(QDateTime::currentDateTime(), QExecutableModel::LastModifiedRole);
+
+			// only auto-run if the test is checked
+			if (m.data(Qt::CheckStateRole) == Qt::Checked)
+			{
+				emit showMessage("Change detected: " + path + "...");
+				// add a little delay to avoid running multiple instances of the same test build,
+				// and to avoid running the file before visual studio is done writting it.
+				QTimer::singleShot(500, [this, path] {emit runTestInThread(path, true); });
+			}
+			else
+			{
+				QModelIndex m = executableModelHash[path];
+				if (m.isValid())
+				{
+					QStandardItem* exeItem = executableModel->itemFromIndex(m);
+					exeItem->setData(QExecutableModel::NOT_RUNNING, QExecutableModel::StateRole);
+				}
+			}
 		}
+		
 	});
 
 	// run test when signaled to. Queued connection so that multiple quick invocations will
@@ -280,9 +297,21 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	testRunningHash[path] = false;
 
 	// if there are no previous results but the test is being watched, run the test
+	qDebug() << "previous:" << previousResults;
+	qDebug() << "out of date:" << outOfDate;
+	qDebug() << "auto:" << runAutomatically;
 	if ((!previousResults || outOfDate) && runAutomatically)
 	{
 		this->runTestInThread(path, false);
+	}
+	else if (outOfDate && !runAutomatically)
+	{
+		QModelIndex m = executableModelHash[path];
+		if (m.isValid())
+		{
+			QStandardItem* exeItem = executableModel->itemFromIndex(m);
+			exeItem->setData(QExecutableModel::NOT_RUNNING, QExecutableModel::StateRole);
+		}
 	}
 }
 
