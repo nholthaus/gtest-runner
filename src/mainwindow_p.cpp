@@ -297,9 +297,6 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	testRunningHash[path] = false;
 
 	// if there are no previous results but the test is being watched, run the test
-	qDebug() << "previous:" << previousResults;
-	qDebug() << "out of date:" << outOfDate;
-	qDebug() << "auto:" << runAutomatically;
 	if ((!previousResults || outOfDate) && runAutomatically)
 	{
 		this->runTestInThread(path, false);
