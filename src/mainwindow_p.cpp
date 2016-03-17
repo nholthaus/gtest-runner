@@ -360,6 +360,11 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 			if (!testProcess.waitForReadyRead(500))
 			{
 				testProcess.kill();
+				testRunningHash[pathToTest] = false;
+				
+				emit testProgress(pathToTest, 0, 0);
+				emit testOutputReady("");
+				
 				return;
 			}
 
@@ -387,11 +392,12 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 
 				emit testProgress(pathToTest, progress, tests);
 				emit testOutputReady(output);
+				
+				testRunningHash[pathToTest] = false;
 			});
 
 			loop.exec();
 
-			testRunningHash[pathToTest] = false;
 		});
 		t.detach();
 	}
