@@ -611,7 +611,7 @@ void MainWindowPrivate::createTestMenu()
 
 	testMenu = new QMenu("Test", q);
 
-	addTestAction = new QAction(q->style()->standardIcon(QStyle::SP_FileIcon), "Add Test...", testMenu);
+	addTestAction = new QAction(QIcon(":/images/green"), "Add Test...", testMenu);
 	selectAndRemoveTestAction = new QAction(q->style()->standardIcon(QStyle::SP_DialogCloseButton), "Remove Test...", testMenu);
 	selectAndRunTest = new QAction(q->style()->standardIcon(QStyle::SP_BrowserReload), "Run Test...", testMenu);
 	selectAndRunTest->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_F5));
