@@ -62,6 +62,8 @@ set(CXX_STANDARD 11)
 
 if(WIN32)
 	set(GUI_TYPE WIN32)
+else(WIN32)
+	add_compile_options(--std=c++14)
 endif(WIN32)
 
 #-------------------------------------------------------------------------------
@@ -87,7 +89,7 @@ src/mainwindow_p.cpp
 src/executableModelDelegate.cpp
 src/domitem.cpp
 src/GTestFailureModel.cpp
-src/gtestmodel.cpp
+src/gtestModel.cpp
 src/qexecutablemodel.cpp
 src/QBottomUpSortFilterProxy.cpp
 )

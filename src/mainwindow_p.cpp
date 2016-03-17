@@ -514,7 +514,7 @@ void MainWindowPrivate::loadSettings()
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: removeTest
 //--------------------------------------------------------------------------------------------------
-void MainWindowPrivate::removeTest(QModelIndex &index)
+void MainWindowPrivate::removeTest(const QModelIndex &index)
 {
 	if (!index.isValid())
 		return;

@@ -173,7 +173,7 @@ public:
 
 	void loadSettings();
 
-	void removeTest(QModelIndex &index);
+	void removeTest(const QModelIndex &index);
 
 protected:
 
