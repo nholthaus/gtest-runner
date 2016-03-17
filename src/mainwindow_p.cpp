@@ -625,7 +625,13 @@ void MainWindowPrivate::createTestMenu()
 
 	connect(addTestAction, &QAction::triggered,	[this]()
 	{
-		QString filename = QFileDialog::getOpenFileName(q_ptr, "Select Test Executable", QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first(), "Text Executables (*.exe)");
+		QString filter;
+#ifdef Q_OS_WIN32
+		filter = "Text Executables (*.exe)";
+#else
+		filter = "Text Executables (*)";
+#endif
+		QString filename = QFileDialog::getOpenFileName(q_ptr, "Select Test Executable", QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first(), filter);
 
 		if (filename.isEmpty())
 			return;
