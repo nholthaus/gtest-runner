@@ -47,7 +47,7 @@
 class DomItem
 {
 public:
-	DomItem(QDomNode &node, int row, DomItem *parent = 0);
+	DomItem(const QDomNode &node, int row, DomItem *parent = 0);
 	~DomItem();
 	DomItem *child(int i);
 	DomItem *parent();

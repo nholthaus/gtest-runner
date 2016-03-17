@@ -42,7 +42,7 @@
 
 #include <QtXml>
 
-DomItem::DomItem(QDomNode &node, int row, DomItem *parent)
+DomItem::DomItem(const QDomNode &node, int row, DomItem *parent)
 {
 	domNode = node;
 	// Record the item's location within its parent.
