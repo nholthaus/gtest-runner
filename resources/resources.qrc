@@ -1,13 +1,13 @@
 <!DOCTYPE RCC><RCC version="1.0">
 	<qresource>
 		<file alias="icons/logo">icons/logo.ico</file>
-    <file alias="images/logo">images/logo.png</file>
-    <file alias="images/gray">images/gray.png</file>
-    <file alias="images/green">images/green.png</file>
-    <file alias="images/yellow">images/yellow.png</file>
-    <file alias="images/red">images/red.png</file>
-    <file alias="images/fail">images/fail.png</file>
-    <file alias="schemas/gtest.xsd">schemas/gtest.xsd</file>
-    <file alias="fonts/consolas">fonts/consola.ttf</file>
+		<file alias="images/logo">images/logo.png</file>
+		<file alias="images/gray">images/gray.png</file>
+		<file alias="images/green">images/green.png</file>
+		<file alias="images/yellow">images/yellow.png</file>
+		<file alias="images/red">images/red.png</file>
+		<file alias="images/fail">images/fail.png</file>
+		<file alias="schemas/gtest.xsd">schemas/gtest.xsd</file>
+		<file alias="fonts/consolas">fonts/consola.ttf</file>
 	</qresource>
 </RCC>

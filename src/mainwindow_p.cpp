@@ -39,7 +39,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	qRegisterMetaType<QVector<int>>("QVector<int>");
 
 	QFontDatabase fontDB;
-	fontDB.addApplicationFont(":/consolas");
+	fontDB.addApplicationFont(":/fonts/consolas");
 
 	centralFrame->setLayout(new QVBoxLayout);
 	centralFrame->layout()->addWidget(testCaseFilterEdit);
