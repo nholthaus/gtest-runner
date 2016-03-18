@@ -40,6 +40,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 
 	QFontDatabase fontDB;
 	fontDB.addApplicationFont(":/fonts/consolas");
+	QFont consolas("consolas", 10);
 
 	centralFrame->setLayout(new QVBoxLayout);
 	centralFrame->layout()->addWidget(testCaseFilterEdit);
@@ -82,7 +83,6 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	consoleDock->setWindowTitle("Console Output");
 	consoleDock->setWidget(consoleTextEdit);
 
-	QFont consolas("consolas", 10);
 	consoleTextEdit->setFont(consolas);
 	consoleTextEdit->setStyleSheet("QTextEdit { background-color: black; color: white; }");
 	consoleTextEdit->setReadOnly(true);
