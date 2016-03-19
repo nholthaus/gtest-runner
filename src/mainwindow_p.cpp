@@ -92,11 +92,12 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 
 	systemTrayIcon->show();
 
-	createExecutableContextMenu();
 	createTestMenu();
 	createOptionsMenu();
 	createWindowMenu();
-
+	
+	createExecutableContextMenu();
+	
 	connect(this, &MainWindowPrivate::setStatus, statusBar, &QStatusBar::setStatusTip, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, this, &MainWindowPrivate::loadTestResults, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, statusBar, &QStatusBar::clearMessage, Qt::QueuedConnection);
@@ -612,7 +613,10 @@ void MainWindowPrivate::createExecutableContextMenu()
 	removeTestAction = new QAction(q->style()->standardIcon(QStyle::SP_DialogCloseButton), "Remove Test", executableContextMenu);
 
 	executableContextMenu->addAction(runTestAction);
+	executableContextMenu->addSeparator();	
+	executableContextMenu->addAction(addTestAction);
 	executableContextMenu->addAction(removeTestAction);
+	executableContextMenu->addAction(selectAndRemoveTestAction);
 
 	executableListView->setContextMenuPolicy(Qt::CustomContextMenu);
 	
@@ -621,8 +625,18 @@ void MainWindowPrivate::createExecutableContextMenu()
 		QModelIndex indexUnderMouse = executableListView->indexAt(pos);
 		if (indexUnderMouse.isValid())
 		{
-			executableContextMenu->exec(executableListView->mapToGlobal(pos));
+			runTestAction->setEnabled(true);
+			removeTestAction->setVisible(true);
+			selectAndRemoveTestAction->setVisible(false);
 		}
+		else
+		{
+			runTestAction->setEnabled(false);
+			removeTestAction->setVisible(false);
+			selectAndRemoveTestAction->setVisible(true);
+		}
+		executableContextMenu->exec(executableListView->mapToGlobal(pos));
+		selectAndRemoveTestAction->setVisible(true);	// important b/c this is a shared action
 	});
 
 	connect(runTestAction, &QAction::triggered, [this]
@@ -646,7 +660,7 @@ void MainWindowPrivate::createTestMenu()
 
 	testMenu = new QMenu("Test", q);
 
-	addTestAction = new QAction(QIcon(":/images/green"), "Add Test...", testMenu);
+	addTestAction = new QAction(QIcon(":/images/green"), "Add Test...", q);
 	selectAndRemoveTestAction = new QAction(q->style()->standardIcon(QStyle::SP_DialogCloseButton), "Remove Test...", testMenu);
 	selectAndRunTest = new QAction(q->style()->standardIcon(QStyle::SP_BrowserReload), "Run Test...", testMenu);
 	selectAndRunTest->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_F5));
