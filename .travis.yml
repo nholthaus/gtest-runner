@@ -8,8 +8,9 @@ before_install:
   
 install:
   - sudo apt-get install gcc-4.9 -y
-  - sudo apt-get install 
-  - sudo apt-get qt56xmlpatterns
+  - sudo apt-get install qt56-meta
+  - sudo apt-get install qt56base
+  - sudo apt-get install qt56xmlpatterns
   
 script:
   - source /opt/qt55/bin/qt55-env.sh
