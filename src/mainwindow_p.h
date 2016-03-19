@@ -139,6 +139,10 @@ public:
 	QAction*								selectAndRemoveTestAction;				///< Remove a test after choosing it from a list.
 	QAction*								selectAndRunTest;						///< Run a test after selecting it from a list.																	///< program options.
 
+	QMenu*									testCaseViewContextMenu;				///< Context menu for the test case tree view
+	QAction*								testCaseViewExpandAllAction;			///< expands all nodes in the test case tree view
+	QAction*								testCaseViewCollapseAllAction;			///< Collapses all nodes in the test case tree view.
+
 	QMenu*									consoleContextMenu;						///< Context menu for the console dock;
 	QAction*								clearConsoleAction;						///< Clears the console window.
 	
@@ -183,7 +187,9 @@ protected:
 	void createTestMenu();
 	void createOptionsMenu();
 	void createWindowMenu();
+
 	void createExecutableContextMenu();
+	void createTestCaseViewContextMenu();
 	void createConsoleContextMenu();
 
 	QModelIndex getTestIndexDialog(const QString& label);

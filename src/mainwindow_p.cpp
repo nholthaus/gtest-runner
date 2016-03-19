@@ -98,6 +98,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	
 	createExecutableContextMenu();
 	createConsoleContextMenu();
+	createTestCaseViewContextMenu();
 
 	connect(this, &MainWindowPrivate::setStatus, statusBar, &QStatusBar::setStatusTip, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, this, &MainWindowPrivate::loadTestResults, Qt::QueuedConnection);
@@ -650,6 +651,25 @@ void MainWindowPrivate::createExecutableContextMenu()
 	{
 		removeTest(executableListView->currentIndex());
 	});
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: createTestCaseViewContextMenu
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::createTestCaseViewContextMenu()
+{
+	testCaseTreeView->setContextMenuPolicy(Qt::ActionsContextMenu);
+
+	testCaseViewContextMenu = new QMenu(testCaseTreeView);
+
+	testCaseViewExpandAllAction = new QAction("Expand All", testCaseViewContextMenu);
+	testCaseViewCollapseAllAction = new QAction("Collapse All", testCaseViewContextMenu);
+
+	testCaseTreeView->addAction(testCaseViewExpandAllAction);
+	testCaseTreeView->addAction(testCaseViewCollapseAllAction);
+
+	connect(testCaseViewExpandAllAction, &QAction::triggered, testCaseTreeView, &QTreeView::expandAll);
+	connect(testCaseViewCollapseAllAction, &QAction::triggered, testCaseTreeView, &QTreeView::collapseAll);
 }
 
 //--------------------------------------------------------------------------------------------------
