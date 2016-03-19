@@ -11,6 +11,7 @@ install:
   - export CXX="g++-4.9"
   - sudo apt-get install qt56base -y
   - sudo apt-get install qt56xmlpatterns -y
+  - cmake --version
   
 script:
   - source /opt/qt56/bin/qt56-env.sh
