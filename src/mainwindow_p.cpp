@@ -84,7 +84,10 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	consoleDock->setWidget(consoleTextEdit);
 
 	consoleTextEdit->setFont(consolas);
-	consoleTextEdit->setStyleSheet("QTextEdit { background-color: black; color: white; }");
+	QPalette p = consoleTextEdit->palette();
+	p.setColor(QPalette::Base, Qt::black);
+	p.setColor(QPalette::Text, Qt::white);
+	consoleTextEdit->setPalette(p);
 	consoleTextEdit->setReadOnly(true);
 
 	systemTrayIcon->show();
