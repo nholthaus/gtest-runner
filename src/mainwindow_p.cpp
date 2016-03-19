@@ -122,6 +122,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		if(!selected.isEmpty())
 		{
 			auto index = selected.indexes().first();
+			index = index.sibling(index.row(), QExecutableModel::NameColumn);
 			selectTest(index.data(QExecutableModel::PathRole).toString());
 		}
 	});
@@ -130,11 +131,12 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	connect(fileWatcher, &QFileSystemWatcher::fileChanged, [this](const QString& path)
 	{	
 		QModelIndex m = executableModelHash[path];
+		m = m.sibling(m.row(), QExecutableModel::NameColumn);
 		if (m.isValid())
 		{
 			QStandardItem* exeItem = executableModel->itemFromIndex(m);
 			exeItem->setData(QDateTime::currentDateTime(), QExecutableModel::LastModifiedRole);
-
+			
 			// only auto-run if the test is checked
 			if (m.data(Qt::CheckStateRole) == Qt::Checked)
 			{
@@ -145,12 +147,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 			}
 			else
 			{
-				QModelIndex m = executableModelHash[path];
-				if (m.isValid())
-				{
-					QStandardItem* exeItem = executableModel->itemFromIndex(m);
-					exeItem->setData(QExecutableModel::NOT_RUNNING, QExecutableModel::StateRole);
-				}
+				QStandardItem* exeItem = executableModel->itemFromIndex(m);
+				exeItem->setData(QExecutableModel::NOT_RUNNING, QExecutableModel::StateRole);
 			}
 		}
 		
@@ -171,26 +169,27 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	// re-rerun tests when auto-testing is re-enabled
 	connect(executableModel, &QAbstractItemModel::dataChanged, this, [this](const QModelIndex & topLeft, const QModelIndex & bottomRight, const QVector<int> & roles)
 	{
-		QString path = topLeft.data(QExecutableModel::PathRole).toString();
+		QModelIndex index = topLeft.sibling(topLeft.row(), QExecutableModel::NameColumn);
+		QString path = index.data(QExecutableModel::PathRole).toString();
 		Qt::CheckState prevState = executableCheckedStateHash[path];
+
 		// Only re-run IFF the check box state goes from unchecked to checked AND
 		// the data has gotten out of date since the checkbox was off.
-		if (topLeft.data(Qt::CheckStateRole) == Qt::Checked && prevState == Qt::Unchecked)
+		if (index.data(Qt::CheckStateRole) == Qt::Checked && prevState == Qt::Unchecked)
 		{
-			QString path = topLeft.data(QExecutableModel::PathRole).toString();
 			QFileInfo xml(xmlPath(path));
 			QFileInfo exe(path);
 
 			if (xml.lastModified() < exe.lastModified())
 			{
 				// out of date! re-run.
-				emit showMessage("Automatic testing enabled for: " + topLeft.data(Qt::DisplayRole).toString() + ". Re-running tests...");
+				emit showMessage("Automatic testing enabled for: " + index.data(Qt::DisplayRole).toString() + ". Re-running tests...");
 				runTestInThread(topLeft.data(QExecutableModel::PathRole).toString(), true);
 			}			
 		}
 
 		// update previous state
-		executableCheckedStateHash[path] = (Qt::CheckState)topLeft.data(Qt::CheckStateRole).toInt();
+		executableCheckedStateHash[path] = (Qt::CheckState)index.data(Qt::CheckStateRole).toInt();
 	}, Qt::QueuedConnection);
 
 	// filter test results when the filter is changed
@@ -450,7 +449,9 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath, bool notify)
 	testResultsHash[testPath] = doc;
 
 	// if the test that just ran is selected, update the view
-	if (executableTreeView->selectionModel()->currentIndex().data(QExecutableModel::PathRole).toString() == testPath)
+	QModelIndex index = executableTreeView->selectionModel()->currentIndex();
+	index = index.sibling(index.row(), QExecutableModel::NameColumn);
+	if (index.data(QExecutableModel::PathRole).toString() == testPath)
 	{
 		selectTest(testPath);
 	}
