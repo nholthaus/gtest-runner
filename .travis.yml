@@ -7,7 +7,8 @@ before_install:
   - sudo apt-get update -qq
   
 install:
-  - sudo apt-get install gcc-4.9 -y
+  - sudo apt-get install g++-4.9 -y
+  - export CXX="g++4.9"
   - sudo apt-get install qt56base -y
   - sudo apt-get install qt56xmlpatterns -y
   
