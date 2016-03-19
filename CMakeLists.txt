@@ -53,6 +53,9 @@ find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Xml REQUIRED)
 find_package(Qt5XmlPatterns REQUIRED)
 
+# find thread library 
+find_package(Threads REQUIRED)
+
 #-------------------------------------------------------------------------------
 #	COMPILE FLAGS
 #-------------------------------------------------------------------------------
@@ -156,6 +159,7 @@ Qt5::Gui
 Qt5::Widgets
 Qt5::Xml
 Qt5::XmlPatterns
+Threads::Threads
 )
 
 # Remove duplicate library dependencies. 

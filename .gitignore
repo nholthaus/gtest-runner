@@ -3,6 +3,9 @@
 [Bb]uild
 [Mm][Ss][Vv][Cc]*
 
+#kdevelop
+*.kdev4
+
 # Compiled Object files
 *.slo
 *.lo
