@@ -41,6 +41,9 @@ QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 	static QRegExp whichisrx("[Ww]hich is: ([^,\n]*)");
 	static QRegExp nearrx("The difference between (.*) and (.*) is (.*), which exceeds (.*), where\n(.*) evaluates to(.*),\n(.*) evaluates to(.*), and\n(.*) evaluates to(.*).");
 	static QRegExp predrx("\n(.*) evaluates to (.*), where\n(.*)");
+	static QRegExp sehrx("(.*)\n(.*) with code (.*) thrown in the test body");
+
+	QString filename;
 
 	switch (role)
 	{
@@ -49,7 +52,10 @@ QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 		{
 		case 0:
 			filerx.indexIn(message);
-			return QFileInfo(filerx.cap(1)).fileName();
+			filename = QFileInfo(filerx.cap(1)).fileName();
+			if (!filename.isEmpty()) return filename;
+			sehrx.indexIn(message);
+			return sehrx.cap(1);
 		case 1:
 			filerx.indexIn(message);
 			return filerx.cap(2);
@@ -60,7 +66,10 @@ QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 				if (!valueofrx.cap(i).isEmpty()) return valueofrx.cap(i);
 			nearrx.indexIn(message);
 			if(!nearrx.cap(7).isEmpty()) return nearrx.cap(7);
-			return predrx.cap(1);
+			predrx.indexIn(message);
+			if (!predrx.cap(1).isEmpty())  return predrx.cap(1);
+			sehrx.indexIn(message);
+			return sehrx.cap(2);
 		case 3:
 			actualrx.indexIn(message);
 			for (int i = 1; i <= actualrx.captureCount(); ++i)
@@ -68,7 +77,9 @@ QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 			nearrx.indexIn(message);
 			if (!nearrx.cap(8).isEmpty()) return nearrx.cap(8);
 			predrx.indexIn(message);
-			return predrx.cap(2);
+			if(!predrx.cap(2).isEmpty()) return predrx.cap(2);
+			sehrx.indexIn(message);
+			return sehrx.cap(3);
 		case 4:
 			expectedrx.indexIn(message);
 			for (int i = 1; i <= expectedrx.captureCount(); ++i)
