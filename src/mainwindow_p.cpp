@@ -523,7 +523,7 @@ void MainWindowPrivate::saveSettings() const
 		settings.setArrayIndex(row);
 		settings.setValue("path", executableModel->data(executableModel->index(row, QExecutableModel::NameColumn), QExecutableModel::PathRole).toString());
 		settings.setValue("checked", executableModel->data(executableModel->index(row, QExecutableModel::NameColumn), Qt::CheckStateRole).toInt());
-		settings.setValue("lastModified", executableModel->data(executableModel->index(row, QExecutableModel::NameColumn), QExecutableModel::LastModifiedRole).toDateTime());
+		settings.setValue("lastModified", executableModel->data(executableModel->index(row, QExecutableModel::NameColumn), QExecutableModel::LastModifiedRole).toDateTime().toString());
 	}
 	settings.endArray();
 
@@ -551,7 +551,7 @@ void MainWindowPrivate::loadSettings()
 		settings.setArrayIndex(i);
 		QString path = settings.value("path").toString();
 		Qt::CheckState checked = static_cast<Qt::CheckState>(settings.value("checked").toInt());
-		QDateTime lastModified = settings.value("lastModified").toDateTime();
+		QDateTime lastModified = QDateTime::fromString(settings.value("lastModified").toString());
 		addTestExecutable(path, checked, lastModified);
 	}
 	settings.endArray();
