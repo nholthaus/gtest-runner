@@ -139,6 +139,9 @@ public:
 	QAction*								selectAndRemoveTestAction;				///< Remove a test after choosing it from a list.
 	QAction*								selectAndRunTest;						///< Run a test after selecting it from a list.																	///< program options.
 
+	QMenu*									consoleContextMenu;						///< Context menu for the console dock;
+	QAction*								clearConsoleAction;						///< Clears the console window.
+	
 	// state variables
 	QString									mostRecentFailurePath;					///< Stores the path [key] of the most recently failed test.
 	QHash<QString, QPersistentModelIndex>	executableModelHash;					///< Hash for finding entries in the executable model.
@@ -177,10 +180,11 @@ public:
 
 protected:
 
-	void createExecutableContextMenu();
 	void createTestMenu();
 	void createOptionsMenu();
 	void createWindowMenu();
+	void createExecutableContextMenu();
+	void createConsoleContextMenu();
 
 	QModelIndex getTestIndexDialog(const QString& label);
 
