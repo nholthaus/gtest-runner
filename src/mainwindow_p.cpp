@@ -1,6 +1,7 @@
 #include "GTestFailureModel.h"
 #include "QStdOutSyntaxHighlighter.h"
 #include "mainwindow_p.h"
+#include "executableModelDelegate.h"
 
 #include <QCryptographicHash>
 #include <QDesktopServices>
@@ -18,7 +19,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	q_ptr(q),
 	executableDock(new QDockWidget(q)),
 	executableDockFrame(new QFrame(q)),
-	executableListView(new QListView(q)),
+	executableTreeView(new QTreeView(q)),
 	executableModel(new QExecutableModel(q)),
 	testCaseProxyModel(new QBottomUpSortFilterProxy(q)),
 	addTestButton(new QPushButton(q)),
@@ -52,11 +53,18 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	executableDock->setWindowTitle("Test Executables");
 	executableDock->setWidget(executableDockFrame);
 
-	executableListView->setModel(executableModel);
-	executableListView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	executableModel->setColumnCount(3);
+
+	executableTreeView->setModel(executableModel);
+	executableTreeView->setHeaderHidden(true);
+	executableTreeView->setIndentation(0);
+	executableTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	executableTreeView->setItemDelegateForColumn(1, new QProgressBarDelegate(executableTreeView));
+	executableTreeView->setSelectionBehavior(QAbstractItemView::SelectRows);
+	executableTreeView->setSelectionMode(QAbstractItemView::SingleSelection);
 
 	executableDockFrame->setLayout(new QVBoxLayout);
-	executableDockFrame->layout()->addWidget(executableListView);
+	executableDockFrame->layout()->addWidget(executableTreeView);
 	executableDockFrame->layout()->addWidget(addTestButton);
 
 	addTestButton->setText("Add Test Executable...");
@@ -109,7 +117,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	connect(addTestButton, &QPushButton::clicked, addTestAction, &QAction::trigger);
 
 	// switch testCase models when new tests are clicked
-	connect(executableListView->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected)
+	connect(executableTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected)
 	{
 		if(!selected.isEmpty())
 		{
@@ -243,7 +251,9 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	// update test progress
 	connect(this, &MainWindowPrivate::testProgress, this, [this](QString test, int complete, int total)
 	{
-		qDebug() << test << complete << total << ((double)complete / total) * 100;
+		QModelIndex index = executableModelHash[test];
+		index = index.sibling(index.row(), QExecutableModel::ProgressColumn);
+		executableModel->setData(index, (double)complete / total, QExecutableModel::ProgressRole);
 	});
 
 	// open the GUI when a tray message is clicked
@@ -281,6 +291,7 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	QFileInfo xmlResults(xmlPath(path));
 	QStandardItem* item = new QStandardItem(fileinfo.baseName());
 
+	item->setData(0, QExecutableModel::ProgressRole);
 	item->setData(path, QExecutableModel::PathRole);
 	item->setData(lastModified, QExecutableModel::LastModifiedRole);
 	item->setData(QExecutableModel::NOT_RUNNING);	
@@ -288,7 +299,7 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	item->setCheckState(checked);
 
 	executableModel->appendRow(item);
-	executableModelHash.insert(path, QPersistentModelIndex(executableModel->index(executableModel->rowCount() - 1, 0)));
+	executableModelHash.insert(path, QPersistentModelIndex(executableModel->index(executableModel->rowCount() - 1, QExecutableModel::NameColumn)));
 	
 	fileWatcher->addPath(fileinfo.dir().canonicalPath());
 	fileWatcher->addPath(path);
@@ -298,7 +309,11 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	bool runAutomatically = (item->data(Qt::CheckStateRole) == Qt::Checked);
 	bool outOfDate = previousResults && (xmlResults.lastModified() < lastModified);
 
-	executableListView->setCurrentIndex(executableModel->indexFromItem(item));
+	executableTreeView->setCurrentIndex(executableModel->indexFromItem(item));
+	for (int i = 0; i < executableModel->columnCount(); i++)
+	{
+		executableTreeView->resizeColumnToContents(i);
+	}
 
 	testRunningHash[path] = false;
 
@@ -388,7 +403,7 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 				}
 				else
 				{
-					static QRegExp rx("(\\[.*OK.*\\]|\\[.*FAILED.*\\])");
+					QRegExp rx("(\\[.*OK.*\\]|\\[.*FAILED.*\\])");
 					if (rx.indexIn(output) != -1)
 						progress++;
 				}
@@ -435,7 +450,7 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath, bool notify)
 	testResultsHash[testPath] = doc;
 
 	// if the test that just ran is selected, update the view
-	if (executableListView->selectionModel()->currentIndex().data(QExecutableModel::PathRole).toString() == testPath)
+	if (executableTreeView->selectionModel()->currentIndex().data(QExecutableModel::PathRole).toString() == testPath)
 	{
 		selectTest(testPath);
 	}
@@ -482,7 +497,7 @@ void MainWindowPrivate::selectTest(const QString& testPath)
 	QModelIndexList indices = executableModel->match(executableModel->index(0,0), QExecutableModel::PathRole, testPath);
 	if (indices.size())
 	{
-		executableListView->setCurrentIndex(indices.first());
+		executableTreeView->setCurrentIndex(indices.first());
 	}
 	
 	for (int i = 0; i < testCaseTreeView->model()->columnCount(); i++)
@@ -506,9 +521,9 @@ void MainWindowPrivate::saveSettings() const
 	for (int row = 0; row < executableModel->rowCount(); row++)
 	{
 		settings.setArrayIndex(row);
-		settings.setValue("path", executableModel->data(executableModel->index(row, 0), QExecutableModel::PathRole).toString());
-		settings.setValue("checked", executableModel->data(executableModel->index(row, 0), Qt::CheckStateRole).toInt());
-		settings.setValue("lastModified", executableModel->data(executableModel->index(row, 0), QExecutableModel::LastModifiedRole).toDateTime());
+		settings.setValue("path", executableModel->data(executableModel->index(row, QExecutableModel::NameColumn), QExecutableModel::PathRole).toString());
+		settings.setValue("checked", executableModel->data(executableModel->index(row, QExecutableModel::NameColumn), Qt::CheckStateRole).toInt());
+		settings.setValue("lastModified", executableModel->data(executableModel->index(row, QExecutableModel::NameColumn), QExecutableModel::LastModifiedRole).toDateTime());
 	}
 	settings.endArray();
 
@@ -557,12 +572,12 @@ void MainWindowPrivate::removeTest(const QModelIndex &index)
 	if (!index.isValid())
 		return;
 
-	QString path = index.data(QExecutableModel::PathRole).toString();
+	QString path = index.sibling(index.row(), QExecutableModel::NameColumn).data(QExecutableModel::PathRole).toString();
 
 	if (QMessageBox::question(this->q_ptr, QString("Remove Test?"), "Do you want to remove test " + QFileInfo(path).baseName() + "?",
 		QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
-		executableListView->setCurrentIndex(index);
+		executableTreeView->setCurrentIndex(index);
 
 		// remove all data related to this test
 		executablePaths.removeAll(path);
@@ -591,7 +606,7 @@ QModelIndex MainWindowPrivate::getTestIndexDialog(const QString& label)
 
 	for (int i = 0; i < executableModel->rowCount(); ++i)
 	{
-		tests << executableModel->index(i, 0).data().toString();
+		tests << executableModel->index(i, QExecutableModel::NameColumn).data().toString();
 	}
 	QString selected = QInputDialog::getItem(this->q_ptr, "Select Test", label, tests, 0, false, &ok);
 
@@ -609,7 +624,7 @@ void MainWindowPrivate::createExecutableContextMenu()
 {
 	Q_Q(MainWindow);
 
-	executableContextMenu = new QMenu(executableListView);
+	executableContextMenu = new QMenu(executableTreeView);
 
 	runTestAction = new QAction(q->style()->standardIcon(QStyle::SP_BrowserReload), "Run Test...", executableContextMenu);
 	removeTestAction = new QAction(q->style()->standardIcon(QStyle::SP_DialogCloseButton), "Remove Test", executableContextMenu);
@@ -620,11 +635,11 @@ void MainWindowPrivate::createExecutableContextMenu()
 	executableContextMenu->addAction(removeTestAction);
 	executableContextMenu->addAction(selectAndRemoveTestAction);
 
-	executableListView->setContextMenuPolicy(Qt::CustomContextMenu);
+	executableTreeView->setContextMenuPolicy(Qt::CustomContextMenu);
 	
-	connect(executableListView, &QListView::customContextMenuRequested, [this, q](const QPoint& pos)
+	connect(executableTreeView, &QListView::customContextMenuRequested, [this, q](const QPoint& pos)
 	{
-		QModelIndex indexUnderMouse = executableListView->indexAt(pos);
+		QModelIndex indexUnderMouse = executableTreeView->indexAt(pos);
 		if (indexUnderMouse.isValid())
 		{
 			runTestAction->setEnabled(true);
@@ -637,19 +652,20 @@ void MainWindowPrivate::createExecutableContextMenu()
 			removeTestAction->setVisible(false);
 			selectAndRemoveTestAction->setVisible(true);
 		}
-		executableContextMenu->exec(executableListView->mapToGlobal(pos));
+		executableContextMenu->exec(executableTreeView->mapToGlobal(pos));
 		selectAndRemoveTestAction->setVisible(true);	// important b/c this is a shared action
 	});
 
 	connect(runTestAction, &QAction::triggered, [this]
 	{
-		QString path = executableListView->currentIndex().data(QExecutableModel::PathRole).toString();
+		QModelIndex index = executableTreeView->currentIndex().sibling(executableTreeView->currentIndex().row(), QExecutableModel::NameColumn);
+		QString path = index.data(QExecutableModel::PathRole).toString();
 		runTestInThread(path, false);
 	});
 
 	connect(removeTestAction, &QAction::triggered, [this]
 	{
-		removeTest(executableListView->currentIndex());
+		removeTest(executableTreeView->currentIndex());
 	});
 }
 

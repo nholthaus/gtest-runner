@@ -24,9 +24,6 @@ public:
 		redIcon(QIcon(":images/red"))
 	{};
 
-
-
-
 };	// CLASS: QExecutableModelPrivate
 
 
@@ -37,6 +34,17 @@ QExecutableModel::QExecutableModel(QObject* parent /*= nullptr*/) : QStandardIte
 	d_ptr(new QExecutableModelPrivate)
 {
 
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: hasChildren
+//--------------------------------------------------------------------------------------------------
+bool QExecutableModel::hasChildren(const QModelIndex& parent) const
+{
+	if (parent == QModelIndex())
+		return true;
+	else
+		return false;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -52,12 +60,12 @@ QExecutableModel::~QExecutableModel()
 //--------------------------------------------------------------------------------------------------
 Q_INVOKABLE int QExecutableModel::columnCount(const QModelIndex &parent /*= QModelIndex()*/) const
 {
-	return 2;
+	return 3;
 }
 
-//--------------------------------------------------------------------------------------------------
-//	FUNCTION: data
-//--------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------
+// 	FUNCTION: data
+// --------------------------------------------------------------------------------------------------
 Q_INVOKABLE QVariant QExecutableModel::data(const QModelIndex &index, int role /*= Qt::DisplayRole*/) const
 {
 	if (!index.isValid())
@@ -68,25 +76,28 @@ Q_INVOKABLE QVariant QExecutableModel::data(const QModelIndex &index, int role /
 	switch (role)
 	{
 	case Qt::DecorationRole:
-		switch (data(index, StateRole).toInt())
+		if(index.column() == 0)
 		{
-		case NOT_RUNNING:
-			return d->grayIcon;
-			break;
-		case RUNNING:
-			return d->yellowIcon;
-			break;
-		case PASSED:
-			return d->greenIcon;
-			break;
-		case FAILED:
-			return d->redIcon;
-			break;
-		default:
-			return QIcon();
+			switch (data(index, StateRole).toInt())
+			{
+			case NOT_RUNNING:
+				return d->grayIcon;
+				break;
+			case RUNNING:
+				return d->yellowIcon;
+				break;
+			case PASSED:
+				return d->greenIcon;
+				break;
+			case FAILED:
+				return d->redIcon;
+				break;
+			default:
+				return QIcon();
+				break;
+			}
 			break;
 		}
-		break;
 	default:
 		return QStandardItemModel::data(index, role);
 		break;

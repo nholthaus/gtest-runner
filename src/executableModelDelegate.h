@@ -44,18 +44,22 @@
 #include <QStyledItemDelegate>
 
 //--------------------------------------------------------------------------------------------------
-//	CLASS: QExecutableModelDelegate
+//	CLASS: QProgressBarDelegate
 //--------------------------------------------------------------------------------------------------
-/// @brief		brief		delegate to display state icons for the executable test model
-/// @details	details
+/// @brief		Represents progress role data as a progress bar
+/// @details	
 //--------------------------------------------------------------------------------------------------
-class QExecutableModelDelegate : QStyledItemDelegate
+class QProgressBarDelegate : public QStyledItemDelegate
 {
 public:
 
-	explicit QExecutableModelDelegate(QObject* parent = nullptr);
-	virtual ~QExecutableModelDelegate();
+	explicit QProgressBarDelegate(QObject* parent = 0);
+	virtual ~QProgressBarDelegate();
 	
+
+	virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+	virtual QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+
 protected:
 
 	
@@ -64,6 +68,6 @@ private:
 
 
 
-};	// CLASS: QExecutableModelDelegate
+};	// CLASS: QProgressBarDelegate
 
 #endif // executableModelDelegate_h__

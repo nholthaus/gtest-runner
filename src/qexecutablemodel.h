@@ -60,6 +60,13 @@ class QExecutableModel : public QStandardItemModel
 {
 public:
 
+	enum Columns
+	{
+//		AdvancedOptionsColumn,
+		NameColumn,
+		ProgressColumn,
+	};
+
 	enum Roles
 	{
 		PathRole = Qt::ToolTipRole,
@@ -74,12 +81,14 @@ public:
 		RUNNING, 
 		PASSED, 
 		FAILED,
-	};
+ 	};
 
-	explicit QExecutableModel(QObject* parent = nullptr);
+ 	explicit QExecutableModel(QObject* parent = nullptr);
 	virtual ~QExecutableModel();
 
-	Q_INVOKABLE virtual int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+	bool hasChildren(const QModelIndex& parent) const override;
+
+ 	Q_INVOKABLE virtual int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 	Q_INVOKABLE virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
 protected:
