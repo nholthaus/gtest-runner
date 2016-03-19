@@ -64,6 +64,7 @@ if(WIN32)
 	set(GUI_TYPE WIN32)
 else(WIN32)
 	add_compile_options(--std=c++14)
+	add_compile_options(-pthread)
 endif(WIN32)
 
 #-------------------------------------------------------------------------------
