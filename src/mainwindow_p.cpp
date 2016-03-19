@@ -97,7 +97,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	createWindowMenu();
 	
 	createExecutableContextMenu();
-	
+	createConsoleContextMenu();
+
 	connect(this, &MainWindowPrivate::setStatus, statusBar, &QStatusBar::setStatusTip, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, this, &MainWindowPrivate::loadTestResults, Qt::QueuedConnection);
 	connect(this, &MainWindowPrivate::testResultsReady, statusBar, &QStatusBar::clearMessage, Qt::QueuedConnection);
@@ -649,6 +650,30 @@ void MainWindowPrivate::createExecutableContextMenu()
 	{
 		removeTest(executableListView->currentIndex());
 	});
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: createConsoleContextMenu
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::createConsoleContextMenu()
+{
+	Q_Q(MainWindow);
+
+	consoleTextEdit->setContextMenuPolicy(Qt::CustomContextMenu);
+
+	consoleContextMenu = consoleTextEdit->createStandardContextMenu();
+
+	clearConsoleAction = new QAction("Clear", consoleContextMenu);
+
+	consoleContextMenu->addSeparator();
+	consoleContextMenu->addAction(clearConsoleAction);
+
+	connect(consoleTextEdit, &QTextEdit::customContextMenuRequested, [this, q](const QPoint& pos)
+	{
+		consoleContextMenu->exec(consoleTextEdit->mapToGlobal(pos));
+	});
+
+	connect(clearConsoleAction, &QAction::triggered, consoleTextEdit, &QTextEdit::clear);
 }
 
 //--------------------------------------------------------------------------------------------------
