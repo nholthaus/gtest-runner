@@ -97,7 +97,7 @@ Q_INVOKABLE QVariant QExecutableModel::data(const QModelIndex &index, int role /
 				break;
 			}
 			break;
-		}
+		} 
 	default:
 		return QStandardItemModel::data(index, role);
 		break;

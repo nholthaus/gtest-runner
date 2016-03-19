@@ -136,7 +136,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		{
 			QStandardItem* exeItem = executableModel->itemFromIndex(m);
 			exeItem->setData(QDateTime::currentDateTime(), QExecutableModel::LastModifiedRole);
-			
+
 			// only auto-run if the test is checked
 			if (m.data(Qt::CheckStateRole) == Qt::Checked)
 			{
@@ -285,28 +285,31 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	if (!fileinfo.exists())
 		return;
 
+	if (lastModified == QDateTime())
+		lastModified = fileinfo.lastModified();
+
 	executableCheckedStateHash[path] = checked;
 
 	QFileInfo xmlResults(xmlPath(path));
 	QStandardItem* item = new QStandardItem(fileinfo.baseName());
 
-	item->setData(0, QExecutableModel::ProgressRole);
-	item->setData(path, QExecutableModel::PathRole);
-	item->setData(lastModified, QExecutableModel::LastModifiedRole);
-	item->setData(QExecutableModel::NOT_RUNNING);	
-	item->setCheckable(true);
-	item->setCheckState(checked);
-
 	executableModel->appendRow(item);
 	executableModelHash.insert(path, QPersistentModelIndex(executableModel->index(executableModel->rowCount() - 1, QExecutableModel::NameColumn)));
 	
+	executableModel->setData(executableModelHash[path], 0, QExecutableModel::ProgressRole);
+	executableModel->setData(executableModelHash[path], path, QExecutableModel::PathRole);
+	executableModel->setData(executableModelHash[path], lastModified, QExecutableModel::LastModifiedRole);
+	executableModel->setData(executableModelHash[path], QExecutableModel::NOT_RUNNING, QExecutableModel::StateRole);
+	item->setCheckable(true);
+	item->setCheckState(checked);
+
 	fileWatcher->addPath(fileinfo.dir().canonicalPath());
 	fileWatcher->addPath(path);
 	executablePaths << path;
 
 	bool previousResults = loadTestResults(path, false);
 	bool runAutomatically = (item->data(Qt::CheckStateRole) == Qt::Checked);
-	bool outOfDate = previousResults && (xmlResults.lastModified() < lastModified);
+	bool outOfDate = lastModified < fileinfo.lastModified();
 
 	executableTreeView->setCurrentIndex(executableModel->indexFromItem(item));
 	for (int i = 0; i < executableModel->columnCount(); i++)
@@ -320,6 +323,8 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	if ((!previousResults || outOfDate) && runAutomatically)
 	{
 		this->runTestInThread(path, false);
+		QFileInfo newInfo(path);
+		executableModel->setData(executableModelHash[path], newInfo.lastModified(), QExecutableModel::LastModifiedRole);
 	}
 	else if (outOfDate && !runAutomatically)
 	{
@@ -519,12 +524,14 @@ void MainWindowPrivate::saveSettings() const
 
 	// save executable information
 	settings.beginWriteArray("tests");
-	for (int row = 0; row < executableModel->rowCount(); row++)
+	for (auto itr = executableModelHash.begin(); itr != executableModelHash.end(); ++itr)
 	{
-		settings.setArrayIndex(row);
-		settings.setValue("path", executableModel->data(executableModel->index(row, QExecutableModel::NameColumn), QExecutableModel::PathRole).toString());
-		settings.setValue("checked", executableModel->data(executableModel->index(row, QExecutableModel::NameColumn), Qt::CheckStateRole).toInt());
-		settings.setValue("lastModified", executableModel->data(executableModel->index(row, QExecutableModel::NameColumn), QExecutableModel::LastModifiedRole).toDateTime().toString());
+		QModelIndex index = *itr;
+		index = index.sibling(index.row(), QExecutableModel::NameColumn);
+		settings.setArrayIndex(index.row());
+		settings.setValue("path", index.data(QExecutableModel::PathRole).toString());
+		settings.setValue("checked", index.data(Qt::CheckStateRole).toInt());
+		settings.setValue("lastModified", index.data(QExecutableModel::LastModifiedRole).toDateTime());
 	}
 	settings.endArray();
 
@@ -552,7 +559,7 @@ void MainWindowPrivate::loadSettings()
 		settings.setArrayIndex(i);
 		QString path = settings.value("path").toString();
 		Qt::CheckState checked = static_cast<Qt::CheckState>(settings.value("checked").toInt());
-		QDateTime lastModified = QDateTime::fromString(settings.value("lastModified").toString());
+		QDateTime lastModified = settings.value("lastModified").toDateTime();
 		addTestExecutable(path, checked, lastModified);
 	}
 	settings.endArray();
