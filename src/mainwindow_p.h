@@ -100,7 +100,7 @@ public:
 	MainWindow*								q_ptr;
 	QDockWidget*							executableDock;							///< Dock Widget for the gtest executable selector.
 	QFrame*									executableDockFrame;					///< Frame for containing the dock's sub-widgets
-	QListView*								executableListView;						///< Widget to display and select gtest executables	
+	QTreeView*								executableTreeView;						///< Widget to display and select gtest executables	
 	QExecutableModel*						executableModel;						///< Item model for test executables.
 	QPushButton*							addTestButton;							///< Button which adds a test to the monitored tests.
 	QFileSystemWatcher*						fileWatcher;							///< Hash table to store the file system watchers.
