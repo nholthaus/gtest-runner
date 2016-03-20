@@ -17,4 +17,4 @@ platform:
 #  - Release
  
 build:
-  Project: build/gtest-gui-HEAD.sln
+  project: build/gtest-gui-HEAD.sln
