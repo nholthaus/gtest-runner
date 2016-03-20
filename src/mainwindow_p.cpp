@@ -348,8 +348,6 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 //--------------------------------------------------------------------------------------------------
 void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 {
-	executableModel->setData(executableModelHash[pathToTest], QExecutableModel::RUNNING, QExecutableModel::StateRole);
-
 	std::thread t([this, pathToTest, notify]
 	{
 		QEventLoop loop;
@@ -365,6 +363,8 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 		
 		testRunningHash[pathToTest] = true;
 
+		executableModel->setData(executableModelHash[pathToTest], QExecutableModel::RUNNING, QExecutableModel::StateRole);
+		
 		QFileInfo info(pathToTest);
 		QProcess testProcess;
 		QStringList arguments;
@@ -397,7 +397,6 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 			output.append("\nTEST RUN KILLED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n\n");
 
 			emit testOutputReady(output);
-			emit testResultsReady(pathToTest, notify);
 			emit testProgress(pathToTest, 0, 0);
 
 			testRunningHash[pathToTest] = false;
