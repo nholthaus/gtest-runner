@@ -342,87 +342,112 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 //--------------------------------------------------------------------------------------------------
 void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 {
-	if (!testRunningHash[pathToTest])
+	executableModel->setData(executableModelHash[pathToTest], QExecutableModel::RUNNING, QExecutableModel::StateRole);
+
+	std::thread t([this, pathToTest, notify]
 	{
+		QEventLoop loop;
+
+		// kill the running test instance first if there is one
+		if (testRunningHash[pathToTest])
+		{
+			emit killTest(pathToTest);
+
+			std::unique_lock<std::mutex> lock(threadKillMutex);
+			threadKillCv.wait(lock, [&, pathToTest] {return !testRunningHash[pathToTest]; });
+		}
+		
 		testRunningHash[pathToTest] = true;
 
-		std::thread t([this, pathToTest, notify]
+		QFileInfo info(pathToTest);
+		QProcess testProcess;
+		QStringList arguments;
+
+		bool first = true;
+		int tests = 0;
+		int progress = 0;
+
+		// when the process finished, read any remaining output then quit the loop
+		connect(&testProcess, static_cast<void (QProcess::*)(int)>(&QProcess::finished), &loop, [&, pathToTest]
 		{
-			QEventLoop loop;
+			QString output = testProcess.readAllStandardOutput();
+			output.append("\nTEST RUN COMPLETED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n\n");
 
-			QFileInfo info(pathToTest);
-			executableModel->setData(executableModelHash[pathToTest], QExecutableModel::RUNNING, QExecutableModel::StateRole);
-			QProcess testProcess;
-			QStringList arguments;
+			emit testOutputReady(output);
+			emit testResultsReady(pathToTest, notify);
+			emit testProgress(pathToTest, 0, 0);
 
-			bool first = true;
-			int tests = 0;
-			int progress = 0;
+			testRunningHash[pathToTest] = false;
+			threadKillCv.notify_one();
 
-			// when the process finished, read any remaining output then quit the loop
-			connect(&testProcess, static_cast<void (QProcess::*)(int)>(&QProcess::finished), &loop, [&]
-			{
-				QString output = testProcess.readAllStandardOutput();
-				output.append("\nTEST RUN COMPLETED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n\n");
+			loop.exit();
+		}, Qt::QueuedConnection);
 
-				emit testOutputReady(output);
-				emit testResultsReady(pathToTest, notify);
-				emit testProgress(pathToTest, 0, 0);
+		// get killed if asked to do so
+		connect(this, &MainWindowPrivate::killTest, &loop, [&, pathToTest]
+		{
+			testProcess.kill();
+			QString output = testProcess.readAllStandardOutput();
+			output.append("\nTEST RUN KILLED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n\n");
 
-				loop.exit();
-			});
+			emit testOutputReady(output);
+			emit testResultsReady(pathToTest, notify);
+			emit testProgress(pathToTest, 0, 0);
 
-			// SET GTEST ARGS
-			arguments << "--gtest_output=xml:" + this->xmlPath(pathToTest);
+			testRunningHash[pathToTest] = false;
+			threadKillCv.notify_one();
 
-			testProcess.start(pathToTest, arguments);
+			loop.exit();
+		}, Qt::QueuedConnection);
 
-			// get the first line of output. If we don't get it in a timely manner, the test is
-			// probably bugged out so kill it.
-			if (!testProcess.waitForReadyRead(500))
-			{
-				testProcess.kill();
-				testRunningHash[pathToTest] = false;
+		// SET GTEST ARGS
+		arguments << "--gtest_output=xml:" + this->xmlPath(pathToTest);
+
+		testProcess.start(pathToTest, arguments);
+
+		// get the first line of output. If we don't get it in a timely manner, the test is
+		// probably bugged out so kill it.
+		if (!testProcess.waitForReadyRead(500))
+		{
+			testProcess.kill();
+			testRunningHash[pathToTest] = false;
 				
-				emit testProgress(pathToTest, 0, 0);
-				emit testOutputReady("");
+			emit testProgress(pathToTest, 0, 0);
+			emit testOutputReady("");
 				
-				return;
+			return;
+		}
+
+		// print test output as it becomes available
+		connect(&testProcess, &QProcess::readyReadStandardOutput, &loop, [&, pathToTest]
+		{
+			QString output = testProcess.readAllStandardOutput();
+
+			// parse the first output line for the number of tests so we can
+			// keep track of progress
+			if (first)
+			{
+				// get the number of tests
+				static QRegExp rx("([0-9]+) tests");
+				rx.indexIn(output);
+				tests = rx.cap(1).toInt();
+				first = false;
+			}
+			else
+			{
+				QRegExp rx("(\\[.*OK.*\\]|\\[.*FAILED.*\\])");
+				if (rx.indexIn(output) != -1)
+					progress++;
 			}
 
-			// print test output as it becomes available
-			connect(&testProcess, &QProcess::readyReadStandardOutput, &loop, [&, pathToTest]
-			{
-				QString output = testProcess.readAllStandardOutput();
+			emit testProgress(pathToTest, progress, tests);
+			emit testOutputReady(output);
+		}, Qt::QueuedConnection);
 
-				// parse the first output line for the number of tests so we can
-				// keep track of progress
-				if (first)
-				{
-					// get the number of tests
-					static QRegExp rx("([0-9]+) tests");
-					rx.indexIn(output);
-					tests = rx.cap(1).toInt();
-					first = false;
-				}
-				else
-				{
-					QRegExp rx("(\\[.*OK.*\\]|\\[.*FAILED.*\\])");
-					if (rx.indexIn(output) != -1)
-						progress++;
-				}
+		loop.exec();
 
-				emit testProgress(pathToTest, progress, tests);
-				emit testOutputReady(output);
-				
-				testRunningHash[pathToTest] = false;
-			});
-
-			loop.exec();
-
-		});
-		t.detach();
-	}
+	});
+	t.detach();
 }
 
 //--------------------------------------------------------------------------------------------------

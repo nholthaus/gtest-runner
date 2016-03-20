@@ -47,6 +47,10 @@
 #include "appinfo.h"
 #include "gtestModel.h"
 
+#include <atomic>
+#include <condition_variable>
+#include <map>
+#include <mutex>
 #include <thread>
 
 #include <QAction>
@@ -151,7 +155,11 @@ public:
 	QHash<QString, QPersistentModelIndex>	executableModelHash;					///< Hash for finding entries in the executable model.
 	QHash<QString, Qt::CheckState>			executableCheckedStateHash;				///< Hash of the previous state of the checkboxes.
 	QHash<QString, QDomDocument>			testResultsHash;						///< Hash table storing the xml test results for each test path.
-	QHash<QString, bool>					testRunningHash;						///< Stores whether the given test is actively running.
+	std::map<QString, std::atomic<bool>>	testRunningHash;						///< Stores whether the given test is actively running.
+
+	// synchronization
+	std::mutex								threadKillMutex;						
+	std::condition_variable					threadKillCv;							///< Condition variable that is notified when a thread is killed.
 
 signals:
 
@@ -161,6 +169,7 @@ signals:
 	void testOutputReady(QString);
 	void testProgress(QString path, int complete, int total);
 	void runTest(QString path, bool notify);
+	void killTest(QString path);													///< kills the test if it's currently running
 
 public:
 
