@@ -1,0 +1,8 @@
+install:
+  - set QTDIR=C:\Qt\5.5\msvc2013_64
+  - set PATH=%PATH%;%QTDIR%\bin;
+  
+build_script:
+  - mkdir build
+  - cd build
+  - cmake ..
