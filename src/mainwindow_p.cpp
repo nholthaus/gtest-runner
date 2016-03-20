@@ -128,7 +128,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	});
 
 	// run the test whenever the executable changes
-	connect(fileWatcher, &QFileSystemWatcher::fileChanged, [this](const QString& path)
+	connect(fileWatcher, &QFileSystemWatcher::fileChanged, this, [this](const QString& path)
 	{	
 		QModelIndex m = executableModelHash[path];
 		m = m.sibling(m.row(), QExecutableModel::NameColumn);
@@ -144,6 +144,12 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 				// add a little delay to avoid running multiple instances of the same test build,
 				// and to avoid running the file before visual studio is done writting it.
 				QTimer::singleShot(500, [this, path] {emit runTestInThread(path, true); });
+				
+				// the directories tend to change A LOT for a single build, so let the watcher
+				// cool off a bit. Anyone who is actually building there code multiple times
+				// within 500 msecs on purpose is an asshole, and we won't support them.
+				fileWatcher->blockSignals(true);
+				QTimer::singleShot(500, [this, path] {emit fileWatcher->blockSignals(false); });
 			}
 			else
 			{
@@ -163,7 +169,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	{
 		// This could be caused by the re-build of a watched test (which cause additionally cause the
 		// watcher to stop watching it), so just in case add all the test paths back.
-		this->fileWatcher->addPaths(executablePaths);
+		this->fileWatcher->addPaths(executablePaths.filter(path));
 	});
 
 	// re-rerun tests when auto-testing is re-enabled
