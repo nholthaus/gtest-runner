@@ -16,5 +16,5 @@ platform:
 #  - Debug
 #  - Release
  
-build_script:
+build:
   Project: build/gtest-gui-HEAD.sln
