@@ -6,3 +6,4 @@ before_build:
   - mkdir build
   - cd build
   - cmake ..
+  - dir
