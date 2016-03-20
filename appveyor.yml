@@ -9,11 +9,11 @@ before_build:
   - cd ..
   - dir
 
-#platform:
-#  - x64
+platform:
+  - x86
   
-#configuration:
-#  - Debug
+configuration:
+  - Debug
 #  - Release
  
 build:
