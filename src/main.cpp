@@ -41,6 +41,7 @@
 
 // Qt
 #include <QApplication>
+#include <QDebug>
 #include <QtGlobal>
 
 // gtest-gui
@@ -52,7 +53,7 @@ int main(int argc, char *argv[])
 	Q_INIT_RESOURCE(resources);
 
 // Enable high-DPI scaling with Qt 5.6+
-#if QT_VERSION >= 050600
+#if (QT_VERSION >= QT_VERSION_CHECK(5,6,0))
 	QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
 	
