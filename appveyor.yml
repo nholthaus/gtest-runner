@@ -6,7 +6,18 @@ before_build:
   - mkdir build
   - cd build
   - cmake ..
+
+project:
+  - ALL_BUILD.vcxproj
   
-build:
-  - msbuild "build\ALL_BUILD.vcxproj" /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+platform:
+  - x86
+  - Any CPU
+
+configuration:
+  - Debug
+  - Release
+
+matrix:
+  fast_finish: true
  
