@@ -74,7 +74,7 @@ public:
 		highlightingRules.append(rule);
 
 		errorFormat.setForeground(QColor("#ffd700"));
-		rule.pattern = QRegExp("TEST RUN COMPLETED:.*");
+		rule.pattern = QRegExp("TEST RUN .*");
 		rule.format = errorFormat;
 		highlightingRules.append(rule);
 	}
