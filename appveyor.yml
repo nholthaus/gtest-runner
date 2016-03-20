@@ -21,3 +21,4 @@ matrix:
  
 build:
   parallel: true
+  project: "build\ALL_BUILD.vcxproj"
