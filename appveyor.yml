@@ -21,4 +21,4 @@ matrix:
  
 build:
   parallel: true
-  project: build\gtest-gui-{branch}.sln
+  project: build\gtest-gui-HEAD.sln
