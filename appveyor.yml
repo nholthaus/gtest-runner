@@ -1,5 +1,5 @@
 install:
-  - set QTDIR=C:\Qt\5.5\msvc2013
+  - set QTDIR=C:\Qt\5.5\msvc2013_64
   - set PATH=%PATH%;%QTDIR%\bin;
   
 before_build:
@@ -10,7 +10,7 @@ before_build:
   - dir
 
 platform:
-  - x86
+  - x64
   
 configuration:
   - Debug
