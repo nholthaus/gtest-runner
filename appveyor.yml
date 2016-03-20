@@ -21,4 +21,4 @@ matrix:
  
 build:
   parallel: true
-  project: build\ALL_BUILD.vcxproj
+  project: build\gtest-gui-{branch}.sln
