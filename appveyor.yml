@@ -3,7 +3,7 @@ install:
   - set PATH=%PATH%;%QTDIR%\bin;
   
 before_build:
-  - mkdir build
+  - md build
   - cd build
   - cmake ..
   - dir
@@ -21,4 +21,4 @@ matrix:
  
 build:
   parallel: true
-  project: build\gtest-gui-HEAD.sln
+  project: gtest-gui-HEAD.sln
