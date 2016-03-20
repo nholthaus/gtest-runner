@@ -1,5 +1,7 @@
+os: Visual Studio 2013
+
 install:
-  - set QTDIR=C:\Qt\5.5\msvc2013_64
+  - set QTDIR=C:\Qt\5.5\msvc2013
   - set PATH=%PATH%;%QTDIR%\bin;
   
 before_build:
