@@ -6,18 +6,18 @@ before_build:
   - mkdir build
   - cd build
   - cmake ..
+  - dir
   
-platform:
-  - x86
-  - Any CPU
+#platform:
+#  - x86
+#  - Any CPU
 
-configuration:
-  - Debug
-  - Release
+#configuration:
+#  - Debug
+#  - Release
 
 matrix:
   fast_finish: true
  
 build:
   parallel: true
-  project: ALL_BUILD.vcxproj
