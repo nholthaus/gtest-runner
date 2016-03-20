@@ -76,8 +76,8 @@ Q_INVOKABLE QVariant QExecutableModel::data(const QModelIndex &index, int role /
 	switch (role)
 	{
 	case Qt::DecorationRole:
-		if(index.column() == 0)
-		{
+ 		if(index.column() == NameColumn)
+ 		{
 			switch (data(index, StateRole).toInt())
 			{
 			case NOT_RUNNING:
