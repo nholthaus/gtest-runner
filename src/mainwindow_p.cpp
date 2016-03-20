@@ -377,10 +377,18 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 		connect(&testProcess, static_cast<void (QProcess::*)(int)>(&QProcess::finished), &loop, [&, pathToTest]
 		{
 			QString output = testProcess.readAllStandardOutput();
-			output.append("\nTEST RUN COMPLETED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n\n");
-
+			if(testProcess.exitStatus() == QProcess::NormalExit)
+			{
+				output.append("\nTEST RUN COMPLETED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n\n");
+				emit testResultsReady(pathToTest, notify);
+			}
+			else
+			{
+				output.append("\nTEST RUN EXITED WITH ERRORS: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n\n");
+				executableModel->setData(executableModelHash[pathToTest], QExecutableModel::NOT_RUNNING, QExecutableModel::StateRole);
+			}
+			
 			emit testOutputReady(output);
-			emit testResultsReady(pathToTest, notify);
 			emit testProgress(pathToTest, 0, 0);
 
 			testRunningHash[pathToTest] = false;
