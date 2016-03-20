@@ -6,6 +6,7 @@ before_build:
   - md build
   - cd build
   - cmake ..
+  - cd ..
   - dir
   
 #platform:
@@ -21,4 +22,4 @@ matrix:
  
 build:
   parallel: true
-  project: gtest-gui-HEAD.sln
+  project: build\gtest-gui-HEAD.sln
