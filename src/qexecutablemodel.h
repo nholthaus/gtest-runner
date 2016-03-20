@@ -62,7 +62,7 @@ public:
 
 	enum Columns
 	{
-//		AdvancedOptionsColumn,
+		AdvancedOptionsColumn,
 		NameColumn,
 		ProgressColumn,
 	};

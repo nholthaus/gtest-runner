@@ -59,7 +59,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	executableTreeView->setHeaderHidden(true);
 	executableTreeView->setIndentation(0);
 	executableTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	executableTreeView->setItemDelegateForColumn(1, new QProgressBarDelegate(executableTreeView));
+	executableTreeView->setItemDelegateForColumn(QExecutableModel::ProgressColumn, new QProgressBarDelegate(executableTreeView));
 	executableTreeView->setSelectionBehavior(QAbstractItemView::SelectRows);
 	executableTreeView->setSelectionMode(QAbstractItemView::SingleSelection);
 
@@ -293,7 +293,7 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	QFileInfo xmlResults(xmlPath(path));
 	QStandardItem* item = new QStandardItem(fileinfo.baseName());
 
-	executableModel->appendRow(item);
+	executableModel->setItem(executableModel->rowCount(), QExecutableModel::NameColumn, item);
 	executableModelHash.insert(path, QPersistentModelIndex(executableModel->index(executableModel->rowCount() - 1, QExecutableModel::NameColumn)));
 	
 	executableModel->setData(executableModelHash[path], 0, QExecutableModel::ProgressRole);
