@@ -9,12 +9,11 @@ before_build:
   - cd ..
   - dir
   
-#platform:
-#  - x86
-#  - Any CPU
+platform:
+  - Any CPU
 
 #configuration:
-#  - Debug
+  - Debug
 #  - Release
 
 matrix:
