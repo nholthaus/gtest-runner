@@ -6,4 +6,6 @@ before_build:
   - mkdir build
   - cd build
   - cmake ..
-  - dir
+beuild:
+  - msbuild "build\ALL_BUILD.vcxproj" /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+ 
