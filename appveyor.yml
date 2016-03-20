@@ -8,12 +8,9 @@ before_build:
   - cmake ..
   - cd ..
   - dir
-  
-platform:
-  - Any CPU
 
 #configuration:
-  - Debug
+#  - Debug
 #  - Release
 
 matrix:
