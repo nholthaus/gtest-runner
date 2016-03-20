@@ -16,6 +16,5 @@ before_build:
 matrix:
   fast_finish: true
  
-build:
-  parallel: true
-  project: build\gtest-gui-HEAD.sln
+build_script:
+  - msbuild "build/gtest-gui-HEAD.sln" /machine:x64 /m /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
