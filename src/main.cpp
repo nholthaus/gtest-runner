@@ -51,7 +51,6 @@ int main(int argc, char *argv[])
 {
 	Q_INIT_RESOURCE(resources);
 
-	
 // Enable high-DPI scaling with Qt 5.6+
 #if QT_VERSION >= 050600
 	QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
