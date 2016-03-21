@@ -84,30 +84,32 @@ configure_file(src/appinfo.h.in appinfo.h @ONLY NEWLINE_STYLE UNIX)
 #	SOURCE CODE
 #-------------------------------------------------------------------------------
 
-# .cpp files
-list(APPEND SOURCE_FILES
-src/main.cpp
-src/mainwindow.cpp
-src/mainwindow_p.cpp
-src/executableModelDelegate.cpp
-src/domitem.cpp
-src/GTestFailureModel.cpp
-src/gtestModel.cpp
-src/qexecutablemodel.cpp
-src/QBottomUpSortFilterProxy.cpp
-)
-
 # .h files
 list(APPEND HEADER_FILES
 src/mainwindow.h
 src/mainwindow_p.h
 src/executableModelDelegate.h
+src/executableSettingsDialog.h
 src/domitem.h
 src/GTestFailureModel.h
 src/gtestmodel.h
 src/qexecutablemodel.h
 src/QBottomUpSortFilterProxy.h
 src/QStdOutSyntaxHighlighter.h
+)
+
+# .cpp files
+list(APPEND SOURCE_FILES
+src/main.cpp
+src/mainwindow.cpp
+src/mainwindow_p.cpp
+src/executableModelDelegate.cpp
+src/executableSettingsDialog.cpp
+src/domitem.cpp
+src/GTestFailureModel.cpp
+src/gtestModel.cpp
+src/qexecutablemodel.cpp
+src/QBottomUpSortFilterProxy.cpp
 )
 
 # on windows, append headers to source so they show up in visual studio
