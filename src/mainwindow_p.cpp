@@ -426,6 +426,8 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 			QString output = testProcess.readAllStandardOutput();
 			output.append("\nTEST RUN KILLED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n\n");
 
+			executableModel->setData(executableModelHash[pathToTest], QExecutableModel::NOT_RUNNING, QExecutableModel::StateRole);
+
 			emit testOutputReady(output);
 			emit testProgress(pathToTest, 0, 0);
 
@@ -667,20 +669,25 @@ void MainWindowPrivate::removeTest(const QModelIndex &index)
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: getTestDialog
 //--------------------------------------------------------------------------------------------------
-QModelIndex MainWindowPrivate::getTestIndexDialog(const QString& label)
+QModelIndex MainWindowPrivate::getTestIndexDialog(const QString& label, bool running /*= false*/)
 {
 	bool ok;
 	QStringList tests;
 
 	for (int i = 0; i < executableModel->rowCount(); ++i)
 	{
-		tests << executableModel->index(i, QExecutableModel::NameColumn).data().toString();
+		QString path = executableModel->index(i, QExecutableModel::NameColumn).data(QExecutableModel::PathRole).toString();
+		if(!running || testRunningHash[path])
+			tests << executableModel->index(i, QExecutableModel::NameColumn).data().toString();
 	}
-	QString selected = QInputDialog::getItem(this->q_ptr, "Select Test", label, tests, 0, false, &ok);
 
-	QModelIndexList matches = executableModel->match(executableModel->index(0, 0), Qt::DisplayRole, selected);
+	if (tests.isEmpty())
+		return QModelIndex();
+
+	QString selected = QInputDialog::getItem(this->q_ptr, "Select Test", label, tests, 0, false, &ok);
+	QModelIndexList matches = executableModel->match(executableModel->index(0, QExecutableModel::NameColumn), Qt::DisplayRole, selected);
 	if (ok && matches.size())
-		return matches.first();
+		return matches.first().sibling(matches.first().row(), QExecutableModel::NameColumn);
 	else
 		return QModelIndex();
 }
@@ -695,9 +702,11 @@ void MainWindowPrivate::createExecutableContextMenu()
 	executableContextMenu = new QMenu(executableTreeView);
 
 	runTestAction = new QAction(q->style()->standardIcon(QStyle::SP_BrowserReload), "Run Test...", executableContextMenu);
-	removeTestAction = new QAction(q->style()->standardIcon(QStyle::SP_DialogCloseButton), "Remove Test", executableContextMenu);
+	killTestAction = new QAction(q->style()->standardIcon(QStyle::SP_DialogCloseButton), "Kill Test...", executableContextMenu);
+	removeTestAction = new QAction(q->style()->standardIcon(QStyle::SP_TrashIcon), "Remove Test", executableContextMenu);
 
 	executableContextMenu->addAction(runTestAction);
+	executableContextMenu->addAction(killTestAction);
 	executableContextMenu->addSeparator();	
 	executableContextMenu->addAction(addTestAction);
 	executableContextMenu->addAction(removeTestAction);
@@ -708,15 +717,21 @@ void MainWindowPrivate::createExecutableContextMenu()
 	connect(executableTreeView, &QListView::customContextMenuRequested, [this, q](const QPoint& pos)
 	{
 		QModelIndex indexUnderMouse = executableTreeView->indexAt(pos);
-		if (indexUnderMouse.isValid())
+		QModelIndex index = indexUnderMouse.sibling(indexUnderMouse.row(), QExecutableModel::NameColumn);
+		if (index.isValid())
 		{
 			runTestAction->setEnabled(true);
+			if (testRunningHash[index.data(QExecutableModel::PathRole).toString()])
+				killTestAction->setEnabled(true);
+			else
+				killTestAction->setEnabled(false);
 			removeTestAction->setVisible(true);
 			selectAndRemoveTestAction->setVisible(false);
 		}
 		else
 		{
 			runTestAction->setEnabled(false);
+			killTestAction->setEnabled(false);
 			removeTestAction->setVisible(false);
 			selectAndRemoveTestAction->setVisible(true);
 		}
@@ -729,6 +744,16 @@ void MainWindowPrivate::createExecutableContextMenu()
 		QModelIndex index = executableTreeView->currentIndex().sibling(executableTreeView->currentIndex().row(), QExecutableModel::NameColumn);
 		QString path = index.data(QExecutableModel::PathRole).toString();
 		runTestInThread(path, false);
+	});
+
+	connect(killTestAction, &QAction::triggered, [this]
+	{
+		Q_Q(MainWindow);
+		QModelIndex index = executableTreeView->currentIndex().sibling(executableTreeView->currentIndex().row(), QExecutableModel::NameColumn);
+		QString path = index.data(QExecutableModel::PathRole).toString();
+		QFileInfo info(path);
+		if (QMessageBox::question(q, "Kill Test?", "Are you sure you want to kill test: " + info.baseName() + "?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+			emit killTest(path);
 	});
 
 	connect(removeTestAction, &QAction::triggered, [this]
@@ -790,14 +815,17 @@ void MainWindowPrivate::createTestMenu()
 	testMenu = new QMenu("Test", q);
 
 	addTestAction = new QAction(QIcon(":/images/green"), "Add Test...", q);
-	selectAndRemoveTestAction = new QAction(q->style()->standardIcon(QStyle::SP_DialogCloseButton), "Remove Test...", testMenu);
+	selectAndRemoveTestAction = new QAction(q->style()->standardIcon(QStyle::SP_TrashIcon), "Remove Test...", testMenu);
 	selectAndRunTest = new QAction(q->style()->standardIcon(QStyle::SP_BrowserReload), "Run Test...", testMenu);
 	selectAndRunTest->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_F5));
+	selectAndKillTest = new QAction(q->style()->standardIcon(QStyle::SP_DialogCloseButton), "Kill Test...", testMenu);
+	selectAndKillTest->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_F5));
 
 	testMenu->addAction(addTestAction);
 	testMenu->addAction(selectAndRemoveTestAction);
 	testMenu->addSeparator();
 	testMenu->addAction(selectAndRunTest);
+	testMenu->addAction(selectAndKillTest);
 
 	q->menuBar()->addMenu(testMenu);
 
@@ -827,6 +855,15 @@ void MainWindowPrivate::createTestMenu()
 		QModelIndex index = getTestIndexDialog("Select Test to run:");
 		if(index.isValid())
 			runTestInThread(index.data(QExecutableModel::PathRole).toString(), false);
+	});
+
+	connect(selectAndKillTest, &QAction::triggered, [this, q]
+	{
+		QModelIndex index = getTestIndexDialog("Select Test to kill:", true);
+		QFileInfo info(index.data(QExecutableModel::PathRole).toString());
+		if (index.isValid())
+			if (QMessageBox::question(q, "Kill Test?", "Are you sure you want to kill test: " + info.baseName() + "?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+				emit killTest(index.data(QExecutableModel::PathRole).toString());
 	});
 }
 
