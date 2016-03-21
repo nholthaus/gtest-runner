@@ -43,6 +43,7 @@
 #include "mainwindow.h"
 #include "qexecutablemodel.h"
 #include "QBottomUpSortFilterProxy.h"
+#include "executableSettingsDialog.h"
 #include "QStdOutSyntaxHighlighter.h"
 #include "appinfo.h"
 #include "gtestModel.h"
@@ -102,6 +103,7 @@ public:
 	// GUI components
 
 	MainWindow*								q_ptr;
+	
 	QDockWidget*							executableDock;							///< Dock Widget for the gtest executable selector.
 	QFrame*									executableDockFrame;					///< Frame for containing the dock's sub-widgets
 	QTreeView*								executableTreeView;						///< Widget to display and select gtest executables	
@@ -109,6 +111,7 @@ public:
 	QPushButton*							addTestButton;							///< Button which adds a test to the monitored tests.
 	QFileSystemWatcher*						fileWatcher;							///< Hash table to store the file system watchers.
 	QStringList								executablePaths;						///< String list of all the paths, which can be used to re-constitute the filewatcher after an executable rebuild.
+	QExecutableSettingsDialog*				executableAdvancedSettingsDialog;		///< Dialog to display/select advanced command-line settings.
 
 	QFrame*									centralFrame;							///< Central widget frame.
 	QLineEdit*								testCaseFilterEdit;						///< Line edit for filtering test cases.

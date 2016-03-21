@@ -7,6 +7,7 @@
 		<file alias="images/yellow">images/yellow.png</file>
 		<file alias="images/red">images/red.png</file>
 		<file alias="images/fail">images/fail.png</file>
+    <file alias="images/hamburger">images/hamburger.png</file>
 		<file alias="schemas/gtest.xsd">schemas/gtest.xsd</file>
 		<file alias="fonts/consolas">fonts/consola.ttf</file>
 	</qresource>

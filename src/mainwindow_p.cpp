@@ -24,6 +24,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	testCaseProxyModel(new QBottomUpSortFilterProxy(q)),
 	addTestButton(new QPushButton(q)),
 	fileWatcher(new QFileSystemWatcher(q)),
+	executableAdvancedSettingsDialog(new QExecutableSettingsDialog(q)),
 	centralFrame(new QFrame(q)),
 	testCaseFilterEdit(new QLineEdit(q)),
 	testCaseTreeView(new QTreeView(q)),
@@ -66,6 +67,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	executableDockFrame->setLayout(new QVBoxLayout);
 	executableDockFrame->layout()->addWidget(executableTreeView);
 	executableDockFrame->layout()->addWidget(addTestButton);
+
+	executableAdvancedSettingsDialog->setModal(false);
 
 	addTestButton->setText("Add Test Executable...");
 
@@ -316,6 +319,25 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	bool previousResults = loadTestResults(path, false);
 	bool runAutomatically = (item->data(Qt::CheckStateRole) == Qt::Checked);
 	bool outOfDate = lastModified < fileinfo.lastModified();
+
+ 	QPushButton* advButton = new QPushButton();
+	advButton->setIcon(QIcon(":/images/hamburger"));
+	advButton->setToolTip("Advanced...");
+	advButton->setFixedSize(18, 18);
+ 	executableTreeView->setIndexWidget(executableModel->index(executableModel->rowCount() - 1, QExecutableModel::AdvancedOptionsColumn), advButton);
+	connect(advButton, &QPushButton::clicked, [this, advButton]
+	{
+		if(!executableAdvancedSettingsDialog->isVisible())
+		{
+			auto pos = advButton->mapToGlobal(advButton->rect().bottomLeft());
+			executableAdvancedSettingsDialog->move(pos);
+			executableAdvancedSettingsDialog->show();
+		}
+		else
+		{
+			executableAdvancedSettingsDialog->reject();
+		}
+	});
 
 	executableTreeView->setCurrentIndex(executableModel->indexFromItem(item));
 	for (int i = 0; i < executableModel->columnCount(); i++)

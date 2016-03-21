@@ -70,31 +70,4 @@ private:
 
 };	// CLASS: QProgressBarDelegate
 
-
-//--------------------------------------------------------------------------------------------------
-//	CLASS: QPushButtonDelegate
-//--------------------------------------------------------------------------------------------------
-/// @brief		Represents the advanced options column as a pushbutton
-/// @details	
-//--------------------------------------------------------------------------------------------------
-class QPushButtonDelegate : public QStyledItemDelegate
-{
-public:
-
-	explicit QPushButtonDelegate(QObject* parent = 0);
-	virtual ~QPushButtonDelegate();
-	
-
-
-
-protected:
-
-	
-	
-private:
-
-
-
-};	// CLASS: QPushButtonDelegate
-
 #endif // executableModelDelegate_h__
