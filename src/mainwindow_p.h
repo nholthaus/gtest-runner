@@ -132,6 +132,7 @@ public:
 
 	// Menus
 	QMenu*									executableContextMenu;					///< context menu for the executable list view.
+	QAction*								killTestAction;							///< Kills a running test
 	QAction*								runTestAction;							///< Manually forces a test-run.
 	QAction*								removeTestAction;						///< Removes a test from being watched.
 	
@@ -143,6 +144,7 @@ public:
 
 	QMenu*									testMenu;								///< Menu for test-related actions
 	QAction*								addTestAction;							///< Opens a dialog to add a test executable.
+	QAction*								selectAndKillTest;						///< Selects and kills a running test.
 	QAction*								selectAndRemoveTestAction;				///< Remove a test after choosing it from a list.
 	QAction*								selectAndRunTest;						///< Run a test after selecting it from a list.																	///< program options.
 
@@ -204,7 +206,7 @@ protected:
 	void createTestCaseViewContextMenu();
 	void createConsoleContextMenu();
 
-	QModelIndex getTestIndexDialog(const QString& label);
+	QModelIndex getTestIndexDialog(const QString& label, bool running = false);
 
 };	// CLASS: MainWindowPrivate
 
