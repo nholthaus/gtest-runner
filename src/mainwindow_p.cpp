@@ -3,6 +3,8 @@
 #include "mainwindow_p.h"
 #include "executableModelDelegate.h"
 
+#include <QApplication>
+#include <QClipboard>
 #include <QCryptographicHash>
 #include <QDesktopServices>
 #include <QFontDatabase>
@@ -237,6 +239,15 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	{
 		if (index.isValid())
 			failureDock->show();
+	});
+
+	// copy failure line to clipboard (to support IDE Ctrl-G + Ctrl-V)
+	connect(failureTreeView, &QTreeView::clicked, [this](const QModelIndex& index)
+	{
+		if (index.isValid())
+		{
+			QApplication::clipboard()->setText(index.data(GTestFailureModel::LineRole).toString());
+		}
 	});
 
 	// open file on double-click
