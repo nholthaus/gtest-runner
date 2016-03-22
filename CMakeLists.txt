@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.0)
 #	PROJECT SETTINGS
 #-------------------------------------------------------------------------------
 
-set(TARGET_NAME gtest-gui)
+set(TARGET_NAME gtest-runner)
 
 # Use git branch as project name if clones from git
 find_package(Git)
@@ -76,7 +76,7 @@ endif(WIN32)
 set(APPLICATION_NAME ${TARGET_NAME})
 set(APPLICATION_VERSION ${BRANCH})
 set(APPLICATION_ORGANIZATION "Menari Softworks")
-set(APPLICATION_ORGANIZATION_DOMAIN "https://github.com/nholthaus/gtest-gui")
+set(APPLICATION_ORGANIZATION_DOMAIN "https://github.com/nholthaus/gtest-runner")
 
 configure_file(src/appinfo.h.in appinfo.h @ONLY NEWLINE_STYLE UNIX)
 

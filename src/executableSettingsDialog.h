@@ -1,6 +1,6 @@
 //--------------------------------------------------------------------------------------------------
 // 
-///	@PROJECT	gtest-gui
+///	@PROJECT	gtest-runner
 /// @BRIEF		Dialog box for gtest command line options
 ///	@DETAILS	
 //

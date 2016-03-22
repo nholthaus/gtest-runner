@@ -1,6 +1,6 @@
 //--------------------------------------------------------------------------------------------------
 // 
-///	@PROJECT	gtest-gui
+///	@PROJECT	gtest-runner
 /// @BRIEF		Delegate definitions for the exectuable test model
 ///	@DETAILS	
 //

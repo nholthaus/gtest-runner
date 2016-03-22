@@ -1,6 +1,6 @@
 //--------------------------------------------------------------------------------------------------
 // 
-///	@PROJECT	gtest-gui
+///	@PROJECT	gtest-runner
 /// @BRIEF		Filter proxy that does sorting on tree models
 ///	@DETAILS	
 //

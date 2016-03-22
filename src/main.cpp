@@ -1,7 +1,7 @@
 //--------------------------------------------------------------------------------------------------
 // 
-/// @PROJECT		gtest-gui
-/// @BRIEF		main file for gtest-gui
+/// @PROJECT	gtest-runner
+/// @BRIEF		main file for gtest-runner
 /// @DETAILS	
 //
 //--------------------------------------------------------------------------------------------------
@@ -44,7 +44,7 @@
 #include <QDebug>
 #include <QtGlobal>
 
-// gtest-gui
+// gtest-runner
 #include "appinfo.h"
 #include "mainwindow.h"
 
