@@ -1,6 +1,6 @@
 //--------------------------------------------------------------------------------------------------
 // 
-///	@PROJECT	gtest-gui
+///	@PROJECT	gtest-runner
 /// @BRIEF		GTest std::out syntax highlighter
 ///	@DETAILS	
 //

@@ -1,6 +1,6 @@
 //--------------------------------------------------------------------------------------------------
 // 
-///	@PROJECT	gtest-gui
+///	@PROJECT	gtest-runner
 /// @BRIEF		GTest failure model
 ///	@DETAILS	
 //

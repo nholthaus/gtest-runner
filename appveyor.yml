@@ -16,4 +16,4 @@ configuration:
   - Release
  
 build:
-  project: build/gtest-gui-HEAD.sln
+  project: build/gtest-runner-HEAD.sln
