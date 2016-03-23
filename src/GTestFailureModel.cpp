@@ -41,7 +41,7 @@ QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 	static QRegExp whichisrx("[Ww]hich is: ([^,\n]*)");
 	static QRegExp nearrx("The difference between (.*) and (.*) is (.*), which exceeds (.*), where\n(.*) evaluates to(.*),\n(.*) evaluates to(.*), and\n(.*) evaluates to(.*).");
 	static QRegExp predrx("\n(.*) evaluates to (.*), where\n(.*)");
-	static QRegExp sehrx("(.*)\n(.*) with code (.*) thrown in the test body");
+	static QRegExp sehrx("(.*)\n(.*) with (code|description) (.*) thrown in the test body");
 
 	QString filename;
 
@@ -79,7 +79,7 @@ QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 			predrx.indexIn(message);
 			if(!predrx.cap(2).isEmpty()) return predrx.cap(2);
 			sehrx.indexIn(message);
-			return sehrx.cap(3);
+			return sehrx.cap(4);
 		case 4:
 			expectedrx.indexIn(message);
 			for (int i = 1; i <= expectedrx.captureCount(); ++i)
