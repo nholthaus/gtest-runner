@@ -73,6 +73,11 @@ public:
 		StateRole = Qt::UserRole,
 		LastModifiedRole = Qt::UserRole + 1,
 		ProgressRole = Qt::UserRole + 2,
+		FilterRole = Qt::UserRole + 3,
+		RepeatTestsRole = Qt::UserRole + 4,
+		RunDisabledTestsRole = Qt::UserRole + 5,
+		ShuffleRole = Qt::UserRole + 6,
+		RandomSeedRole = Qt::UserRole + 7,
 	};
 
 	enum States

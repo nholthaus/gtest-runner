@@ -42,6 +42,7 @@
 //------------------------------
 
 #include <QDialog>
+#include <QPersistentModelIndex>
 
 class QExecutableSettingsDialogPrivate;
 
@@ -58,6 +59,9 @@ public:
 	explicit QExecutableSettingsDialog(QWidget* parent = (QWidget*)0);
 	virtual ~QExecutableSettingsDialog();
 	
+	void setModelIndex(const QPersistentModelIndex& index);
+	virtual void accept() override;
+
 protected:
 
 	

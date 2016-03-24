@@ -298,7 +298,7 @@ QString MainWindowPrivate::xmlPath(const QString& testPath) const
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: addTestExecutable
 //--------------------------------------------------------------------------------------------------
-void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState checked /*= Qt::Checked*/, QDateTime lastModified /*= QDateTime::currentDateTime()*/)
+void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState checked, QDateTime lastModified, QString filter /*= ""*/, int repeat /*= 0*/, Qt::CheckState runDisabled /*= Qt::Unchecked*/, Qt::CheckState shuffle /*= Qt::Unchecked*/, int randomSeed /*= 0*/)
 {
 	QFileInfo fileinfo(path);
 
@@ -320,6 +320,11 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	executableModel->setData(executableModelHash[path], path, QExecutableModel::PathRole);
 	executableModel->setData(executableModelHash[path], lastModified, QExecutableModel::LastModifiedRole);
 	executableModel->setData(executableModelHash[path], QExecutableModel::NOT_RUNNING, QExecutableModel::StateRole);
+	executableModel->setData(executableModelHash[path], filter, QExecutableModel::FilterRole);
+	executableModel->setData(executableModelHash[path], repeat, QExecutableModel::RepeatTestsRole);
+	executableModel->setData(executableModelHash[path], runDisabled, QExecutableModel::RunDisabledTestsRole);
+	executableModel->setData(executableModelHash[path], shuffle, QExecutableModel::ShuffleRole);
+	executableModel->setData(executableModelHash[path], randomSeed, QExecutableModel::RandomSeedRole);
 	item->setCheckable(true);
 	item->setCheckState(checked);
 
@@ -340,8 +345,11 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	{
 		if(!executableAdvancedSettingsDialog->isVisible())
 		{
+			QPersistentModelIndex index = executableTreeView->indexAt(executableTreeView->mapFromGlobal(QCursor::pos()));
+			index = index.sibling(index.row(), QExecutableModel::NameColumn);
 			auto pos = advButton->mapToGlobal(advButton->rect().bottomLeft());
 			executableAdvancedSettingsDialog->move(pos);
+			executableAdvancedSettingsDialog->setModelIndex(index);
 			executableAdvancedSettingsDialog->show();
 		}
 		else
@@ -451,6 +459,19 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 		// SET GTEST ARGS
 		arguments << "--gtest_output=xml:" + this->xmlPath(pathToTest);
 
+		QString filter = executableModel->data(executableModelHash[pathToTest], QExecutableModel::FilterRole).toString();
+		if (!filter.isEmpty()) arguments << "--gtest_filter=" + filter;
+
+		QString repeat = executableModel->data(executableModelHash[pathToTest], QExecutableModel::RepeatTestsRole).toString();
+		if (repeat != "0" && repeat != "1") arguments << "--gtest_repeat=" + repeat;
+
+		int runDisabled = executableModel->data(executableModelHash[pathToTest], QExecutableModel::RunDisabledTestsRole).toInt();
+		if (runDisabled) arguments << "--gtest_also_run_disabled_tests";
+
+
+		qDebug() << arguments;
+
+		// Start the test
 		testProcess.start(pathToTest, arguments);
 
 		// get the first line of output. If we don't get it in a timely manner, the test is

@@ -1,10 +1,13 @@
 #include "executableSettingsDialog.h"
+#include "qexecutablemodel.h"
 
 #include <QCheckBox>
 #include <QComboBox>
+#include <QDebug>
 #include <QDialogButtonBox>
 #include <QGridLayout>
 #include <QLabel>
+#include <QModelIndex>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QValidator>
@@ -50,6 +53,8 @@ public:
 	QIntValidator*				gtestRandomSeedValidator;
 
 	QDialogButtonBox*			buttonBox;
+
+	QPersistentModelIndex		index;
 
 };
 
@@ -115,5 +120,40 @@ QExecutableSettingsDialog::QExecutableSettingsDialog(QWidget* parent /*= (QObjec
 QExecutableSettingsDialog::~QExecutableSettingsDialog()
 {
 
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: setModelIndex
+//--------------------------------------------------------------------------------------------------
+void QExecutableSettingsDialog::setModelIndex(const QPersistentModelIndex& index)
+{
+	Q_D(QExecutableSettingsDialog);
+
+	d->index = index;
+	d->gtestFilterEdit->setText(index.data(QExecutableModel::FilterRole).toString());
+	d->gtestRepeatLineEdit->setText(index.data(QExecutableModel::RepeatTestsRole).toString());
+	d->gtestAlsoRunDisabledTestsCheckbox->setCheckState((Qt::CheckState)index.data(QExecutableModel::RunDisabledTestsRole).toInt());
+	d->gtestShuffleCheckbox->setCheckState((Qt::CheckState)index.data(QExecutableModel::ShuffleRole).toInt());
+	d->gtestRandomSeedLineEdit->setText(index.data(QExecutableModel::RandomSeedRole).toString());
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: accept
+//--------------------------------------------------------------------------------------------------
+void QExecutableSettingsDialog::accept()
+{
+	Q_D(QExecutableSettingsDialog);
+
+	if (d->index.isValid())
+	{
+		QAbstractItemModel* model(const_cast<QAbstractItemModel*>(d->index.model()));
+		model->setData(model->index(d->index.row(), QExecutableModel::NameColumn), d->gtestFilterEdit->text(), QExecutableModel::FilterRole);
+		model->setData(model->index(d->index.row(), QExecutableModel::NameColumn), d->gtestRepeatLineEdit->text(), QExecutableModel::RepeatTestsRole);
+		model->setData(model->index(d->index.row(), QExecutableModel::NameColumn), d->gtestAlsoRunDisabledTestsCheckbox->checkState(), QExecutableModel::RunDisabledTestsRole);
+		model->setData(model->index(d->index.row(), QExecutableModel::NameColumn), d->gtestShuffleCheckbox->checkState(), QExecutableModel::ShuffleRole);
+		model->setData(model->index(d->index.row(), QExecutableModel::NameColumn), d->gtestRandomSeedLabel->text(), QExecutableModel::RandomSeedRole);
+	}
+
+	QDialog::accept();
 }
 
