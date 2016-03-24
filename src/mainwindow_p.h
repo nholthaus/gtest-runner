@@ -182,7 +182,7 @@ public:
 
 	QString xmlPath(const QString& testPath) const;
 
-	void addTestExecutable(const QString& path, Qt::CheckState checked, QDateTime lastModified);
+	void addTestExecutable(const QString& path, Qt::CheckState checked, QDateTime lastModified, QString filter = "", int repeat = 0, Qt::CheckState runDisabled = Qt::Unchecked, Qt::CheckState shuffle = Qt::Unchecked, int randomSeed = 0);
 
 	void runTestInThread(const QString& pathToTest, bool notify);
 

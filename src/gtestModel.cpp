@@ -64,7 +64,7 @@ QVariant GTestModel::data(const QModelIndex &index, int role) const
 	case Qt::DecorationRole:
 		if (index.column() == 0)
 		{
-			if (attributeMap.namedItem("name").nodeValue().contains("DISABLED_"))
+			if (attributeMap.namedItem("status").nodeValue().contains("notrun"))
 				return grayIcon;
 			if (!attributeMap.namedItem("failures").isNull())
 			{
