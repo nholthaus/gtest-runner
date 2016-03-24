@@ -78,6 +78,7 @@ public:
 		RunDisabledTestsRole = Qt::UserRole + 5,
 		ShuffleRole = Qt::UserRole + 6,
 		RandomSeedRole = Qt::UserRole + 7,
+		ArgsRole = Qt::UserRole + 8,
 	};
 
 	enum States

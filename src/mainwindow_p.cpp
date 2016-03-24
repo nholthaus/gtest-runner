@@ -298,7 +298,9 @@ QString MainWindowPrivate::xmlPath(const QString& testPath) const
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: addTestExecutable
 //--------------------------------------------------------------------------------------------------
-void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState checked, QDateTime lastModified, QString filter /*= ""*/, int repeat /*= 0*/, Qt::CheckState runDisabled /*= Qt::Unchecked*/, Qt::CheckState shuffle /*= Qt::Unchecked*/, int randomSeed /*= 0*/)
+void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState checked, QDateTime lastModified, 
+	QString filter /*= ""*/, int repeat /*= 0*/, Qt::CheckState runDisabled /*= Qt::Unchecked*/, 
+	Qt::CheckState shuffle /*= Qt::Unchecked*/, int randomSeed /*= 0*/, QString otherArgs /*= ""*/)
 {
 	QFileInfo fileinfo(path);
 
@@ -325,6 +327,7 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	executableModel->setData(executableModelHash[path], runDisabled, QExecutableModel::RunDisabledTestsRole);
 	executableModel->setData(executableModelHash[path], shuffle, QExecutableModel::ShuffleRole);
 	executableModel->setData(executableModelHash[path], randomSeed, QExecutableModel::RandomSeedRole);
+	executableModel->setData(executableModelHash[path], otherArgs, QExecutableModel::ArgsRole);
 	item->setCheckable(true);
 	item->setCheckState(checked);
 
@@ -471,6 +474,11 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 		int shuffle = executableModel->data(executableModelHash[pathToTest], QExecutableModel::ShuffleRole).toInt();
 		if (shuffle) arguments << "--gtest_shuffle";
 
+		int seed = executableModel->data(executableModelHash[pathToTest], QExecutableModel::RandomSeedRole).toInt();
+		if (shuffle) arguments << "--gtest_random_seed=" + QString::number(seed);
+
+		QString otherArgs = executableModel->data(executableModelHash[pathToTest], QExecutableModel::ArgsRole).toString();
+		if(!otherArgs.isEmpty()) arguments << otherArgs;
 
 		qDebug() << arguments;
 
