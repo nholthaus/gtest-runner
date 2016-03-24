@@ -637,6 +637,12 @@ void MainWindowPrivate::saveSettings() const
 		settings.setValue("path", index.data(QExecutableModel::PathRole).toString());
 		settings.setValue("checked", index.data(Qt::CheckStateRole).toInt());
 		settings.setValue("lastModified", index.data(QExecutableModel::LastModifiedRole).toDateTime());
+		settings.setValue("filter", index.data(QExecutableModel::FilterRole).toString());
+		settings.setValue("repeat", index.data(QExecutableModel::RepeatTestsRole).toInt());
+		settings.setValue("runDisabled", index.data(QExecutableModel::RunDisabledTestsRole).toInt());
+		settings.setValue("shuffle", index.data(QExecutableModel::ShuffleRole).toInt());
+		settings.setValue("seed", index.data(QExecutableModel::RandomSeedRole).toInt());
+		settings.setValue("args", index.data(QExecutableModel::ArgsRole).toString());
 	}
 	settings.endArray();
 
@@ -665,7 +671,14 @@ void MainWindowPrivate::loadSettings()
 		QString path = settings.value("path").toString();
 		Qt::CheckState checked = static_cast<Qt::CheckState>(settings.value("checked").toInt());
 		QDateTime lastModified = settings.value("lastModified").toDateTime();
-		addTestExecutable(path, checked, lastModified);
+		QString filter = settings.value("filter").toString();
+		int repeat = settings.value("repeat").toInt();
+		Qt::CheckState runDisabled = static_cast<Qt::CheckState>(settings.value("runDisabled").toInt());
+		Qt::CheckState shuffle = static_cast<Qt::CheckState>(settings.value("shuffle").toInt());
+		int seed = settings.value("seed").toInt();
+		QString args = settings.value("args").toString();
+
+		addTestExecutable(path, checked, lastModified, filter, repeat, runDisabled, shuffle, seed, args);
 	}
 	settings.endArray();
 
