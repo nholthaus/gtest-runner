@@ -31,6 +31,8 @@ public:
 		gtestRandomSeedLabel(new QLabel("Random Seed:", q)),
 		gtestRandomSeedLineEdit(new QLineEdit(q)),
 		gtestRandomSeedValidator(new QIntValidator(q)),
+		gtestOtherArgsLabel(new QLabel("Command line:", q)),
+		gtestOtherArgsLineEdit(new QLineEdit(q)),
 		buttonBox(new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, q))
 	{}
 
@@ -51,6 +53,8 @@ public:
 	QLabel*						gtestRandomSeedLabel;
 	QLineEdit*					gtestRandomSeedLineEdit;
 	QIntValidator*				gtestRandomSeedValidator;
+	QLabel*						gtestOtherArgsLabel;
+	QLineEdit*					gtestOtherArgsLineEdit;
 
 	QDialogButtonBox*			buttonBox;
 
@@ -81,7 +85,9 @@ QExecutableSettingsDialog::QExecutableSettingsDialog(QWidget* parent /*= (QObjec
 	layout->addWidget(d->gtestShuffleCheckbox, 3, 1);
 	layout->addWidget(d->gtestRandomSeedLabel, 4, 0);
 	layout->addWidget(d->gtestRandomSeedLineEdit, 4, 1);
-	layout->addWidget(d->buttonBox, 5, 0, 2, 2);
+	layout->addWidget(d->gtestOtherArgsLabel, 5, 0);
+	layout->addWidget(d->gtestOtherArgsLineEdit, 5, 1);
+	layout->addWidget(d->buttonBox, 6, 0, 2, 2);
 
 	d->gtestFilterEdit->setPlaceholderText("Use * for wildcard");
 	d->gtestFilterLabel->setToolTip("Sets the gtest_filter command line argument.");
@@ -98,12 +104,14 @@ QExecutableSettingsDialog::QExecutableSettingsDialog(QWidget* parent /*= (QObjec
 	d->gtestRandomSeedLineEdit->setValidator(d->gtestRandomSeedValidator);
 	d->gtestRandomSeedValidator->setBottom(0);
 	d->gtestRandomSeedValidator->setTop(99999);
+	d->gtestOtherArgsLineEdit->setPlaceholderText("other command line arguments");
 
 	this->setTabOrder(d->gtestFilterEdit, d->gtestRepeatLineEdit);
 	this->setTabOrder(d->gtestRepeatLineEdit, d->gtestAlsoRunDisabledTestsCheckbox);
 	this->setTabOrder(d->gtestAlsoRunDisabledTestsCheckbox, d->gtestShuffleCheckbox);
 	this->setTabOrder(d->gtestShuffleCheckbox, d->gtestRandomSeedLineEdit);
-	this->setTabOrder(d->gtestRandomSeedLineEdit, d->buttonBox->button(QDialogButtonBox::Ok));
+	this->setTabOrder(d->gtestRandomSeedLineEdit, d->gtestOtherArgsLineEdit);
+	this->setTabOrder(d->gtestOtherArgsLineEdit, d->buttonBox->button(QDialogButtonBox::Ok));
 	this->setTabOrder(d->buttonBox->button(QDialogButtonBox::Ok), d->buttonBox->button(QDialogButtonBox::Cancel));
 	this->setTabOrder(d->buttonBox->button(QDialogButtonBox::Cancel), d->gtestFilterEdit);
 
@@ -135,6 +143,7 @@ void QExecutableSettingsDialog::setModelIndex(const QPersistentModelIndex& index
 	d->gtestAlsoRunDisabledTestsCheckbox->setCheckState((Qt::CheckState)index.data(QExecutableModel::RunDisabledTestsRole).toInt());
 	d->gtestShuffleCheckbox->setCheckState((Qt::CheckState)index.data(QExecutableModel::ShuffleRole).toInt());
 	d->gtestRandomSeedLineEdit->setText(index.data(QExecutableModel::RandomSeedRole).toString());
+	d->gtestOtherArgsLineEdit->setText(index.data(QExecutableModel::ArgsRole).toString());
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -151,7 +160,8 @@ void QExecutableSettingsDialog::accept()
 		model->setData(model->index(d->index.row(), QExecutableModel::NameColumn), d->gtestRepeatLineEdit->text(), QExecutableModel::RepeatTestsRole);
 		model->setData(model->index(d->index.row(), QExecutableModel::NameColumn), d->gtestAlsoRunDisabledTestsCheckbox->checkState(), QExecutableModel::RunDisabledTestsRole);
 		model->setData(model->index(d->index.row(), QExecutableModel::NameColumn), d->gtestShuffleCheckbox->checkState(), QExecutableModel::ShuffleRole);
-		model->setData(model->index(d->index.row(), QExecutableModel::NameColumn), d->gtestRandomSeedLabel->text(), QExecutableModel::RandomSeedRole);
+		model->setData(model->index(d->index.row(), QExecutableModel::NameColumn), d->gtestRandomSeedLineEdit->text(), QExecutableModel::RandomSeedRole);
+		model->setData(model->index(d->index.row(), QExecutableModel::NameColumn), d->gtestOtherArgsLineEdit->text(), QExecutableModel::ArgsRole);
 	}
 
 	QDialog::accept();
