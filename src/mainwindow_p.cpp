@@ -468,6 +468,9 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 		int runDisabled = executableModel->data(executableModelHash[pathToTest], QExecutableModel::RunDisabledTestsRole).toInt();
 		if (runDisabled) arguments << "--gtest_also_run_disabled_tests";
 
+		int shuffle = executableModel->data(executableModelHash[pathToTest], QExecutableModel::ShuffleRole).toInt();
+		if (shuffle) arguments << "--gtest_shuffle";
+
 
 		qDebug() << arguments;
 
