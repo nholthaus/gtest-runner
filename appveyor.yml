@@ -19,12 +19,11 @@ matrix:
   
 install:
   - set PATH=%PATH%;%QTDIR%\bin;
-  - echo Configuration is %CONFIG%
   
 before_build:
   - md build
   - cd build
-  - cmake -Wno-dev -G"%VS_GEN%" -DCMAKE_BUILD_TYPE=%CONFIGURATION% ..
+  - cmake -Wno-dev -G"%VS_GEN%"
   - cd ..
   - dir
  
@@ -41,8 +40,7 @@ artifacts:
 
 before_deploy:
   - cd build
-  - cpack -G NSIS -C Release
-  - cpack -G ZIP -C Release
+  - cmake --build . --target PACKAGE
   - cd ..
   
 deploy:
