@@ -2,6 +2,8 @@
 
 A Qt5 based automated test-runner and Graphical User Interface for Google Test unit tests
 
+![Screenshot](https://github.com/nholthaus/gtest-runner/blob/documentation/resources/screenshots/screen.png)
+
 ## Build Instructions
 
 See the [Build Instructions wiki page](https://github.com/nholthaus/gtest-runner/wiki/Build-Instructions) for information on how to build gtest-runner from source on your platform.
