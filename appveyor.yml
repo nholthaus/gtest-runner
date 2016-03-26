@@ -29,28 +29,22 @@ before_build:
   - cd ..
   - dir
  
-build:
-  parallel: true
-  project: build/gtest-runner-HEAD.sln
+build_script:
+  - cmake --build . --target PACKAGE
 
 artifacts:
-  - path: C:/projects/gtest-runner/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.exe
-    name: installer
-  - path: C:/projects/gtest-runner/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.zip
-    name: zip_executable
+  - path: gtest-runner/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.exe
+    name: windows_installer
+  - path: gtest-runner/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.zip
+    name: windows_portable
     type: zip
-
-before_deploy:
-  - cd build
-  - cmake --build . --target PACKAGE
-  - cd ..
   
 deploy:
   tag: $(appveyor_repo_tag_name)
   provider: GitHub
   auth_token:
     secure: FtWS/a/Vb7xeJrcZYs+9AtDnQ3aNqfL56NnjMYFvwokdPUP4qo4BImfPFr4H67A6
-  artifact: installer, zip_executable
+  artifact: windows_installer, windows_portable
   draft: false
   prerelease: false
   on:
