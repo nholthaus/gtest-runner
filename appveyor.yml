@@ -30,7 +30,9 @@ before_build:
   - dir
  
 build_script:
+  - cd build
   - cmake --build . --target PACKAGE
+  - cd ..
 
 artifacts:
   - path: gtest-runner/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.exe
