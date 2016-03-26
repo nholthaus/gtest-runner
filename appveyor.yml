@@ -35,14 +35,15 @@ build_script:
   - cd ..
 
 artifacts:
-  - path: gtest-runner/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.exe
+  - path: build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.exe
     name: windows_installer
-  - path: gtest-runner/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.zip
+  - path: build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.zip
     name: windows_portable
     type: zip
   
 deploy:
   tag: $(appveyor_repo_tag_name)
+  description: windows binaries
   provider: GitHub
   auth_token:
     secure: FtWS/a/Vb7xeJrcZYs+9AtDnQ3aNqfL56NnjMYFvwokdPUP4qo4BImfPFr4H67A6
