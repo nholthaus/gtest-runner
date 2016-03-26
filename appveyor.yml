@@ -22,22 +22,17 @@ matrix:
 install:
   - set PATH=%PATH%;%QTDIR%\bin;
   
-before_build:
+build_script:
   - md build
   - cd build
   - cmake -Wno-dev -G"%VS_GEN%" ..
-  - cd ..
-  - dir
- 
-build_script:
-  - cd build
-  - cmake --build . --target PACKAGE
-  - cd ..
+  - cmake --build . --config %CONFIGURATION%
+  - cmake --build . --target PACKAGE --config %CONFIGURATION%
 
 artifacts:
-  - path: gtest-runner\build\$(configuration)\gtest-runner-$(appveyor_repo_tag_name)-$(EXT).exe
+  - path: build\$(configuration)\gtest-runner-$(appveyor_repo_tag_name)-$(EXT).exe
     name: windows_installer
-  - path: gtest-runner\build\$(configuration)\gtest-runner-$(appveyor_repo_tag_name)-$(EXT).zip
+  - path: build\$(configuration)\gtest-runner-$(appveyor_repo_tag_name)-$(EXT).zip
     name: windows_portable
     type: zip
   
