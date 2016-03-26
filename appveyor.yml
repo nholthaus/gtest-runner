@@ -17,8 +17,14 @@ configuration:
   - Release
  
 build:
+  parallel: true
   project: build/gtest-runner-HEAD.sln
 
+install:
+  on:
+    branch: master
+    configuration: Release
+	
 deploy:
   release: Windows Installer - v$(appveyor_repo_tag_name)
   description: gtest-runner automated binary installer for windows
