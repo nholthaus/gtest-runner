@@ -11,3 +11,7 @@ See the [Build Instructions wiki page](https://github.com/nholthaus/gtest-runner
 Check out the [Latest release](https://github.com/nholthaus/gtest-runner/releases) for binary installers. 
 
 _NOTE_: This is an open-source project, and as such I haven't paid for any binary signing. This means that if you install the binaries on Windows, it's going to give you a lot of pop-up warnings about potentially unsafe code. Click 'run anyway' through all of these messages to continue the installation.
+
+## Features
+
+gtest-runner is an automated test runner that will ensure you are always looking at the latest test results, whenever you build a gtest executable. Check the [features wiki page](https://github.com/nholthaus/gtest-runner/wiki/Features) to see what else gtest-runner is capable of.
