@@ -34,9 +34,9 @@ build:
   project: build/gtest-runner-HEAD.sln
 
 artifacts:
-  - path: gtest-runner/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.exe
+  - path: C:/projects/gtest-runner/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.exe
     name: installer
-  - path: gtest-runner/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.zip
+  - path: C:/projects/gtest-runner/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.zip
     name: zip_executable
     type: zip
 
@@ -46,8 +46,7 @@ before_deploy:
   - cd ..
   
 deploy:
-  release: Windows Installer - v$(appveyor_repo_tag_name)
-  description: gtest-runner automated binary installer for windows
+  tag: $(appveyor_repo_tag_name)
   provider: GitHub
   auth_token:
     secure: FtWS/a/Vb7xeJrcZYs+9AtDnQ3aNqfL56NnjMYFvwokdPUP4qo4BImfPFr4H67A6
