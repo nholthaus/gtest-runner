@@ -30,5 +30,5 @@ deploy:
   prerelease: false
   on:
     branch: master                 # release from master branch only
-	configuration: Release 
+    configuration: Release 
     appveyor_repo_tag: true        # deploy on tag push only
