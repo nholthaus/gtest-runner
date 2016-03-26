@@ -1,13 +1,19 @@
 os: Visual Studio 2015
 version: 1.0.0.{build}
 
+configuration:
+  - Debug
+  - Release
+  
 environment:
   matrix:
   - VS_GEN: Visual Studio 12 2013
     QTDIR: C:\Qt\5.5\msvc2013
+    CONFIG: $(configuration)
     EXT: win32
   - VS_GEN: Visual Studio 12 2013 Win64
     QTDIR: C:\Qt\5.5\msvc2013_64
+    CONFIG: $(configuration)
     EXT: win64
     
 matrix:
@@ -15,6 +21,7 @@ matrix:
   
 install:
   - set PATH=%PATH%;%QTDIR%\bin;
+  - echo Configuration is %CONFIG%
   
 before_build:
   - md build
@@ -22,10 +29,6 @@ before_build:
   - cmake -Wno-dev -G"%VS_GEN%" -DCMAKE_BUILD_TYPE=$(configuration) ..
   - cd ..
   - dir
-  
-configuration:
-  - Debug
-  - Release
  
 build:
   parallel: true
