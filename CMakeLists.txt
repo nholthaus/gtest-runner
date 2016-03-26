@@ -139,6 +139,7 @@ source_group(generated REGULAR_EXPRESSION ".*_automoc.cpp")
 source_group(resources REGULAR_EXPRESSION ".*[.][q]?rc")
 source_group(source REGULAR_EXPRESSION ".*[.]cpp")
 source_group(headers REGULAR_EXPRESSION ".*[.]h")
+source_group(continuous-integration REGULAR_EXPRESSION ".*[.]yml")
 
 #-------------------------------------------------------------------------------
 #	RESOURCES

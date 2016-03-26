@@ -3,6 +3,10 @@ version: 1.0.0.{build}
 
 clone_folder: c:\projects\gtest-runner
 
+branches:
+  except:
+    - documentation
+    
 configuration:
   - Debug
   - Release
