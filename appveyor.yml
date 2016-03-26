@@ -4,14 +4,11 @@ version: 1.0.0.{build}
 environment:
   matrix:
   - VS_GEN: Visual Studio 12 2013
-    CONFIG: Debug
     QTDIR: C:\Qt\5.5\msvc2013
-  - VS_GEN: Visual Studio 12 2013
-    CONFIG: Release
-    QTDIR: C:\Qt\5.5\msvc2013
+    EXT: win32
   - VS_GEN: Visual Studio 12 2013 Win64
-    CONFIG: Release
     QTDIR: C:\Qt\5.5\msvc2013_64
+    EXT: win64
     
 matrix:
   fast_finish: true
@@ -22,7 +19,7 @@ install:
 before_build:
   - md build
   - cd build
-  - cmake -Wno-dev -G"%VS_GEN%" -DCMAKE_BUILD_TYPE=%CONFIG% ..
+  - cmake -Wno-dev -G"%VS_GEN%" -DCMAKE_BUILD_TYPE=$(configuration) ..
   - cd ..
   - dir
   
@@ -35,9 +32,9 @@ build:
   project: build/gtest-runner-HEAD.sln
 
 artifacts:
-  - path: Release/gtest-runner-$(appveyor_repo_tag_name)-win64.exe
+  - path: %APPVEYOR_BUILD_FOLDER%/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.exe
     name: installer
-  - path: Release/gtest-runner-$(appveyor_repo_tag_name)-win64.zip
+  - path: %APPVEYOR_BUILD_FOLDER%/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.zip
     name: zip_executable
     type: zip
 
