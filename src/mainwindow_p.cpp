@@ -52,7 +52,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	centralFrame->layout()->setContentsMargins(0, 5, 0, 0);
 
 	executableDock->setObjectName("executableDock");
-	executableDock->setAllowedAreas(Qt::LeftDockWidgetArea);
+	executableDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea | Qt::TopDockWidgetArea | Qt::BottomDockWidgetArea);
 	executableDock->setWindowTitle("Test Executables");
 	executableDock->setWidget(executableDockFrame);
 
@@ -84,7 +84,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	testCaseProxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
 
 	failureDock->setObjectName("failureDock");
-	failureDock->setAllowedAreas(Qt::BottomDockWidgetArea);
+	failureDock->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::TopDockWidgetArea | Qt::RightDockWidgetArea | Qt::LeftDockWidgetArea);
 	failureDock->setWindowTitle("Failures");
 	failureDock->setWidget(failureTreeView);
 
@@ -92,7 +92,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	failureTreeView->setAlternatingRowColors(true);
 
 	consoleDock->setObjectName("consoleDock");
-	consoleDock->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::RightDockWidgetArea);
+	consoleDock->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::TopDockWidgetArea | Qt::RightDockWidgetArea | Qt::LeftDockWidgetArea);
 	consoleDock->setWindowTitle("Console Output");
 	consoleDock->setWidget(consoleTextEdit);
 

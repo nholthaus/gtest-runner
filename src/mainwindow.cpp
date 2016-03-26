@@ -15,13 +15,18 @@ MainWindow::MainWindow() : QMainWindow(), d_ptr(new MainWindowPrivate(this))
 	this->setCentralWidget(d->centralFrame);
 	this->setWindowIcon(QIcon(":images/logo"));
 
+	this->setCorner(Qt::TopLeftCorner, Qt::LeftDockWidgetArea);
+	this->setCorner(Qt::TopRightCorner, Qt::RightDockWidgetArea);
 	this->setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
 	this->setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
 
 	this->addDockWidget(Qt::LeftDockWidgetArea, d->executableDock);
 	this->addDockWidget(Qt::BottomDockWidgetArea, d->consoleDock);
 	this->addDockWidget(Qt::BottomDockWidgetArea, d->failureDock);
-	this->tabifyDockWidget(d->consoleDock, d->failureDock);
+	this->tabifyDockWidget(d->failureDock, d->consoleDock);
+	d->failureDock->raise();
+
+	this->setDockNestingEnabled(true);
 
 	// restore settings
 	d->loadSettings();
