@@ -23,7 +23,7 @@ install:
 before_build:
   - md build
   - cd build
-  - cmake -Wno-dev -G"%VS_GEN%"
+  - cmake -Wno-dev -G"%VS_GEN%" ..
   - cd ..
   - dir
  
