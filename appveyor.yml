@@ -1,6 +1,8 @@
 os: Visual Studio 2015
 version: 1.0.0.{build}
 
+clone_folder: c:\projects\gtest-runner
+
 configuration:
   - Debug
   - Release
@@ -32,9 +34,9 @@ build:
   project: build/gtest-runner-HEAD.sln
 
 artifacts:
-  - path: build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.exe
+  - path: gtest-runner/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.exe
     name: installer
-  - path: build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.zip
+  - path: gtest-runner/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.zip
     name: zip_executable
     type: zip
 
