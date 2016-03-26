@@ -1,14 +1,28 @@
-os: Visual Studio 2013
+os: Visual Studio 2015
 version: 1.0.0.{build}
 
+environment:
+  matrix:
+  - VS_GEN: Visual Studio 12 2013
+    CONFIG: Debug
+    QTDIR: C:\Qt\5.5\msvc2013
+  - VS_GEN: Visual Studio 12 2013
+    CONFIG: Release
+    QTDIR: C:\Qt\5.5\msvc2013
+  - VS_GEN: Visual Studio 12 2013 Win64
+    CONFIG: Release
+    QTDIR: C:\Qt\5.5\msvc2013_64
+    
+matrix:
+  fast_finish: true
+  
 install:
-  - set QTDIR=C:\Qt\5.5\msvc2013
   - set PATH=%PATH%;%QTDIR%\bin;
   
 before_build:
   - md build
   - cd build
-  - cmake ..
+  - cmake -Wno-dev -G"%VS_GEN%" -DCMAKE_BUILD_TYPE=%CONFIG% ..
   - cd ..
   - dir
   
@@ -20,18 +34,26 @@ build:
   parallel: true
   project: build/gtest-runner-HEAD.sln
 
-install:
-  on:
-    branch: master
-    configuration: Release
-    
+artifacts:
+  - path: Release/gtest-runner-$(appveyor_repo_tag_name)-win64.exe
+    name: installer
+  - path: Release/gtest-runner-$(appveyor_repo_tag_name)-win64.zip
+    name: zip_executable
+    type: zip
+
+before_deploy:
+  - cd build
+  - cpack -G NSIS -C Release
+  - cpack -G ZIP -C Release
+  - cd ..
+  
 deploy:
   release: Windows Installer - v$(appveyor_repo_tag_name)
   description: gtest-runner automated binary installer for windows
   provider: GitHub
   auth_token:
     secure: FtWS/a/Vb7xeJrcZYs+9AtDnQ3aNqfL56NnjMYFvwokdPUP4qo4BImfPFr4H67A6
-  artifact: Release/gtest-runner-$(appveyor_repo_tag_name)-win64.exe
+  artifact: installer, zip_executable
   draft: false
   prerelease: false
   on:
