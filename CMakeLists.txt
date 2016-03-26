@@ -3,6 +3,7 @@
 #-------------------------------------------------------------------------------
 
 cmake_minimum_required(VERSION 3.0)
+set(QT_MINIMUM_VERSION 5.3.0)
 
 #-------------------------------------------------------------------------------
 #	PROJECT SETTINGS
@@ -52,6 +53,13 @@ find_package(Qt5Gui REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Xml REQUIRED)
 find_package(Qt5XmlPatterns REQUIRED)
+
+# Test for supported Qt version
+find_program(QMAKE_EXECUTABLE NAMES qmake HINTS ${QTDIR} ENV QTDIR PATH_SUFFIXES bin)
+execute_process(COMMAND ${QMAKE_EXECUTABLE} -query QT_VERSION OUTPUT_VARIABLE QT_VERSION)
+if(QT_VERSION LESS QT_MINIMUM_VERSION)
+	MESSAGE(FATAL_ERROR "Minimum supported Qt version: ${QT_MINIMUM_VERSION}. Installed version: ${QT_VERSION}")
+endif()
 
 # find thread library 
 find_package(Threads REQUIRED)
@@ -185,5 +193,43 @@ if(WIN32)
 	# Run winddeployqt if it can be found
 	find_program(WINDEPLOYQT_EXECUTABLE NAMES windeployqt HINTS ${QTDIR} ENV QTDIR PATH_SUFFIXES bin)
 	add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-	COMMAND ${WINDEPLOYQT_EXECUTABLE} $<TARGET_FILE:${TARGET_NAME}>)
+	COMMAND ${WINDEPLOYQT_EXECUTABLE} $<TARGET_FILE:${TARGET_NAME}>
+	COMMAND ${WINDEPLOYQT_EXECUTABLE} $<TARGET_FILE:${TARGET_NAME}> --list target > ${PROJECT_BINARY_DIR}/dependencies.txt)
+	# Gather up all the dependencies in the bin dir
+	# Lack of a trailing slash means install this directory, trailing slash means install everything in this directory.
+	install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Release/
+			DESTINATION bin
+			FILES_MATCHING
+			PATTERN "*.dll"
+			)
 endif()
+
+INSTALL(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)
+#INSTALL(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Release DESTINATION bin)
+
+if(WIN32)
+	set(CPACK_GENERATOR NSIS)
+	SET(CPACK_NSIS_MODIFY_PATH ON)
+	SET(CPACK_NSIS_URL_INFO_ABOUT ${APPLICATION_ORGANIZATION_DOMAIN})
+	set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+endif()
+
+# PACKAGING
+INCLUDE(InstallRequiredSystemLibraries)
+
+set(CPACK_PACKAGE_NAME ${APPLICATION_NAME})
+set(CPACK_PACKAGE_VENDOR ${APPLICATION_ORGANIZATION})
+SET(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "GTest-Runner - an automated test runner and UI for google tests")
+set(CPACK_PACKAGE_VERSION ${APPLICATION_VERSION})
+set(CPACK_PACKAGE_ICON ${PROJECT_SOURCE_DIR}/resources/images\\\\logo.png)
+set(CPACK_PACKAGE_VERSION_MAJOR "1")
+set(CPACK_PACKAGE_VERSION_MINOR "0")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
+SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${TARGET_NAME}-${APPLICATION_VERSION}")
+set(CPACK_PACKAGE_DIRECTORY ${PROJECT_BINARY_DIR}/Release)
+set(CPACK_PACKAGE_EXECUTABLES "${TARGET_NAME}" "GTest-Runner")
+
+INCLUDE(CPack)
