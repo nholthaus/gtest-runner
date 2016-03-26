@@ -17,17 +17,18 @@ configuration:
   - Release
  
 build:
-  project: build/gtest-runner-$(appveyor_repo_branch).sln
+  project: build/gtest-runner-HEAD.sln
 
 deploy:
-  release: Windows Installer - v$(appveyor_build_version)
-  description: 'Release description'
+  release: Windows Installer - v$(appveyor_repo_tag_name)
+  description: gtest-runner automated binary installer for windows
   provider: GitHub
   auth_token:
     secure: FtWS/a/Vb7xeJrcZYs+9AtDnQ3aNqfL56NnjMYFvwokdPUP4qo4BImfPFr4H67A6
-  artifact: /.*\.nupkg/            # upload all NuGet packages to release assets
+  artifact: Release/gtest-runner-$(appveyor_repo_tag_name)-win64.exe
   draft: false
   prerelease: false
   on:
     branch: master                 # release from master branch only
+	configuration: Release 
     appveyor_repo_tag: true        # deploy on tag push only
