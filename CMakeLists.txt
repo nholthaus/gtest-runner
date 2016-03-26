@@ -188,6 +188,10 @@ add_executable(${TARGET_NAME} ${GUI_TYPE} ${SOURCE_FILES} ${RESOURCES})
 # link libraries
 target_link_libraries(${TARGET_NAME} ${LIBRARIES})
 
+# Executable installation
+INSTALL(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)
+INCLUDE(InstallRequiredSystemLibraries)
+
 # Windows specific build steps
 if(WIN32)
 	# Run winddeployqt if it can be found
@@ -197,18 +201,16 @@ if(WIN32)
 	# Gather up all the dependencies in the bin dir
 	# Lack of a trailing slash means install this directory, trailing slash means install everything in this directory.
 	install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Release/
-			DESTINATION bin
+			RUNTIME DESTINATION bin
 			FILES_MATCHING
+			PATTERN "_CPack*" EXCLUDE
 			PATTERN "*.dll"
 			)
 endif()
 
-# Executable installation
-INSTALL(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)
-
 # NSIS specific configuration
 if(WIN32)
-	set(CPACK_GENERATOR NSIS)
+	set(CPACK_GENERATOR "NSIS;ZIP")
 	SET(CPACK_NSIS_MODIFY_PATH ON)
 	SET(CPACK_NSIS_URL_INFO_ABOUT ${APPLICATION_ORGANIZATION_DOMAIN})
 	set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
@@ -218,9 +220,6 @@ if(WIN32)
 	SET(CPACK_NSIS_MUI_FINISHPAGE_RUN ${TARGET_NAME}.exe)
 	set(CPACK_PACKAGE_ICON ${PROJECT_SOURCE_DIR}/resources/images\\\\logo.bmp)
 endif()
-
-# PACKAGING
-INCLUDE(InstallRequiredSystemLibraries)
 
 set(CPACK_PACKAGE_NAME ${APPLICATION_NAME})
 set(CPACK_PACKAGE_VENDOR ${APPLICATION_ORGANIZATION})
