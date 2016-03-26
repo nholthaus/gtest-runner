@@ -32,9 +32,9 @@ build:
   project: build/gtest-runner-HEAD.sln
 
 artifacts:
-  - path: %APPVEYOR_BUILD_FOLDER%/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.exe
+  - path: build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.exe
     name: installer
-  - path: %APPVEYOR_BUILD_FOLDER%/build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.zip
+  - path: build/$(configuration)/gtest-runner-$(appveyor_repo_tag_name)-%EXT%.zip
     name: zip_executable
     type: zip
 
