@@ -12,7 +12,7 @@ See the [Build Instructions wiki page](https://github.com/nholthaus/gtest-runner
 
 Check out the [Latest release](https://github.com/nholthaus/gtest-runner/releases) for binary installers. 
 
-_NOTE_: This is an open-source project, and as such I haven't paid for any binary signing. This means that if you install the binaries on Windows, it's going to give you a lot of pop-up warnings about potentially unsafe code. Click 'run anyway' through all of these messages to continue the installation.
+_NOTE_: We're still in the process of acquiring certificates to sign the windows binaries, which should happen within the next couple of releases. For now, if you use the .exe installer, you'll get a lot of warnings about potentially unsafe code. If you have admin rights to your machine you can 'continue anyway' through those messages to finish the install.
 
 ## Features
 
