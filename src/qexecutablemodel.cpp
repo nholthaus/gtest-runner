@@ -104,3 +104,11 @@ Q_INVOKABLE QVariant QExecutableModel::data(const QModelIndex &index, int role /
 	}
 }
 
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: supportedDropActions
+//--------------------------------------------------------------------------------------------------
+Q_INVOKABLE Qt::DropActions QExecutableModel::supportedDropActions() const
+{
+	return Qt::MoveAction;
+}
+

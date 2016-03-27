@@ -59,6 +59,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	executableModel->setColumnCount(3);
 
 	executableTreeView->setModel(executableModel);
+	executableTreeView->setDefaultDropAction(Qt::MoveAction);
+	executableTreeView->setDragDropMode(QAbstractItemView::InternalMove);
 	executableTreeView->setHeaderHidden(true);
 	executableTreeView->setIndentation(0);
 	executableTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
