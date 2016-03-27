@@ -35,6 +35,12 @@ endif()
 PROJECT(${PROJECT_NAME})
 
 #-------------------------------------------------------------------------------
+#	CMake Modules
+#-------------------------------------------------------------------------------
+
+LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules/)
+
+#-------------------------------------------------------------------------------
 #	Qt Settings
 #-------------------------------------------------------------------------------
 
@@ -214,8 +220,8 @@ if(WIN32)
 			)
 endif()
 
-# NSIS specific configuration
 if(WIN32)
+	# NSIS specific configuration
 	set(CPACK_GENERATOR "NSIS;ZIP")
 	SET(CPACK_NSIS_MODIFY_PATH ON)
 	SET(CPACK_NSIS_URL_INFO_ABOUT ${APPLICATION_ORGANIZATION_DOMAIN})
@@ -225,15 +231,25 @@ if(WIN32)
 	SET(CPACK_NSIS_DISPLAY_NAME "${TARGET_NAME} ${APPLICATION_VERSION}")
 	SET(CPACK_NSIS_MUI_FINISHPAGE_RUN ${TARGET_NAME}.exe)
 	set(CPACK_PACKAGE_ICON ${PROJECT_SOURCE_DIR}/resources/images\\\\logo.bmp)
+else(WIN32)
+	# DEBIAN CPACK_GENERATOR
+	SET(CPACK_GENERATOR "DEB")
+	SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Nic Holthaus")
+	SET(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 endif()
 
+# Deb packages can't have the 'v' in the version name
+string(REGEX MATCH [0-9][.][0-9][.][0-9] VERSION_NUM ${APPLICATION_VERSION})
+set(CPACK_PACKAGE_VERSION ${VERSION_NUM})
+
+set(CPACK_PACKAGE_CONTACT "Nic Holthaus nholthaus@gmail.com")
 set(CPACK_PACKAGE_NAME ${APPLICATION_NAME})
 set(CPACK_PACKAGE_VENDOR ${APPLICATION_ORGANIZATION})
 SET(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "GTest-Runner - an automated test runner and user interface for google tests")
-set(CPACK_PACKAGE_VERSION ${APPLICATION_VERSION})
+
 SET(CPACK_PACKAGE_INSTALL_DIRECTORY "${TARGET_NAME}")
 set(CPACK_PACKAGE_DIRECTORY ${PROJECT_BINARY_DIR}/Release)
 set(CPACK_PACKAGE_EXECUTABLES "${TARGET_NAME}" "gtest-runner")
