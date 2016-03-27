@@ -96,6 +96,7 @@ public:
 
  	Q_INVOKABLE virtual int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 	Q_INVOKABLE virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+	Q_INVOKABLE virtual Qt::DropActions supportedDropActions() const override;
 
 protected:
 
