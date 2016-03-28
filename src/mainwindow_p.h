@@ -157,7 +157,6 @@ public:
 	
 	// state variables
 	QString									mostRecentFailurePath;					///< Stores the path [key] of the most recently failed test.
-	QHash<QString, QPersistentModelIndex>	executableModelHash;					///< Hash for finding entries in the executable model.
 	QHash<QString, Qt::CheckState>			executableCheckedStateHash;				///< Hash of the previous state of the checkboxes.
 	QHash<QString, QDomDocument>			testResultsHash;						///< Hash table storing the xml test results for each test path.
 	std::map<QString, std::atomic<bool>>	testRunningHash;						///< Stores whether the given test is actively running.

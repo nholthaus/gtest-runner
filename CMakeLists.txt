@@ -116,6 +116,8 @@ src/gtestmodel.h
 src/qexecutablemodel.h
 src/QBottomUpSortFilterProxy.h
 src/QStdOutSyntaxHighlighter.h
+src/tree.h
+src/QTreeModel.h
 )
 
 # .cpp files
