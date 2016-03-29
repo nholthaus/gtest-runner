@@ -397,7 +397,6 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 		
 		QFileInfo info(pathToTest);
 		QProcess testProcess;
-		QStringList arguments;
 
 		bool first = true;
 		int tests = 0;
@@ -447,6 +446,9 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 
 		// SET GTEST ARGS
 		QModelIndex index = executableModel->index(pathToTest);
+
+		QStringList arguments("--gtest_output=xml:" + this->xmlPath(pathToTest));
+
 		QString filter = executableModel->data(index, QExecutableModel::FilterRole).toString();
 		if (!filter.isEmpty()) arguments << "--gtest_filter=" + filter;
 
@@ -712,10 +714,9 @@ QModelIndex MainWindowPrivate::getTestIndexDialog(const QString& label, bool run
 
 	for (auto itr = executableModel->begin(); itr != executableModel->end(); ++itr)
 	{
-		QModelIndex index = executableModel->iteratorToIndex(itr);
-		QString path = index.data(QExecutableModel::PathRole).toString();
+		QString path = itr->path;
 		if(!running || testRunningHash[path])
-			tests << index.data().toString();
+			tests << executableModel->iteratorToIndex(itr).data(QExecutableModel::NameRole).toString();
 	}
 
 	if (tests.isEmpty())
