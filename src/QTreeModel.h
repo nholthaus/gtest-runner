@@ -197,7 +197,7 @@ public:
 	*/
 	iterator begin() const
 	{
-		return root();
+		return ++tree.begin();
 	}
 
 	/**

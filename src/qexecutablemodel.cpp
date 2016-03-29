@@ -126,6 +126,8 @@ Q_INVOKABLE QVariant QExecutableModel::data(const QModelIndex &index, int role /
 		return itr->randomSeed;
 	case ArgsRole:
 		return itr->otherArgs;
+	case NameRole:
+		return QFileInfo(itr->path).baseName();
 	default:
 		return QVariant();
 	}
