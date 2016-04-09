@@ -332,7 +332,7 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	executablePaths << path;
 
 	bool previousResults = loadTestResults(path, false);
-	bool runAutomatically = (newRow.data(Qt::CheckStateRole) == Qt::Checked);
+	bool runAutomatically = (checked == Qt::Checked);
 	bool outOfDate = lastModified < fileinfo.lastModified();
 
  	QPushButton* advButton = new QPushButton();
