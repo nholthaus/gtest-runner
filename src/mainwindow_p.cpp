@@ -56,9 +56,9 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	executableDock->setWindowTitle("Test Executables");
 	executableDock->setWidget(executableDockFrame);
 
-	executableModel->setColumnCount(3);
-
 	executableTreeView->setModel(executableModel);
+	executableTreeView->setDefaultDropAction(Qt::MoveAction);
+	executableTreeView->setDragDropMode(QAbstractItemView::InternalMove);
 	executableTreeView->setHeaderHidden(true);
 	executableTreeView->setIndentation(0);
 	executableTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -127,7 +127,6 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		if(!selected.isEmpty())
 		{
 			auto index = selected.indexes().first();
-			index = index.sibling(index.row(), QExecutableModel::NameColumn);
 			selectTest(index.data(QExecutableModel::PathRole).toString());
 		}
 	});
@@ -135,16 +134,14 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	// run the test whenever the executable changes
 	connect(fileWatcher, &QFileSystemWatcher::fileChanged, this, [this](const QString& path)
 	{	
-		QModelIndex m = executableModelHash[path];
-		m = m.sibling(m.row(), QExecutableModel::NameColumn);
+		QModelIndex m = executableModel->index(path);
 		if (m.isValid())
 		{
-			QStandardItem* exeItem = executableModel->itemFromIndex(m);
-			exeItem->setData(QDateTime::currentDateTime(), QExecutableModel::LastModifiedRole);
-
 			// only auto-run if the test is checked
-			if (m.data(Qt::CheckStateRole) == Qt::Checked)
+			if (m.data(QExecutableModel::AutorunRole).toBool())
 			{
+				executableModel->setData(m, QDateTime::currentDateTime(), QExecutableModel::LastModifiedRole);
+
 				emit showMessage("Change detected: " + path + "...");
 				// add a little delay to avoid running multiple instances of the same test build,
 				// and to avoid running the file before visual studio is done writting it.
@@ -158,8 +155,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 			}
 			else
 			{
-				QStandardItem* exeItem = executableModel->itemFromIndex(m);
-				exeItem->setData(QExecutableModel::NOT_RUNNING, QExecutableModel::StateRole);
+				executableModel->setData(m, ExecutableData::NOT_RUNNING, QExecutableModel::StateRole);
 			}
 		}
 		
@@ -180,13 +176,12 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	// re-rerun tests when auto-testing is re-enabled
 	connect(executableModel, &QAbstractItemModel::dataChanged, this, [this](const QModelIndex & topLeft, const QModelIndex & bottomRight, const QVector<int> & roles)
 	{
-		QModelIndex index = topLeft.sibling(topLeft.row(), QExecutableModel::NameColumn);
-		QString path = index.data(QExecutableModel::PathRole).toString();
-		Qt::CheckState prevState = executableCheckedStateHash[path];
+		QString path = topLeft.data(QExecutableModel::PathRole).toString();
+		bool prevState = executableCheckedStateHash[path];
 
 		// Only re-run IFF the check box state goes from unchecked to checked AND
 		// the data has gotten out of date since the checkbox was off.
-		if (index.data(Qt::CheckStateRole) == Qt::Checked && prevState == Qt::Unchecked)
+		if (topLeft.data(QExecutableModel::AutorunRole).toBool() && !prevState)
 		{
 			QFileInfo xml(xmlPath(path));
 			QFileInfo exe(path);
@@ -194,13 +189,13 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 			if (xml.lastModified() < exe.lastModified())
 			{
 				// out of date! re-run.
-				emit showMessage("Automatic testing enabled for: " + index.data(Qt::DisplayRole).toString() + ". Re-running tests...");
+				emit showMessage("Automatic testing enabled for: " + topLeft.data(Qt::DisplayRole).toString() + ". Re-running tests...");
 				runTestInThread(topLeft.data(QExecutableModel::PathRole).toString(), true);
 			}			
 		}
 
 		// update previous state
-		executableCheckedStateHash[path] = (Qt::CheckState)index.data(Qt::CheckStateRole).toInt();
+		executableCheckedStateHash[path] = topLeft.data(QExecutableModel::AutorunRole).toBool();
 	}, Qt::QueuedConnection);
 
 	// filter test results when the filter is changed
@@ -208,6 +203,10 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	{
 		testCaseProxyModel->setFilterRegExp(text);
 		testCaseTreeView->expandAll();
+		for (int i = 0; i < testCaseProxyModel->columnCount(); ++i)
+		{
+			testCaseTreeView->resizeColumnToContents(i);
+		}
 	});
 
 	// create a failure model when a test is clicked
@@ -270,8 +269,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	// update test progress
 	connect(this, &MainWindowPrivate::testProgress, this, [this](QString test, int complete, int total)
 	{
-		QModelIndex index = executableModelHash[test];
-		index = index.sibling(index.row(), QExecutableModel::ProgressColumn);
+		QModelIndex index = executableModel->index(test);
 		executableModel->setData(index, (double)complete / total, QExecutableModel::ProgressRole);
 	});
 
@@ -298,7 +296,7 @@ QString MainWindowPrivate::xmlPath(const QString& testPath) const
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: addTestExecutable
 //--------------------------------------------------------------------------------------------------
-void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState checked, QDateTime lastModified, 
+void MainWindowPrivate::addTestExecutable(const QString& path, bool autorun, QDateTime lastModified, 
 	QString filter /*= ""*/, int repeat /*= 0*/, Qt::CheckState runDisabled /*= Qt::Unchecked*/, 
 	Qt::CheckState shuffle /*= Qt::Unchecked*/, int randomSeed /*= 0*/, QString otherArgs /*= ""*/)
 {
@@ -310,46 +308,41 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	if (lastModified == QDateTime())
 		lastModified = fileinfo.lastModified();
 
-	executableCheckedStateHash[path] = checked;
+	executableCheckedStateHash[path] = autorun;
 
 	QFileInfo xmlResults(xmlPath(path));
-	QStandardItem* item = new QStandardItem(fileinfo.baseName());
-
-	executableModel->setItem(executableModel->rowCount(), QExecutableModel::NameColumn, item);
-	executableModelHash.insert(path, QPersistentModelIndex(executableModel->index(executableModel->rowCount() - 1, QExecutableModel::NameColumn)));
 	
-	executableModel->setData(executableModelHash[path], 0, QExecutableModel::ProgressRole);
-	executableModel->setData(executableModelHash[path], path, QExecutableModel::PathRole);
-	executableModel->setData(executableModelHash[path], lastModified, QExecutableModel::LastModifiedRole);
-	executableModel->setData(executableModelHash[path], QExecutableModel::NOT_RUNNING, QExecutableModel::StateRole);
-	executableModel->setData(executableModelHash[path], filter, QExecutableModel::FilterRole);
-	executableModel->setData(executableModelHash[path], repeat, QExecutableModel::RepeatTestsRole);
-	executableModel->setData(executableModelHash[path], runDisabled, QExecutableModel::RunDisabledTestsRole);
-	executableModel->setData(executableModelHash[path], shuffle, QExecutableModel::ShuffleRole);
-	executableModel->setData(executableModelHash[path], randomSeed, QExecutableModel::RandomSeedRole);
-	executableModel->setData(executableModelHash[path], otherArgs, QExecutableModel::ArgsRole);
-	item->setCheckable(true);
-	item->setCheckState(checked);
+	QModelIndex newRow = executableModel->insertRow(QModelIndex(), path);
+
+	executableModel->setData(newRow, 0, QExecutableModel::ProgressRole);
+	executableModel->setData(newRow, path, QExecutableModel::PathRole);
+	executableModel->setData(newRow, autorun, QExecutableModel::AutorunRole);
+	executableModel->setData(newRow, lastModified, QExecutableModel::LastModifiedRole);
+	executableModel->setData(newRow, ExecutableData::NOT_RUNNING, QExecutableModel::StateRole);
+	executableModel->setData(newRow, filter, QExecutableModel::FilterRole);
+	executableModel->setData(newRow, repeat, QExecutableModel::RepeatTestsRole);
+	executableModel->setData(newRow, runDisabled, QExecutableModel::RunDisabledTestsRole);
+	executableModel->setData(newRow, shuffle, QExecutableModel::ShuffleRole);
+	executableModel->setData(newRow, randomSeed, QExecutableModel::RandomSeedRole);
+	executableModel->setData(newRow, otherArgs, QExecutableModel::ArgsRole);
 
 	fileWatcher->addPath(fileinfo.dir().canonicalPath());
 	fileWatcher->addPath(path);
 	executablePaths << path;
 
 	bool previousResults = loadTestResults(path, false);
-	bool runAutomatically = (item->data(Qt::CheckStateRole) == Qt::Checked);
 	bool outOfDate = lastModified < fileinfo.lastModified();
 
  	QPushButton* advButton = new QPushButton();
 	advButton->setIcon(QIcon(":/images/hamburger"));
 	advButton->setToolTip("Advanced...");
 	advButton->setFixedSize(18, 18);
- 	executableTreeView->setIndexWidget(executableModel->index(executableModel->rowCount() - 1, QExecutableModel::AdvancedOptionsColumn), advButton);
+ 	executableTreeView->setIndexWidget(newRow, advButton);
 	connect(advButton, &QPushButton::clicked, [this, advButton]
 	{
 		if(!executableAdvancedSettingsDialog->isVisible())
 		{
-			QPersistentModelIndex index = executableTreeView->indexAt(executableTreeView->mapFromGlobal(QCursor::pos()));
-			index = index.sibling(index.row(), QExecutableModel::NameColumn);
+			QModelIndex index = executableTreeView->indexAt(executableTreeView->mapFromGlobal(QCursor::pos()));
 			auto pos = advButton->mapToGlobal(advButton->rect().bottomLeft());
 			executableAdvancedSettingsDialog->move(pos);
 			executableAdvancedSettingsDialog->setModelIndex(index);
@@ -361,7 +354,7 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 		}
 	});
 
-	executableTreeView->setCurrentIndex(executableModel->indexFromItem(item));
+	executableTreeView->setCurrentIndex(newRow);
 	for (int i = 0; i < executableModel->columnCount(); i++)
 	{
 		executableTreeView->resizeColumnToContents(i);
@@ -370,20 +363,15 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	testRunningHash[path] = false;
 
 	// if there are no previous results but the test is being watched, run the test
-	if ((!previousResults || outOfDate) && runAutomatically)
+	if ((!previousResults || outOfDate) && autorun)
 	{
 		this->runTestInThread(path, false);
 		QFileInfo newInfo(path);
-		executableModel->setData(executableModelHash[path], newInfo.lastModified(), QExecutableModel::LastModifiedRole);
+		executableModel->setData(newRow, newInfo.lastModified(), QExecutableModel::LastModifiedRole);
 	}
-	else if (outOfDate && !runAutomatically)
+	else if (outOfDate && !autorun)
 	{
-		QModelIndex m = executableModelHash[path];
-		if (m.isValid())
-		{
-			QStandardItem* exeItem = executableModel->itemFromIndex(m);
-			exeItem->setData(QExecutableModel::NOT_RUNNING, QExecutableModel::StateRole);
-		}
+		executableModel->setData(newRow, ExecutableData::NOT_RUNNING, QExecutableModel::StateRole);
 	}
 }
 
@@ -407,11 +395,10 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 		
 		testRunningHash[pathToTest] = true;
 
-		executableModel->setData(executableModelHash[pathToTest], QExecutableModel::RUNNING, QExecutableModel::StateRole);
+		executableModel->setData(executableModel->index(pathToTest), ExecutableData::RUNNING, QExecutableModel::StateRole);
 		
 		QFileInfo info(pathToTest);
 		QProcess testProcess;
-		QStringList arguments;
 
 		bool first = true;
 		int tests = 0;
@@ -429,7 +416,7 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 			else
 			{
 				output.append("\nTEST RUN EXITED WITH ERRORS: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n\n");
-				executableModel->setData(executableModelHash[pathToTest], QExecutableModel::NOT_RUNNING, QExecutableModel::StateRole);
+				executableModel->setData(executableModel->index(pathToTest), ExecutableData::NOT_RUNNING, QExecutableModel::StateRole);
 			}
 			
 			emit testOutputReady(output);
@@ -448,7 +435,7 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 			QString output = testProcess.readAllStandardOutput();
 			output.append("\nTEST RUN KILLED: " + QDateTime::currentDateTime().toString("yyyy-MMM-dd hh:mm:ss.zzz") + "\n\n");
 
-			executableModel->setData(executableModelHash[pathToTest], QExecutableModel::NOT_RUNNING, QExecutableModel::StateRole);
+			executableModel->setData(executableModel->index(pathToTest), ExecutableData::NOT_RUNNING, QExecutableModel::StateRole);
 
 			emit testOutputReady(output);
 			emit testProgress(pathToTest, 0, 0);
@@ -460,27 +447,27 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 		}, Qt::QueuedConnection);
 
 		// SET GTEST ARGS
-		arguments << "--gtest_output=xml:" + this->xmlPath(pathToTest);
+		QModelIndex index = executableModel->index(pathToTest);
 
-		QString filter = executableModel->data(executableModelHash[pathToTest], QExecutableModel::FilterRole).toString();
+		QStringList arguments("--gtest_output=xml:" + this->xmlPath(pathToTest));
+
+		QString filter = executableModel->data(index, QExecutableModel::FilterRole).toString();
 		if (!filter.isEmpty()) arguments << "--gtest_filter=" + filter;
 
-		QString repeat = executableModel->data(executableModelHash[pathToTest], QExecutableModel::RepeatTestsRole).toString();
+		QString repeat = executableModel->data(index, QExecutableModel::RepeatTestsRole).toString();
 		if (repeat != "0" && repeat != "1") arguments << "--gtest_repeat=" + repeat;
 
-		int runDisabled = executableModel->data(executableModelHash[pathToTest], QExecutableModel::RunDisabledTestsRole).toInt();
+		int runDisabled = executableModel->data(index, QExecutableModel::RunDisabledTestsRole).toInt();
 		if (runDisabled) arguments << "--gtest_also_run_disabled_tests";
 
-		int shuffle = executableModel->data(executableModelHash[pathToTest], QExecutableModel::ShuffleRole).toInt();
+		int shuffle = executableModel->data(index, QExecutableModel::ShuffleRole).toInt();
 		if (shuffle) arguments << "--gtest_shuffle";
 
-		int seed = executableModel->data(executableModelHash[pathToTest], QExecutableModel::RandomSeedRole).toInt();
+		int seed = executableModel->data(index, QExecutableModel::RandomSeedRole).toInt();
 		if (shuffle) arguments << "--gtest_random_seed=" + QString::number(seed);
 
-		QString otherArgs = executableModel->data(executableModelHash[pathToTest], QExecutableModel::ArgsRole).toString();
+		QString otherArgs = executableModel->data(index, QExecutableModel::ArgsRole).toString();
 		if(!otherArgs.isEmpty()) arguments << otherArgs;
-
-		qDebug() << arguments;
 
 		// Start the test
 		testProcess.start(pathToTest, arguments);
@@ -560,7 +547,7 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath, bool notify)
 
 	// if the test that just ran is selected, update the view
 	QModelIndex index = executableTreeView->selectionModel()->currentIndex();
-	index = index.sibling(index.row(), QExecutableModel::NameColumn);
+
 	if (index.data(QExecutableModel::PathRole).toString() == testPath)
 	{
 		selectTest(testPath);
@@ -570,21 +557,23 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath, bool notify)
 	int numErrors = doc.elementsByTagName("testsuites").item(0).attributes().namedItem("failures").nodeValue().toInt();
 	if (numErrors)
 	{
-		executableModel->setData(executableModelHash[testPath], QExecutableModel::FAILED, QExecutableModel::StateRole);
+		executableModel->setData(executableModel->index(testPath), ExecutableData::FAILED, QExecutableModel::StateRole);
 		mostRecentFailurePath = testPath;
+		QString name = executableModel->index(testPath).data(QExecutableModel::NameRole).toString();
 		// only show notifications AFTER the initial startup, otherwise the user
 		// could get a ton of messages every time they open the program. The messages
 		if (notify && notifyOnFailureAction->isChecked())
 		{
-			systemTrayIcon->showMessage("Test Failure", QFileInfo(testPath).baseName() + " failed with " + QString::number(numErrors) + " errors.");
+			systemTrayIcon->showMessage("Test Failure", name + " failed with " + QString::number(numErrors) + " errors.");
 		}
 	}
 	else
 	{
-		executableModel->setData(executableModelHash[testPath], QExecutableModel::PASSED, QExecutableModel::StateRole);
+		executableModel->setData(executableModel->index(testPath), ExecutableData::PASSED, QExecutableModel::StateRole);
+		QString name = executableModel->index(testPath).data(QExecutableModel::NameRole).toString();
 		if(notify && notifyOnSuccessAction->isChecked())
 		{
-			systemTrayIcon->showMessage("Test Successful", QFileInfo(testPath).baseName() + " ran with no errors.");
+			systemTrayIcon->showMessage("Test Successful", name + " ran with no errors.");
 		}
 	}
 
@@ -605,11 +594,7 @@ void MainWindowPrivate::selectTest(const QString& testPath)
 	testCaseTreeView->expandAll();
 	
 	// make sure the right entry is selected
-	QModelIndexList indices = executableModel->match(executableModel->index(0,0), QExecutableModel::PathRole, testPath);
-	if (indices.size())
-	{
-		executableTreeView->setCurrentIndex(indices.first());
-	}
+	executableTreeView->setCurrentIndex(executableModel->index(testPath));
 	
 	for (int i = 0; i < testCaseTreeView->model()->columnCount(); i++)
 	{
@@ -629,13 +614,13 @@ void MainWindowPrivate::saveSettings() const
 
 	// save executable information
 	settings.beginWriteArray("tests");
-	for (auto itr = executableModelHash.begin(); itr != executableModelHash.end(); ++itr)
+	for (auto itr = executableModel->begin(); itr != executableModel->end(); ++itr)
 	{
-		QModelIndex index = *itr;
+		QModelIndex index = executableModel->iteratorToIndex(itr);
 		index = index.sibling(index.row(), QExecutableModel::NameColumn);
 		settings.setArrayIndex(index.row());
 		settings.setValue("path", index.data(QExecutableModel::PathRole).toString());
-		settings.setValue("checked", index.data(Qt::CheckStateRole).toInt());
+		settings.setValue("autorun", index.data(QExecutableModel::AutorunRole).toBool());
 		settings.setValue("lastModified", index.data(QExecutableModel::LastModifiedRole).toDateTime());
 		settings.setValue("filter", index.data(QExecutableModel::FilterRole).toString());
 		settings.setValue("repeat", index.data(QExecutableModel::RepeatTestsRole).toInt());
@@ -669,7 +654,7 @@ void MainWindowPrivate::loadSettings()
 	{
 		settings.setArrayIndex(i);
 		QString path = settings.value("path").toString();
-		Qt::CheckState checked = static_cast<Qt::CheckState>(settings.value("checked").toInt());
+		bool autorun = settings.value("autorun").toBool();
 		QDateTime lastModified = settings.value("lastModified").toDateTime();
 		QString filter = settings.value("filter").toString();
 		int repeat = settings.value("repeat").toInt();
@@ -678,7 +663,7 @@ void MainWindowPrivate::loadSettings()
 		int seed = settings.value("seed").toInt();
 		QString args = settings.value("args").toString();
 
-		addTestExecutable(path, checked, lastModified, filter, repeat, runDisabled, shuffle, seed, args);
+		addTestExecutable(path, autorun, lastModified, filter, repeat, runDisabled, shuffle, seed, args);
 	}
 	settings.endArray();
 
@@ -698,16 +683,15 @@ void MainWindowPrivate::removeTest(const QModelIndex &index)
 	if (!index.isValid())
 		return;
 
-	QString path = index.sibling(index.row(), QExecutableModel::NameColumn).data(QExecutableModel::PathRole).toString();
+	QString path = index.data(QExecutableModel::PathRole).toString();
 
-	if (QMessageBox::question(this->q_ptr, QString("Remove Test?"), "Do you want to remove test " + QFileInfo(path).baseName() + "?",
+	if (QMessageBox::question(this->q_ptr, QString("Remove Test?"), "Do you want to remove test " + index.data(QExecutableModel::NameRole).toString() + "?",
 		QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
 		executableTreeView->setCurrentIndex(index);
 
 		// remove all data related to this test
 		executablePaths.removeAll(path);
-		executableModelHash.remove(path);
 		testResultsHash.remove(path);
 		fileWatcher->removePath(path);
 
@@ -728,22 +712,22 @@ void MainWindowPrivate::removeTest(const QModelIndex &index)
 QModelIndex MainWindowPrivate::getTestIndexDialog(const QString& label, bool running /*= false*/)
 {
 	bool ok;
-	QStringList tests;
+	QHash<QString, QString> tests;
 
-	for (int i = 0; i < executableModel->rowCount(); ++i)
+	for (auto itr = executableModel->begin(); itr != executableModel->end(); ++itr)
 	{
-		QString path = executableModel->index(i, QExecutableModel::NameColumn).data(QExecutableModel::PathRole).toString();
-		if(!running || testRunningHash[path])
-			tests << executableModel->index(i, QExecutableModel::NameColumn).data().toString();
+		QString path = itr->path;
+		if(!path.isEmpty() && (!running || testRunningHash[path]))
+			tests[executableModel->iteratorToIndex(itr).data(QExecutableModel::NameRole).toString()] = path;
 	}
 
 	if (tests.isEmpty())
 		return QModelIndex();
 
-	QString selected = QInputDialog::getItem(this->q_ptr, "Select Test", label, tests, 0, false, &ok);
-	QModelIndexList matches = executableModel->match(executableModel->index(0, QExecutableModel::NameColumn), Qt::DisplayRole, selected);
-	if (ok && matches.size())
-		return matches.first().sibling(matches.first().row(), QExecutableModel::NameColumn);
+	QString selected = QInputDialog::getItem(this->q_ptr, "Select Test", label, tests.keys(), 0, false, &ok);
+	QModelIndex match = executableModel->index(tests[selected]);
+	if (ok)
+		return match;
 	else
 		return QModelIndex();
 }
@@ -772,8 +756,7 @@ void MainWindowPrivate::createExecutableContextMenu()
 	
 	connect(executableTreeView, &QListView::customContextMenuRequested, [this, q](const QPoint& pos)
 	{
-		QModelIndex indexUnderMouse = executableTreeView->indexAt(pos);
-		QModelIndex index = indexUnderMouse.sibling(indexUnderMouse.row(), QExecutableModel::NameColumn);
+		QModelIndex index = executableTreeView->indexAt(pos);
 		if (index.isValid())
 		{
 			runTestAction->setEnabled(true);
@@ -797,7 +780,7 @@ void MainWindowPrivate::createExecutableContextMenu()
 
 	connect(runTestAction, &QAction::triggered, [this]
 	{
-		QModelIndex index = executableTreeView->currentIndex().sibling(executableTreeView->currentIndex().row(), QExecutableModel::NameColumn);
+		QModelIndex index = executableTreeView->currentIndex();
 		QString path = index.data(QExecutableModel::PathRole).toString();
 		runTestInThread(path, false);
 	});
@@ -805,10 +788,9 @@ void MainWindowPrivate::createExecutableContextMenu()
 	connect(killTestAction, &QAction::triggered, [this]
 	{
 		Q_Q(MainWindow);
-		QModelIndex index = executableTreeView->currentIndex().sibling(executableTreeView->currentIndex().row(), QExecutableModel::NameColumn);
-		QString path = index.data(QExecutableModel::PathRole).toString();
-		QFileInfo info(path);
-		if (QMessageBox::question(q, "Kill Test?", "Are you sure you want to kill test: " + info.baseName() + "?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+		QString path = executableTreeView->currentIndex().data(QExecutableModel::PathRole).toString();
+		QString name = executableTreeView->currentIndex().data(QExecutableModel::NameRole).toString();
+		if (QMessageBox::question(q, "Kill Test?", "Are you sure you want to kill test: " + name + "?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
 			emit killTest(path);
 	});
 
@@ -898,7 +880,11 @@ void MainWindowPrivate::createTestMenu()
 		if (filename.isEmpty())
 			return;
 
-		addTestExecutable(filename, Qt::Checked, QFileInfo(filename).lastModified());
+		QModelIndex existingIndex = executableModel->index(filename);
+		if (!existingIndex.isValid())
+			addTestExecutable(filename, true, QFileInfo(filename).lastModified());
+		else
+			executableTreeView->setCurrentIndex(existingIndex);
 	});
 
 	connect(selectAndRemoveTestAction, &QAction::triggered, [this]
@@ -916,9 +902,9 @@ void MainWindowPrivate::createTestMenu()
 	connect(selectAndKillTest, &QAction::triggered, [this, q]
 	{
 		QModelIndex index = getTestIndexDialog("Select Test to kill:", true);
-		QFileInfo info(index.data(QExecutableModel::PathRole).toString());
+		QString name = index.data(QExecutableModel::NameRole).toString();
 		if (index.isValid())
-			if (QMessageBox::question(q, "Kill Test?", "Are you sure you want to kill test: " + info.baseName() + "?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+			if (QMessageBox::question(q, "Kill Test?", "Are you sure you want to kill test: " + name + "?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
 				emit killTest(index.data(QExecutableModel::PathRole).toString());
 	});
 }
