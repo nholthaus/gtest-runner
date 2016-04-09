@@ -886,7 +886,11 @@ void MainWindowPrivate::createTestMenu()
 		if (filename.isEmpty())
 			return;
 
-		addTestExecutable(filename, true, QFileInfo(filename).lastModified());
+		QModelIndex existingIndex = executableModel->index(filename);
+		if (!existingIndex.isValid())
+			addTestExecutable(filename, true, QFileInfo(filename).lastModified());
+		else
+			executableTreeView->setCurrentIndex(existingIndex);
 	});
 
 	connect(selectAndRemoveTestAction, &QAction::triggered, [this]
