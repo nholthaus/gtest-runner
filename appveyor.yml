@@ -35,9 +35,10 @@ build_script:
   - cmake -Wno-dev -G"%VS_GEN%" ..
   - cmake --build . --config %CONFIGURATION%
   - cmake --build . --target PACKAGE --config %CONFIGURATION%
+  - cd ..
 
 after_build:
-  - signtool.exe sign /f c:\projects\gtest-runner\resources\certificates\certum.pfx /p %PWD% C:\projects\gtest-runner\build\Release\gtest-runner-%APPVEYOR_REPO_TAG_NAME%-%EXT%.exe && exit 0
+  - sign.bat
   
 artifacts:
   - path: build\$(configuration)\gtest-runner-$(appveyor_repo_tag_name)-$(EXT).exe
