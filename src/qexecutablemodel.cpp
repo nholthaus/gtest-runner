@@ -105,9 +105,16 @@ Q_INVOKABLE QVariant QExecutableModel::data(const QModelIndex &index, int role /
 		}
 	case Qt::CheckStateRole:
 		if (index.column() == NameColumn)
-			return itr->autorun;
+		{
+			if (itr->autorun)
+				return Qt::Checked;
+			else
+				return Qt::Unchecked;
+		}
 		else
 			return QVariant();
+	case AutorunRole:
+		return itr->autorun;
 	case PathRole:
 		return itr->path;
 	case StateRole:
@@ -147,7 +154,10 @@ Q_INVOKABLE bool QExecutableModel::setData(const QModelIndex &index, const QVari
 		itr->path = value.toString();
 		break;
 	case Qt::CheckStateRole:
-		itr->autorun = (Qt::CheckState)value.toInt();
+		itr->autorun = value.toBool();
+	case AutorunRole:
+		itr->autorun = value.toBool();
+		break;
 	case StateRole:
 		itr->state = (ExecutableData::States)value.toInt();
 		break;

@@ -157,7 +157,7 @@ public:
 	
 	// state variables
 	QString									mostRecentFailurePath;					///< Stores the path [key] of the most recently failed test.
-	QHash<QString, Qt::CheckState>			executableCheckedStateHash;				///< Hash of the previous state of the checkboxes.
+	QHash<QString, bool>					executableCheckedStateHash;				///< Hash of the previous state of the checkboxes.
 	QHash<QString, QDomDocument>			testResultsHash;						///< Hash table storing the xml test results for each test path.
 	std::map<QString, std::atomic<bool>>	testRunningHash;						///< Stores whether the given test is actively running.
 
@@ -181,7 +181,7 @@ public:
 
 	QString xmlPath(const QString& testPath) const;
 
-	void addTestExecutable(const QString& path, Qt::CheckState checked, QDateTime lastModified, QString filter = "", int repeat = 0, Qt::CheckState runDisabled = Qt::Unchecked, Qt::CheckState shuffle = Qt::Unchecked, int randomSeed = 0, QString otherArgs = "");
+	void addTestExecutable(const QString& path, bool autorun, QDateTime lastModified, QString filter = "", int repeat = 0, Qt::CheckState runDisabled = Qt::Unchecked, Qt::CheckState shuffle = Qt::Unchecked, int randomSeed = 0, QString otherArgs = "");
 
 	void runTestInThread(const QString& pathToTest, bool notify);
 
