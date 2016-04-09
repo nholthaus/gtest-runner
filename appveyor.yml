@@ -36,7 +36,6 @@ build_script:
   - cmake -Wno-dev -G"%VS_GEN%" ..
   - cmake --build . --config %CONFIGURATION%
   - cmake --build . --target PACKAGE --config %CONFIGURATION%
-  - signtool.exe sign /f c:\projects\gtest-runner\resources\certificates\certum.pfx /p %PWD% C:\workspace\gtest-runner\build\%CONFIGURATION%\gtest-runner-%appveyor_repo_tag_name%-%EXT%.exe
 
 artifacts:
   - path: build\$(configuration)\gtest-runner-$(appveyor_repo_tag_name)-$(EXT).exe
@@ -44,6 +43,9 @@ artifacts:
   - path: build\$(configuration)\gtest-runner-$(appveyor_repo_tag_name)-$(EXT).zip
     name: windows_portable
     type: zip
+  
+before_deploy:
+  - signtool.exe sign /f c:\projects\gtest-runner\resources\certificates\certum.pfx /p %PWD% C:\workspace\gtest-runner\build\%CONFIGURATION%\gtest-runner-%APPVEYOR_REPO_TAG_NAME%-%EXT%.exe
   
 deploy:
   tag: $(appveyor_repo_tag_name)
