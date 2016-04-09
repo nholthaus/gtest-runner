@@ -65,6 +65,7 @@ find_package(Qt5Gui REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Xml REQUIRED)
 find_package(Qt5XmlPatterns REQUIRED)
+find_package(Qt5Test REQUIRED)
 
 # Test for supported Qt version
 find_program(QMAKE_EXECUTABLE NAMES qmake HINTS ${QTDIR} ENV QTDIR PATH_SUFFIXES bin)
@@ -118,6 +119,7 @@ src/QBottomUpSortFilterProxy.h
 src/QStdOutSyntaxHighlighter.h
 src/tree.h
 src/QTreeModel.h
+src/modeltest.h
 )
 
 # .cpp files
@@ -132,6 +134,7 @@ src/GTestFailureModel.cpp
 src/gtestModel.cpp
 src/qexecutablemodel.cpp
 src/QBottomUpSortFilterProxy.cpp
+src/modeltest.cpp
 )
 
 # on windows, append headers to source so they show up in visual studio
@@ -183,6 +186,7 @@ Qt5::Gui
 Qt5::Widgets
 Qt5::Xml
 Qt5::XmlPatterns
+Qt5::Test
 Threads::Threads
 )
 

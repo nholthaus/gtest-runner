@@ -176,7 +176,7 @@ public:
 
 	}
 
-	QModelIndex removeRow(int row, const QModelIndex &parent = QModelIndex())
+	virtual QModelIndex removeRow(int row, const QModelIndex &parent = QModelIndex())
 	{
 		return iteratorToIndex(removeRow(tree.child_at(indexToIterator(parent), row)));
 	}
@@ -197,7 +197,7 @@ public:
 	*/
 	iterator begin() const
 	{
-		return ++tree.begin();
+		return tree.begin();
 	}
 
 	/**
@@ -227,7 +227,7 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 
 
-	virtual QModelIndex	index(int row, int column, const QModelIndex &parent = QModelIndex()) const override
+	virtual QModelIndex	index(int row, int column, const QModelIndex &parent = QModelIndex()) const
 	{
 		if (!hasIndex(row, column, parent))
 			return QModelIndex();
