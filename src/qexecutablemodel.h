@@ -41,8 +41,9 @@
 //	INCLUDE
 //------------------------------
 
-#include <QScopedPointer>
-#include <QStandardItemModel>
+#include "QTreeModel.h"
+
+#include <QDateTime>
 
 //------------------------------
 //	FORWARD DECLARATIONS
@@ -51,12 +52,56 @@
 class QExecutableModelPrivate;
 
 //--------------------------------------------------------------------------------------------------
+//	CLASS: ExecutableData
+//--------------------------------------------------------------------------------------------------
+/// @brief		container for data about the test executable
+/// @details	
+//--------------------------------------------------------------------------------------------------
+struct ExecutableData
+{
+	enum States
+	{
+		NOT_RUNNING,
+		RUNNING,
+		PASSED,
+		FAILED,
+	};
+
+	/// allow implcit path conversion to help search the model
+	ExecutableData(QString path = "") : path(path) {};
+
+	QString			path;				///< Full, absolute path to test executable
+	bool			autorun;			///< Whether to autorun the tests when they change.
+	States			state;				///< Current state of test execution
+	QDateTime		lastModified;		///< Last time the executable was modified
+	double			progress;			///< Test run completeness, from 0 to 100
+	QString			filter;				///< filter to be applied on gtest command line
+	int				repeat;				///< Number of times to repeat the test. Can be -1.
+	Qt::CheckState	runDisabled;		///< gtest command line to run disabled tests
+	Qt::CheckState	shuffle;			///< gtest command line option to shuffle tests
+	int				randomSeed;			///< Random seed for the shuffle
+	QString			otherArgs;			///< any other dumb-ass args the user thinks I forgot.
+
+	/// executable data needs to be unique per-path, so that's a good equality check
+	friend bool operator==(const ExecutableData& lhs, const ExecutableData& rhs)
+	{
+		return lhs.path == rhs.path;
+	}
+
+	friend bool operator!=(const ExecutableData& lhs, const ExecutableData& rhs)
+	{
+		return !(lhs == rhs);
+	}
+
+};	// CLASS: ExecutableData
+
+//--------------------------------------------------------------------------------------------------
 //	CLASS: QExecutableModel
 //--------------------------------------------------------------------------------------------------
 /// @brief		model for test executables
 /// @details	
 //--------------------------------------------------------------------------------------------------
-class QExecutableModel : public QStandardItemModel
+class QExecutableModel : public QTreeModel<ExecutableData>
 {
 public:
 
@@ -79,28 +124,24 @@ public:
 		ShuffleRole = Qt::UserRole + 6,
 		RandomSeedRole = Qt::UserRole + 7,
 		ArgsRole = Qt::UserRole + 8,
+		NameRole = Qt::UserRole + 9,
+		AutorunRole = Qt::UserRole + 10,
 	};
-
-	enum States
-	{
-		NOT_RUNNING, 
-		RUNNING, 
-		PASSED, 
-		FAILED,
- 	};
 
  	explicit QExecutableModel(QObject* parent = nullptr);
 	virtual ~QExecutableModel();
 
-	bool hasChildren(const QModelIndex& parent) const override;
-
  	Q_INVOKABLE virtual int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 	Q_INVOKABLE virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+	Q_INVOKABLE virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+	Q_INVOKABLE virtual Qt::DropActions supportedDropActions() const override;
+	virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
+	virtual QModelIndex removeRow(int row, const QModelIndex &parent = QModelIndex()) override;
 
-protected:
+	/// return an index from a path
+	QModelIndex index(const QString& path) const;
+	virtual QModelIndex	index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
 
-	
-	
 private:
 
 	Q_DECLARE_PRIVATE(QExecutableModel);

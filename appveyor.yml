@@ -14,17 +14,25 @@ configuration:
 environment:
   matrix:
   - VS_GEN: Visual Studio 12 2013
-    QTDIR: C:\Qt\5.5\msvc2013
+    QTDIR: C:\Qt\5.6\msvc2013
     EXT: win32
   - VS_GEN: Visual Studio 12 2013 Win64
-    QTDIR: C:\Qt\5.5\msvc2013_64
+    QTDIR: C:\Qt\5.6\msvc2013_64
     EXT: win64
+  global:
+    PWD:
+      secure: 9z2ZbAlRhD7hRqEYrmxNMg==
     
+branches:
+  except:
+    - gh-pages
+    - documentation
+
 matrix:
   fast_finish: true
   
 install:
-  - set PATH=%PATH%;%QTDIR%\bin;
+  - set PATH=%PATH%;%QTDIR%\bin;"c:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Bin\"
   
 build_script:
   - md build
@@ -39,6 +47,9 @@ artifacts:
   - path: build\$(configuration)\gtest-runner-$(appveyor_repo_tag_name)-$(EXT).zip
     name: windows_portable
     type: zip
+  
+before_deploy:
+  - signtool.exe sign /f c:\projects\gtest-runner\resources\certificates\certum.pfx /p %PWD% C:\workspace\gtest-runner\build\%CONFIGURATION%\gtest-runner-%APPVEYOR_REPO_TAG_NAME%-%EXT%.exe
   
 deploy:
   tag: $(appveyor_repo_tag_name)
