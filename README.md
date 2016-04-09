@@ -12,7 +12,9 @@ See the [Build Instructions wiki page](https://github.com/nholthaus/gtest-runner
 
 Check out the [Latest release](https://github.com/nholthaus/gtest-runner/releases) for binary installers. 
 
-_NOTE_: We're still in the process of acquiring certificates to sign the windows binaries, which should happen within the next couple of releases. For now, if you use the .exe installer, you'll get a lot of warnings about potentially unsafe code. If you have admin rights to your machine you can 'continue anyway' through those messages to finish the install.
+As of version 1.1.2, all of our Windows binaries are now signed.
+
+_Windows users_: Although we have authenticode signing for our binaries, Windows will continue to show the "This program is not commonly downloaded, and may harm your computer" warning until and arbitrary and undisclosed number of downloads has been achieved, _even though the binaries are signed_. It's nothing to worry about, but if it makes you feel uncomfotable, feel free to inspect the source code for yourse;f, and build your own copy from a repo clone.
 
 ## Features
 
