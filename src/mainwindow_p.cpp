@@ -57,8 +57,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	executableDock->setWidget(executableDockFrame);
 
 	executableTreeView->setModel(executableModel);
-//	executableTreeView->setDefaultDropAction(Qt::MoveAction);
-//	executableTreeView->setDragDropMode(QAbstractItemView::InternalMove);
+	executableTreeView->setDefaultDropAction(Qt::MoveAction);
+	executableTreeView->setDragDropMode(QAbstractItemView::InternalMove);
 	executableTreeView->setHeaderHidden(true);
 	executableTreeView->setIndentation(0);
 	executableTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);

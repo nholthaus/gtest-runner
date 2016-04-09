@@ -15,6 +15,9 @@ environment:
   - VS_GEN: Visual Studio 12 2013 Win64
     QTDIR: C:\Qt\5.6\msvc2013_64
     EXT: win64
+  global:
+    PWD:
+      secure: 9z2ZbAlRhD7hRqEYrmxNMg==
     
 branches:
   except:
@@ -25,7 +28,7 @@ matrix:
   fast_finish: true
   
 install:
-  - set PATH=%PATH%;%QTDIR%\bin;
+  - set PATH="%PATH%;%QTDIR%\bin;c:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Bin\"
   
 build_script:
   - md build
@@ -33,6 +36,7 @@ build_script:
   - cmake -Wno-dev -G"%VS_GEN%" ..
   - cmake --build . --config %CONFIGURATION%
   - cmake --build . --target PACKAGE --config %CONFIGURATION%
+  - signtool.exe sign /f c:\projects\gtest-runner\resources\certificates\certum.pfx /p %PWD% C:\workspace\gtest-runner\build\%CONFIGURATION%\gtest-runner-%appveyor_repo_tag_name%-%EXT%.exe
 
 artifacts:
   - path: build\$(configuration)\gtest-runner-$(appveyor_repo_tag_name)-$(EXT).exe
