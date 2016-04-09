@@ -206,6 +206,10 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	{
 		testCaseProxyModel->setFilterRegExp(text);
 		testCaseTreeView->expandAll();
+		for (int i = 0; i < testCaseProxyModel->columnCount(); ++i)
+		{
+			testCaseTreeView->resizeColumnToContents(i);
+		}
 	});
 
 	// create a failure model when a test is clicked
