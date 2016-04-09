@@ -22,11 +22,6 @@ environment:
   global:
     PWD:
       secure: 9z2ZbAlRhD7hRqEYrmxNMg==
-    
-branches:
-  except:
-    - gh-pages
-    - documentation
 
 matrix:
   fast_finish: true
