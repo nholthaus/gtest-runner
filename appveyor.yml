@@ -37,7 +37,7 @@ build_script:
   - cmake --build . --target PACKAGE --config %CONFIGURATION%
 
 after_build:
-  - signtool.exe sign /f c:\projects\gtest-runner\resources\certificates\certum.pfx /p %PWD% C:\workspace\gtest-runner\build\%CONFIGURATION%\gtest-runner-%APPVEYOR_REPO_TAG_NAME%-%EXT%.exe
+  - signtool.exe sign /f c:\projects\gtest-runner\resources\certificates\certum.pfx /p %PWD% C:\projects\gtest-runner\build\Release\gtest-runner-%APPVEYOR_REPO_TAG_NAME%-%EXT%.exe
   
 artifacts:
   - path: build\$(configuration)\gtest-runner-$(appveyor_repo_tag_name)-$(EXT).exe
