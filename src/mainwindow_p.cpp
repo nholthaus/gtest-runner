@@ -140,11 +140,11 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		QModelIndex m = executableModel->index(path);
 		if (m.isValid())
 		{
-			executableModel->setData(m, QDateTime::currentDateTime(), QExecutableModel::LastModifiedRole);
-
 			// only auto-run if the test is checked
 			if (m.data(QExecutableModel::AutorunRole).toBool())
 			{
+				executableModel->setData(m, QDateTime::currentDateTime(), QExecutableModel::LastModifiedRole);
+
 				emit showMessage("Change detected: " + path + "...");
 				// add a little delay to avoid running multiple instances of the same test build,
 				// and to avoid running the file before visual studio is done writting it.
