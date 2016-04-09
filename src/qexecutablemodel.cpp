@@ -70,6 +70,8 @@ Q_INVOKABLE QVariant QExecutableModel::data(const QModelIndex &index, int role /
 	if (itr == tree.end())
 		return QVariant();
 
+	QString name = QFileInfo(itr->path).baseName();
+
 	switch (role)
 	{
 	case Qt::DecorationRole:
@@ -99,7 +101,7 @@ Q_INVOKABLE QVariant QExecutableModel::data(const QModelIndex &index, int role /
 		switch (index.column())
 		{
 		case NameColumn:
-			return QFileInfo(itr->path).baseName();
+			return data(index, NameRole);
 		default:
 			return QVariant();
 		}
@@ -136,7 +138,15 @@ Q_INVOKABLE QVariant QExecutableModel::data(const QModelIndex &index, int role /
 	case ArgsRole:
 		return itr->otherArgs;
 	case NameRole:
-		return QFileInfo(itr->path).baseName();
+		if (itr->path.contains("Debug"))
+			name.append(" (Debug)");
+		else if (itr->path.contains("RelWithDebInfo"))
+			name.append(" (RelWithDebInfo)");
+		else if (itr->path.contains("Release"))
+			name.append(" (Release)");
+		else if (itr->path.contains("MinSizeRel"))
+			name.append(" (MinSizeRel)");
+		return name;
 	default:
 		return QVariant();
 	}

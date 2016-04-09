@@ -565,19 +565,21 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath, bool notify)
 	{
 		executableModel->setData(executableModel->index(testPath), ExecutableData::FAILED, QExecutableModel::StateRole);
 		mostRecentFailurePath = testPath;
+		QString name = executableModel->index(testPath).data(QExecutableModel::NameRole).toString();
 		// only show notifications AFTER the initial startup, otherwise the user
 		// could get a ton of messages every time they open the program. The messages
 		if (notify && notifyOnFailureAction->isChecked())
 		{
-			systemTrayIcon->showMessage("Test Failure", QFileInfo(testPath).baseName() + " failed with " + QString::number(numErrors) + " errors.");
+			systemTrayIcon->showMessage("Test Failure", name + " failed with " + QString::number(numErrors) + " errors.");
 		}
 	}
 	else
 	{
 		executableModel->setData(executableModel->index(testPath), ExecutableData::PASSED, QExecutableModel::StateRole);
+		QString name = executableModel->index(testPath).data(QExecutableModel::NameRole).toString();
 		if(notify && notifyOnSuccessAction->isChecked())
 		{
-			systemTrayIcon->showMessage("Test Successful", QFileInfo(testPath).baseName() + " ran with no errors.");
+			systemTrayIcon->showMessage("Test Successful", name + " ran with no errors.");
 		}
 	}
 
@@ -689,7 +691,7 @@ void MainWindowPrivate::removeTest(const QModelIndex &index)
 
 	QString path = index.data(QExecutableModel::PathRole).toString();
 
-	if (QMessageBox::question(this->q_ptr, QString("Remove Test?"), "Do you want to remove test " + QFileInfo(path).baseName() + "?",
+	if (QMessageBox::question(this->q_ptr, QString("Remove Test?"), "Do you want to remove test " + index.data(QExecutableModel::NameRole).toString() + "?",
 		QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
 	{
 		executableTreeView->setCurrentIndex(index);
@@ -720,7 +722,7 @@ QModelIndex MainWindowPrivate::getTestIndexDialog(const QString& label, bool run
 
 	for (auto itr = executableModel->begin(); itr != executableModel->end(); ++itr)
 	{
-
+		qDebug() << executableModel->iteratorToIndex(itr).data(QExecutableModel::NameRole).toString();
 		QString path = itr->path;
 		if(!path.isEmpty() && (!running || testRunningHash[path]))
 			tests[executableModel->iteratorToIndex(itr).data(QExecutableModel::NameRole).toString()] = path;
@@ -794,8 +796,8 @@ void MainWindowPrivate::createExecutableContextMenu()
 	{
 		Q_Q(MainWindow);
 		QString path = executableTreeView->currentIndex().data(QExecutableModel::PathRole).toString();
-		QFileInfo info(path);
-		if (QMessageBox::question(q, "Kill Test?", "Are you sure you want to kill test: " + info.baseName() + "?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+		QString name = executableTreeView->currentIndex().data(QExecutableModel::NameRole).toString();
+		if (QMessageBox::question(q, "Kill Test?", "Are you sure you want to kill test: " + name + "?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
 			emit killTest(path);
 	});
 
@@ -908,9 +910,9 @@ void MainWindowPrivate::createTestMenu()
 	connect(selectAndKillTest, &QAction::triggered, [this, q]
 	{
 		QModelIndex index = getTestIndexDialog("Select Test to kill:", true);
-		QFileInfo info(index.data(QExecutableModel::PathRole).toString());
+		QString name = index.data(QExecutableModel::NameRole).toString();
 		if (index.isValid())
-			if (QMessageBox::question(q, "Kill Test?", "Are you sure you want to kill test: " + info.baseName() + "?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+			if (QMessageBox::question(q, "Kill Test?", "Are you sure you want to kill test: " + name + "?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
 				emit killTest(index.data(QExecutableModel::PathRole).toString());
 	});
 }
