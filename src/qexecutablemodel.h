@@ -71,7 +71,7 @@ struct ExecutableData
 	ExecutableData(QString path = "") : path(path) {};
 
 	QString			path;				///< Full, absolute path to test executable
-	Qt::CheckState	autorun;			///< Whether to autorun the tests when they change.
+	bool			autorun;			///< Whether to autorun the tests when they change.
 	States			state;				///< Current state of test execution
 	QDateTime		lastModified;		///< Last time the executable was modified
 	double			progress;			///< Test run completeness, from 0 to 100
@@ -125,6 +125,7 @@ public:
 		RandomSeedRole = Qt::UserRole + 7,
 		ArgsRole = Qt::UserRole + 8,
 		NameRole = Qt::UserRole + 9,
+		AutorunRole = Qt::UserRole + 10,
 	};
 
  	explicit QExecutableModel(QObject* parent = nullptr);

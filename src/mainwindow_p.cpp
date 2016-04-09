@@ -138,13 +138,12 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	connect(fileWatcher, &QFileSystemWatcher::fileChanged, this, [this](const QString& path)
 	{	
 		QModelIndex m = executableModel->index(path);
-
 		if (m.isValid())
 		{
 			executableModel->setData(m, QDateTime::currentDateTime(), QExecutableModel::LastModifiedRole);
 
 			// only auto-run if the test is checked
-			if (m.data(Qt::CheckStateRole) == Qt::Checked)
+			if (m.data(QExecutableModel::AutorunRole).toBool())
 			{
 				emit showMessage("Change detected: " + path + "...");
 				// add a little delay to avoid running multiple instances of the same test build,
@@ -181,11 +180,11 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	connect(executableModel, &QAbstractItemModel::dataChanged, this, [this](const QModelIndex & topLeft, const QModelIndex & bottomRight, const QVector<int> & roles)
 	{
 		QString path = topLeft.data(QExecutableModel::PathRole).toString();
-		Qt::CheckState prevState = executableCheckedStateHash[path];
+		bool prevState = executableCheckedStateHash[path];
 
 		// Only re-run IFF the check box state goes from unchecked to checked AND
 		// the data has gotten out of date since the checkbox was off.
-		if (topLeft.data(Qt::CheckStateRole) == Qt::Checked && prevState == Qt::Unchecked)
+		if (topLeft.data(QExecutableModel::AutorunRole).toBool() && !prevState)
 		{
 			QFileInfo xml(xmlPath(path));
 			QFileInfo exe(path);
@@ -199,7 +198,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		}
 
 		// update previous state
-		executableCheckedStateHash[path] = (Qt::CheckState)topLeft.data(Qt::CheckStateRole).toInt();
+		executableCheckedStateHash[path] = topLeft.data(QExecutableModel::AutorunRole).toBool();
 	}, Qt::QueuedConnection);
 
 	// filter test results when the filter is changed
@@ -296,7 +295,7 @@ QString MainWindowPrivate::xmlPath(const QString& testPath) const
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: addTestExecutable
 //--------------------------------------------------------------------------------------------------
-void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState checked, QDateTime lastModified, 
+void MainWindowPrivate::addTestExecutable(const QString& path, bool autorun, QDateTime lastModified, 
 	QString filter /*= ""*/, int repeat /*= 0*/, Qt::CheckState runDisabled /*= Qt::Unchecked*/, 
 	Qt::CheckState shuffle /*= Qt::Unchecked*/, int randomSeed /*= 0*/, QString otherArgs /*= ""*/)
 {
@@ -308,7 +307,7 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	if (lastModified == QDateTime())
 		lastModified = fileinfo.lastModified();
 
-	executableCheckedStateHash[path] = checked;
+	executableCheckedStateHash[path] = autorun;
 
 	QFileInfo xmlResults(xmlPath(path));
 	
@@ -317,7 +316,7 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 
 	executableModel->setData(newRow, 0, QExecutableModel::ProgressRole);
 	executableModel->setData(newRow, path, QExecutableModel::PathRole);
-	executableModel->setData(newRow, checked, Qt::CheckStateRole);
+	executableModel->setData(newRow, autorun, QExecutableModel::AutorunRole);
 	executableModel->setData(newRow, lastModified, QExecutableModel::LastModifiedRole);
 	executableModel->setData(newRow, ExecutableData::NOT_RUNNING, QExecutableModel::StateRole);
 	executableModel->setData(newRow, filter, QExecutableModel::FilterRole);
@@ -332,7 +331,6 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	executablePaths << path;
 
 	bool previousResults = loadTestResults(path, false);
-	bool runAutomatically = (checked == Qt::Checked);
 	bool outOfDate = lastModified < fileinfo.lastModified();
 
  	QPushButton* advButton = new QPushButton();
@@ -365,13 +363,13 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 	testRunningHash[path] = false;
 
 	// if there are no previous results but the test is being watched, run the test
-	if ((!previousResults || outOfDate) && runAutomatically)
+	if ((!previousResults || outOfDate) && autorun)
 	{
 		this->runTestInThread(path, false);
 		QFileInfo newInfo(path);
 		executableModel->setData(newRow, newInfo.lastModified(), QExecutableModel::LastModifiedRole);
 	}
-	else if (outOfDate && !runAutomatically)
+	else if (outOfDate && !autorun)
 	{
 		executableModel->setData(newRow, ExecutableData::NOT_RUNNING, QExecutableModel::StateRole);
 	}
@@ -622,7 +620,7 @@ void MainWindowPrivate::saveSettings() const
 		index = index.sibling(index.row(), QExecutableModel::NameColumn);
 		settings.setArrayIndex(index.row());
 		settings.setValue("path", index.data(QExecutableModel::PathRole).toString());
-		settings.setValue("checked", index.data(Qt::CheckStateRole).toInt());
+		settings.setValue("autorun", index.data(QExecutableModel::AutorunRole).toBool());
 		settings.setValue("lastModified", index.data(QExecutableModel::LastModifiedRole).toDateTime());
 		settings.setValue("filter", index.data(QExecutableModel::FilterRole).toString());
 		settings.setValue("repeat", index.data(QExecutableModel::RepeatTestsRole).toInt());
@@ -656,7 +654,7 @@ void MainWindowPrivate::loadSettings()
 	{
 		settings.setArrayIndex(i);
 		QString path = settings.value("path").toString();
-		Qt::CheckState checked = static_cast<Qt::CheckState>(settings.value("checked").toInt());
+		bool autorun = settings.value("autorun").toBool();
 		QDateTime lastModified = settings.value("lastModified").toDateTime();
 		QString filter = settings.value("filter").toString();
 		int repeat = settings.value("repeat").toInt();
@@ -665,7 +663,7 @@ void MainWindowPrivate::loadSettings()
 		int seed = settings.value("seed").toInt();
 		QString args = settings.value("args").toString();
 
-		addTestExecutable(path, checked, lastModified, filter, repeat, runDisabled, shuffle, seed, args);
+		addTestExecutable(path, autorun, lastModified, filter, repeat, runDisabled, shuffle, seed, args);
 	}
 	settings.endArray();
 
@@ -884,7 +882,7 @@ void MainWindowPrivate::createTestMenu()
 		if (filename.isEmpty())
 			return;
 
-		addTestExecutable(filename, Qt::Checked, QFileInfo(filename).lastModified());
+		addTestExecutable(filename, true, QFileInfo(filename).lastModified());
 	});
 
 	connect(selectAndRemoveTestAction, &QAction::triggered, [this]
