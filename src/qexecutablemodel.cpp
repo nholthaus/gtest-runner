@@ -218,7 +218,6 @@ Q_INVOKABLE Qt::DropActions QExecutableModel::supportedDropActions() const
 //--------------------------------------------------------------------------------------------------
 QModelIndex QExecutableModel::index(const QString& path) const
 {
-	qDebug() << d_ptr->indexCache;
 	if(d_ptr->indexCache.contains(path))
 	{
 		QModelIndex index = d_ptr->indexCache[path];

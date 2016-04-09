@@ -2,7 +2,6 @@
 #include "QStdOutSyntaxHighlighter.h"
 #include "mainwindow_p.h"
 #include "executableModelDelegate.h"
-#include "modeltest.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -56,8 +55,6 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	executableDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea | Qt::TopDockWidgetArea | Qt::BottomDockWidgetArea);
 	executableDock->setWindowTitle("Test Executables");
 	executableDock->setWidget(executableDockFrame);
-
-	new ModelTest(executableModel, this);
 
 	executableTreeView->setModel(executableModel);
 //	executableTreeView->setDefaultDropAction(Qt::MoveAction);
@@ -316,7 +313,6 @@ void MainWindowPrivate::addTestExecutable(const QString& path, bool autorun, QDa
 	QFileInfo xmlResults(xmlPath(path));
 	
 	QModelIndex newRow = executableModel->insertRow(QModelIndex(), path);
-	qDebug() << newRow;
 
 	executableModel->setData(newRow, 0, QExecutableModel::ProgressRole);
 	executableModel->setData(newRow, path, QExecutableModel::PathRole);
@@ -472,8 +468,6 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 
 		QString otherArgs = executableModel->data(index, QExecutableModel::ArgsRole).toString();
 		if(!otherArgs.isEmpty()) arguments << otherArgs;
-
-		qDebug() << arguments;
 
 		// Start the test
 		testProcess.start(pathToTest, arguments);
@@ -722,7 +716,6 @@ QModelIndex MainWindowPrivate::getTestIndexDialog(const QString& label, bool run
 
 	for (auto itr = executableModel->begin(); itr != executableModel->end(); ++itr)
 	{
-		qDebug() << executableModel->iteratorToIndex(itr).data(QExecutableModel::NameRole).toString();
 		QString path = itr->path;
 		if(!path.isEmpty() && (!running || testRunningHash[path]))
 			tests[executableModel->iteratorToIndex(itr).data(QExecutableModel::NameRole).toString()] = path;
@@ -803,7 +796,6 @@ void MainWindowPrivate::createExecutableContextMenu()
 
 	connect(removeTestAction, &QAction::triggered, [this]
 	{
-		qDebug() << executableTreeView->currentIndex();
 		removeTest(executableTreeView->currentIndex());
 	});
 }
