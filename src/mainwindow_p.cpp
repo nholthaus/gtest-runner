@@ -2,6 +2,7 @@
 #include "QStdOutSyntaxHighlighter.h"
 #include "mainwindow_p.h"
 #include "executableModelDelegate.h"
+#include "modeltest.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -55,6 +56,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	executableDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea | Qt::TopDockWidgetArea | Qt::BottomDockWidgetArea);
 	executableDock->setWindowTitle("Test Executables");
 	executableDock->setWidget(executableDockFrame);
+
+	new ModelTest(executableModel, this);
 
 	executableTreeView->setModel(executableModel);
 //	executableTreeView->setDefaultDropAction(Qt::MoveAction);
@@ -314,6 +317,7 @@ void MainWindowPrivate::addTestExecutable(const QString& path, Qt::CheckState ch
 
 	executableModel->setData(newRow, 0, QExecutableModel::ProgressRole);
 	executableModel->setData(newRow, path, QExecutableModel::PathRole);
+	executableModel->setData(newRow, checked, Qt::CheckStateRole);
 	executableModel->setData(newRow, lastModified, QExecutableModel::LastModifiedRole);
 	executableModel->setData(newRow, ExecutableData::NOT_RUNNING, QExecutableModel::StateRole);
 	executableModel->setData(newRow, filter, QExecutableModel::FilterRole);
@@ -710,22 +714,23 @@ void MainWindowPrivate::removeTest(const QModelIndex &index)
 QModelIndex MainWindowPrivate::getTestIndexDialog(const QString& label, bool running /*= false*/)
 {
 	bool ok;
-	QStringList tests;
+	QHash<QString, QString> tests;
 
 	for (auto itr = executableModel->begin(); itr != executableModel->end(); ++itr)
 	{
+
 		QString path = itr->path;
-		if(!running || testRunningHash[path])
-			tests << executableModel->iteratorToIndex(itr).data(QExecutableModel::NameRole).toString();
+		if(!path.isEmpty() && (!running || testRunningHash[path]))
+			tests[executableModel->iteratorToIndex(itr).data(QExecutableModel::NameRole).toString()] = path;
 	}
 
 	if (tests.isEmpty())
 		return QModelIndex();
 
-	QString selected = QInputDialog::getItem(this->q_ptr, "Select Test", label, tests, 0, false, &ok);
-	QModelIndexList matches = executableModel->match(QModelIndex(), Qt::DisplayRole, selected);
-	if (ok && matches.size())
-		return matches.first().sibling(matches.first().row(), QExecutableModel::NameColumn);
+	QString selected = QInputDialog::getItem(this->q_ptr, "Select Test", label, tests.keys(), 0, false, &ok);
+	QModelIndex match = executableModel->index(tests[selected]);
+	if (ok)
+		return match;
 	else
 		return QModelIndex();
 }
@@ -794,6 +799,7 @@ void MainWindowPrivate::createExecutableContextMenu()
 
 	connect(removeTestAction, &QAction::triggered, [this]
 	{
+		qDebug() << executableTreeView->currentIndex();
 		removeTest(executableTreeView->currentIndex());
 	});
 }

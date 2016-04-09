@@ -67,6 +67,8 @@ Q_INVOKABLE QVariant QExecutableModel::data(const QModelIndex &index, int role /
 	Q_D(const QExecutableModel);
 
 	auto itr = indexToIterator(index);
+	if (itr == tree.end())
+		return QVariant();
 
 	switch (role)
 	{
@@ -196,24 +198,66 @@ Q_INVOKABLE Qt::DropActions QExecutableModel::supportedDropActions() const
 //--------------------------------------------------------------------------------------------------
 QModelIndex QExecutableModel::index(const QString& path) const
 {
-	QModelIndex index = d_ptr->indexCache[path];
-
-	// check the cache to see if we know the index
-	if(index.isValid())
+	qDebug() << d_ptr->indexCache;
+	if(d_ptr->indexCache.contains(path))
 	{
-		// if it hasn't changed since last time
-		if (index.data(QExecutableModel::PathRole).toString() == path)
+		QModelIndex index = d_ptr->indexCache[path];
+
+		// check the cache to see if we know the index
+		if (index.isValid())
 		{
-			return index;
+			// if it hasn't changed since last time
+			if (index.data(QExecutableModel::PathRole).toString() == path)
+			{
+				return index;
+			}
 		}
 	}
 
 	auto itr = std::find(begin(), end(), path);
-	index = iteratorToIndex(itr);
+	QModelIndex index = iteratorToIndex(itr);
 		
 	// cache for later use
 	d_ptr->indexCache[path] = index;
 
 	return index;
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: index
+//--------------------------------------------------------------------------------------------------
+QModelIndex QExecutableModel::index(int row, int column, const QModelIndex &parent /*= QModelIndex()*/) const
+{
+	return QTreeModel::index(row, column, parent);
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: flags
+//--------------------------------------------------------------------------------------------------
+Qt::ItemFlags QExecutableModel::flags(const QModelIndex &index) const
+{
+	Qt::ItemFlags f = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+
+	switch (index.column())
+	{
+	case NameColumn: 
+		f |= Qt::ItemIsUserCheckable;
+		break;
+	default:
+		break;
+	}
+
+	return f;
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: removeRow
+//--------------------------------------------------------------------------------------------------
+QModelIndex QExecutableModel::removeRow(int row, const QModelIndex &parent /*= QModelIndex()*/)
+{
+	Q_D(QExecutableModel);
+	// invalidate the cache on a remove
+	d->indexCache.clear();
+	return QTreeModel::removeRow(row, parent);
 }
 
