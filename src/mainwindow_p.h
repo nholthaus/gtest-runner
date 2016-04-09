@@ -155,6 +155,9 @@ public:
 	QMenu*									consoleContextMenu;						///< Context menu for the console dock;
 	QAction*								clearConsoleAction;						///< Clears the console window.
 	
+	QMenu*									helpMenu;								///< Help menu
+	QAction*								aboutAction;							///< Shows the programs 'about' window
+
 	// state variables
 	QString									mostRecentFailurePath;					///< Stores the path [key] of the most recently failed test.
 	QHash<QString, bool>					executableCheckedStateHash;				///< Hash of the previous state of the checkboxes.
@@ -200,6 +203,7 @@ protected:
 	void createTestMenu();
 	void createOptionsMenu();
 	void createWindowMenu();
+	void createHelpMenu();
 
 	void createExecutableContextMenu();
 	void createTestCaseViewContextMenu();

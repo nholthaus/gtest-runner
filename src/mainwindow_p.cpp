@@ -108,6 +108,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	createTestMenu();
 	createOptionsMenu();
 	createWindowMenu();
+	createHelpMenu();
 	
 	createExecutableContextMenu();
 	createConsoleContextMenu();
@@ -944,4 +945,54 @@ void MainWindowPrivate::createWindowMenu()
 	windowMenu->addAction(consoleDock->toggleViewAction());
 	
 	q->menuBar()->addMenu(windowMenu);
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: createHelpMenu
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::createHelpMenu()
+{
+	Q_Q(MainWindow);
+
+	helpMenu = new QMenu("Help");
+
+	aboutAction = new QAction("About...", helpMenu);
+
+	helpMenu->addAction(aboutAction);
+
+	connect(aboutAction, &QAction::triggered, [q]
+	{
+		QMessageBox msgBox;
+		msgBox.setWindowTitle("About");
+		msgBox.setIconPixmap(QPixmap(":images/logo").scaled(128, 128, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+		msgBox.setTextFormat(Qt::RichText);   //this is what makes the links clickable
+		msgBox.setText("Application: " + APPINFO::name + "<br>version: " + APPINFO::version +
+			"<br>Developer: Nic Holthaus" + "<br>Organization: " + APPINFO::organization + "<br>Website: <a href='" + APPINFO::oranizationDomain + "'>" + APPINFO::oranizationDomain + "</a>" + "<br><br>" + 
+			"The MIT License (MIT)<br><br>\
+			\
+			Copyright(c) 2016 Nic Holthaus<br><br>\
+			\
+			Permission is hereby granted, free of charge, to any person obtaining a copy	\
+			of this software and associated documentation files(the 'Software'), to deal	\
+			in the Software without restriction, including without limitation the rights	\
+			to use, copy, modify, merge, publish, distribute, sublicense, and / or sell		\
+			copies of the Software, and to permit persons to whom the Software is			\
+			furnished to do so, subject to the following conditions :	<br><br>			\
+																							\
+			The above copyright notice and this permission notice shall be included in all	\
+			copies or substantial portions of the Software.<br><br>							\
+																							\
+			THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR		\
+			IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,		\
+			FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE		\
+			AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER			\
+			LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,	\
+			OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE	\
+			SOFTWARE."
+			);
+		msgBox.setStandardButtons(QMessageBox::Ok);
+		msgBox.exec();
+	});
+
+	q->menuBar()->addMenu(helpMenu);
 }
