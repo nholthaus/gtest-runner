@@ -35,10 +35,10 @@ QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 	QString message = item->node().attributes().namedItem("message").nodeValue();
 
 	static QRegExp filerx("(.*)[:]([0-9]+)");
-	static QRegExp valueofrx("[Vv]alue of: ([^,\n]*)|[VDd]eath test: ([^,\n]*)");
-	static QRegExp actualrx("[Aa]ctual[:][ ]([^,\n]*)|[Rr]esult[:][ ]([^,\n]*)|(Failed)");
-	static QRegExp expectedrx("[Ee]xpected[:][ ]([^\n]*)|[Ee]rror msg[:]\n(.*)");
-	static QRegExp whichisrx("[Ww]hich is: ([^,\n]*)");
+	static QRegExp valueofrx("[Vv]alue of: ([^\n]*)|[VDd]eath test: ([^\n]*)");
+	static QRegExp actualrx("[Aa]ctual[:][ ]([^\n]*)|[Rr]esult[:][ ]([^\n]*)|(Failed)");
+	static QRegExp expectedrx("[Ee]xpected[:][ ](.*)([\n]|[,][ ]actual)|[Ee]rror msg[:]\n(.*)");
+	static QRegExp whichisrx("[Ww]hich is: ([^\n]*)");
 	static QRegExp nearrx("The difference between (.*) and (.*) is (.*), which exceeds (.*), where\n(.*) evaluates to(.*),\n(.*) evaluates to(.*), and\n(.*) evaluates to(.*).");
 	static QRegExp predrx("\n(.*) evaluates to (.*), where\n(.*)");
 	static QRegExp sehrx("(.*)\n(.*) with (code|description) (.*) thrown in the test body");
