@@ -565,6 +565,19 @@ public:
 		}
 	}
 
+	iterator insert(const const_iterator& parent, size_t index, const value_type& value)
+	{
+		if (parent.m_pointer)
+		{
+			auto itr = parent.m_pointer->m_children.insert(std::next(parent.m_pointer->m_children.begin(), index),TreeNode<T>::make_unique(parent.m_pointer, value));
+			return iterator(std::next(parent.m_pointer->m_children.begin(), index)->get());
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
 	/**
 	* @brief		Insert Element.
 	* @details		Moves the given <i>value</i> into the Tree as a child of <i>parent</i>. This
