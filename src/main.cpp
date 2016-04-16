@@ -43,6 +43,8 @@
 #include <QApplication>
 #include <QDebug>
 #include <QtGlobal>
+#include <QCommandLineParser>
+#include <QCommandLineOption>
 
 // gtest-runner
 #include "appinfo.h"
@@ -62,7 +64,36 @@ int main(int argc, char *argv[])
 	app.setOrganizationDomain(APPINFO::oranizationDomain);
 	app.setApplicationName(APPINFO::name);
 	app.setApplicationVersion(APPINFO::version);
-	MainWindow mainWin;
+
+	QCommandLineParser parser;
+
+	QCommandLineOption addTestsOption(QStringList() << "a" << "add", "Add tests executables (comma separated)", "tests", "");
+	QCommandLineOption resetOption(QStringList() << "r" << "reset", "Reset gtest-runner to it's original factory settings. This removes all tests and test data.");
+
+	parser.setApplicationDescription("An automated test runner and user interface for google test unit tests.");
+	auto helpOption = parser.addHelpOption();
+	auto versionOption = parser.addVersionOption();
+	parser.addOption(addTestsOption);
+	parser.addOption(resetOption);
+	
+	parser.process(app);
+
+	if (parser.isSet(helpOption))
+	{
+		parser.showHelp();
+		exit(0);
+	}
+
+	if (parser.isSet(versionOption))
+	{
+		parser.showVersion();
+		exit(0);
+	}
+
+	bool reset = parser.isSet(resetOption);
+	QStringList tests = parser.value(addTestsOption).split(',');
+
+	MainWindow mainWin(tests, reset);
 	mainWin.show();
 	return app.exec();
 }

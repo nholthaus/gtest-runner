@@ -179,23 +179,18 @@ signals:
 
 public:
 
-	explicit MainWindowPrivate(MainWindow* q);
+	explicit MainWindowPrivate(QStringList tests, bool reset, MainWindow* q);
 
 	QString xmlPath(const QString& testPath) const;
-
 	void addTestExecutable(const QString& path, bool autorun, QDateTime lastModified, QString filter = "", int repeat = 0, Qt::CheckState runDisabled = Qt::Unchecked, Qt::CheckState shuffle = Qt::Unchecked, int randomSeed = 0, QString otherArgs = "");
-
 	void runTestInThread(const QString& pathToTest, bool notify);
-
 	bool loadTestResults(const QString& testPath, bool notify);
-
 	void selectTest(const QString& testPath);
-
 	void saveSettings() const;
-
 	void loadSettings();
-
 	void removeTest(const QModelIndex &index);
+	void clearData();
+	void clearSettings();
 
 protected:
 

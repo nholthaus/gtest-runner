@@ -17,7 +17,7 @@
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: MainWindowPrivate
 //--------------------------------------------------------------------------------------------------
-MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
+MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* q) :
 	q_ptr(q),
 	executableDock(new QDockWidget(q)),
 	executableDockFrame(new QFrame(q)),
@@ -40,6 +40,12 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	mostRecentFailurePath("")
 {
 	qRegisterMetaType<QVector<int>>("QVector<int>");
+
+	if (reset)
+	{
+		clearData();
+		clearSettings();
+	}
 
 	QFontDatabase fontDB;
 	fontDB.addApplicationFont(":/fonts/consolas");
@@ -298,8 +304,14 @@ void MainWindowPrivate::addTestExecutable(const QString& path, bool autorun, QDa
 	Qt::CheckState shuffle /*= Qt::Unchecked*/, int randomSeed /*= 0*/, QString otherArgs /*= ""*/)
 {
 	QFileInfo fileinfo(path);
-
+	qDebug() << path;
 	if (!fileinfo.exists())
+		return;
+
+	if (!fileinfo.isExecutable() || !fileinfo.isFile())
+		return;
+
+	if (executableModel->index(path).isValid())
 		return;
 
 	if (lastModified == QDateTime())
@@ -680,6 +692,32 @@ void MainWindowPrivate::removeTest(const QModelIndex &index)
 
 		executableModel->removeRow(index.row(), index.parent());
 	}
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: clearData
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::clearData()
+{
+	QDir dataDir(QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first());
+	if (dataDir.exists())
+	{
+		dataDir.removeRecursively();
+		for (int i = 0; i < executableModel->rowCount(); ++i)
+		{
+			QModelIndex index = executableModel->index(i, 0);
+			executableModel->setData(index, ExecutableData::NOT_RUNNING, QExecutableModel::StateRole);
+		}
+	}
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: clearSettings
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::clearSettings()
+{
+	QSettings settings(APPINFO::organization, APPINFO::name);
+	settings.clear();
 }
 
 //--------------------------------------------------------------------------------------------------
