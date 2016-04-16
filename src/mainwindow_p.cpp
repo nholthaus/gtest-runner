@@ -21,12 +21,11 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	q_ptr(q),
 	executableDock(new QDockWidget(q)),
 	executableDockFrame(new QFrame(q)),
-	executableTreeView(new QTreeView(q)),
+	executableTreeView(new QExecutableTreeView(q)),
 	executableModel(new QExecutableModel(q)),
 	testCaseProxyModel(new QBottomUpSortFilterProxy(q)),
 	addTestButton(new QPushButton(q)),
 	fileWatcher(new QFileSystemWatcher(q)),
-	executableAdvancedSettingsDialog(new QExecutableSettingsDialog(q)),
 	centralFrame(new QFrame(q)),
 	testCaseFilterEdit(new QLineEdit(q)),
 	testCaseTreeView(new QTreeView(q)),
@@ -68,8 +67,6 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	executableDockFrame->setLayout(new QVBoxLayout);
 	executableDockFrame->layout()->addWidget(executableTreeView);
 	executableDockFrame->layout()->addWidget(addTestButton);
-
-	executableAdvancedSettingsDialog->setModal(false);
 
 	addTestButton->setText("Add Test Executable...");
 
@@ -332,27 +329,6 @@ void MainWindowPrivate::addTestExecutable(const QString& path, bool autorun, QDa
 
 	bool previousResults = loadTestResults(path, false);
 	bool outOfDate = lastModified < fileinfo.lastModified();
-
- 	QPushButton* advButton = new QPushButton();
-	advButton->setIcon(QIcon(":/images/hamburger"));
-	advButton->setToolTip("Advanced...");
-	advButton->setFixedSize(18, 18);
- 	executableTreeView->setIndexWidget(newRow, advButton);
-	connect(advButton, &QPushButton::clicked, [this, advButton]
-	{
-		if(!executableAdvancedSettingsDialog->isVisible())
-		{
-			QModelIndex index = executableTreeView->indexAt(executableTreeView->mapFromGlobal(QCursor::pos()));
-			auto pos = advButton->mapToGlobal(advButton->rect().bottomLeft());
-			executableAdvancedSettingsDialog->move(pos);
-			executableAdvancedSettingsDialog->setModelIndex(index);
-			executableAdvancedSettingsDialog->show();
-		}
-		else
-		{
-			executableAdvancedSettingsDialog->reject();
-		}
-	});
 
 	executableTreeView->setCurrentIndex(newRow);
 	for (int i = 0; i < executableModel->columnCount(); i++)
