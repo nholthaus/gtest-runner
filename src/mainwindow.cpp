@@ -2,6 +2,10 @@
 #include "mainwindow_p.h"
 
 #include <QDesktopWidget>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QFileInfo>
+#include <QMimeData>
 
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: MainWindow
@@ -27,6 +31,9 @@ MainWindow::MainWindow() : QMainWindow(), d_ptr(new MainWindowPrivate(this))
 	d->failureDock->raise();
 
 	this->setDockNestingEnabled(true);
+
+	// accept drops
+	this->setAcceptDrops(true);
 
 	// restore settings
 	d->loadSettings();
@@ -68,3 +75,26 @@ QSize MainWindow::sizeHint() const
 	return 0.5 * desktop->screen(desktop->primaryScreen())->size();
 }
 
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: dragEnterEvent
+//--------------------------------------------------------------------------------------------------
+void MainWindow::dragEnterEvent(QDragEnterEvent *e)
+{
+	
+	if (e->mimeData()->hasUrls()) 
+	{
+		QFileInfo info(e->mimeData()->urls().first().toLocalFile());
+		if (info.isExecutable())
+			e->acceptProposedAction();
+	}
+}
+
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: dropEvent
+//--------------------------------------------------------------------------------------------------
+void MainWindow::dropEvent(QDropEvent *e)
+{
+	QFileInfo info(e->mimeData()->urls().first().toLocalFile());
+	d_ptr->addTestExecutable(info.absoluteFilePath(), true, info.lastModified());
+}
