@@ -66,7 +66,8 @@ private:
 	virtual void closeEvent(QCloseEvent *) override;
 	virtual void changeEvent(QEvent *) override;
 	virtual QSize sizeHint() const override;
-
+	virtual void dragEnterEvent(QDragEnterEvent *) override;
+	virtual void dropEvent(QDropEvent *) override;
 
 	MainWindowPrivate*	d_ptr;
 
