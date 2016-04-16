@@ -14,8 +14,6 @@ Check out the [Latest release](https://github.com/nholthaus/gtest-runner/release
 
 As of version 1.1.2, all of our Windows binaries are now signed.
 
-_Windows users_: Although we have authenticode signing for our binaries, Windows will continue to show the "This program is not commonly downloaded, and may harm your computer" warning until and arbitrary and undisclosed number of downloads has been achieved, _even though the binaries are signed_. It's nothing to worry about, but if it makes you feel uncomfotable, feel free to inspect the source code for yourse;f, and build your own copy from a repo clone.
-
 ## Features
 
 gtest-runner is an automated test runner that will ensure you are always looking at the latest test results, whenever you build a gtest executable. Check the [features wiki page](https://github.com/nholthaus/gtest-runner/wiki/Features) to see what else gtest-runner is capable of.
