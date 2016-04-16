@@ -116,6 +116,7 @@ src/domitem.h
 src/GTestFailureModel.h
 src/gtestmodel.h
 src/qexecutablemodel.h
+src/qexecutabletreeview.h
 src/QBottomUpSortFilterProxy.h
 src/QStdOutSyntaxHighlighter.h
 src/tree.h
@@ -133,6 +134,7 @@ src/domitem.cpp
 src/GTestFailureModel.cpp
 src/gtestModel.cpp
 src/qexecutablemodel.cpp
+src/qexecutabletreeview.cpp
 src/QBottomUpSortFilterProxy.cpp
 )
 

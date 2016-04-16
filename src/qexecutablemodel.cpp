@@ -259,7 +259,6 @@ QStringList QExecutableModel::mimeTypes() const
 //--------------------------------------------------------------------------------------------------
 QMimeData * QExecutableModel::mimeData(const QModelIndexList &indexes) const
 {
-	qDebug() << indexes;
 	QMimeData *mimeData = new QMimeData();
 	QByteArray encodedData;
 
@@ -307,35 +306,22 @@ bool QExecutableModel::dropMimeData(const QMimeData *data, Qt::DropAction action
 		QDataStream stream(&encodedData, QIODevice::ReadOnly);
 		QList<QMap<int, QVariant>> newItems;
 		int count = 0;
-		qDebug() << "DROP MIME DATA";
+
 		while (!stream.atEnd()) {
 			QMap<int, QVariant> itemData;
 			stream >> itemData[PathRole];
-			qDebug() << itemData[PathRole];
 			stream >> itemData[StateRole];
-			qDebug() << itemData[StateRole];
 			stream >> itemData[LastModifiedRole];
-			qDebug() << itemData[LastModifiedRole];
 			stream >> itemData[ProgressRole];	// doesn't seem to be there
-			qDebug() << itemData[ProgressRole];
 			stream >> itemData[FilterRole];
-			qDebug() << itemData[FilterRole];
 			stream >> itemData[RepeatTestsRole];
-			qDebug() << itemData[RepeatTestsRole];
 			stream >> itemData[RunDisabledTestsRole];
-			qDebug() << itemData[RunDisabledTestsRole];
 			stream >> itemData[ShuffleRole];
-			qDebug() << itemData[ShuffleRole];
 			stream >> itemData[RandomSeedRole];
-			qDebug() << itemData[RandomSeedRole];
 			stream >> itemData[ArgsRole];
-			qDebug() << itemData[ArgsRole];
 			stream >> itemData[NameRole];
-			qDebug() << itemData[NameRole];
 			stream >> itemData[AutorunRole];
-			qDebug() << itemData[AutorunRole];
 			newItems.push_back(itemData);
-			qDebug() << itemData;
 			++count;
 		}
 
@@ -348,12 +334,7 @@ bool QExecutableModel::dropMimeData(const QMimeData *data, Qt::DropAction action
 		{
 			setItemData(index(row + i, 0, parent), newItems[i]);
 		}
-		qDebug() << data->formats();
-		qDebug() << data->text();
-		qDebug() << action;
-		qDebug() << row;
-		qDebug() << column;
-		qDebug() << parent;
+
 		return true;
 	}
 
