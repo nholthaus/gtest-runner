@@ -162,6 +162,23 @@ public:
 		return iteratorToIndex(insertRow(indexToIterator(parent), std::forward<Args>(args)...));
 	}
 
+	virtual bool insertRows(int row, int count, const QModelIndex &parent) override
+	{
+		iterator parentItr = indexToIterator(parent);
+
+		if (tree.child_count(parentItr) < row)
+			return false;
+
+		beginInsertRows(parent, row, row + count - 1);
+		for (int i = 0; i < count; ++i)
+		{
+			tree.insert(parentItr, row + i, T());
+		}
+		endInsertRows();
+
+		return true;
+	}
+
 	iterator removeRow(const_iterator row)
 	{
 		if(row != tree.end())
@@ -179,6 +196,25 @@ public:
 	virtual QModelIndex removeRow(int row, const QModelIndex &parent = QModelIndex())
 	{
 		return iteratorToIndex(removeRow(tree.child_at(indexToIterator(parent), row)));
+	}
+
+	virtual bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override
+	{
+		iterator parentItr = indexToIterator(parent);
+
+		if (tree.child_count(parentItr) < row || tree.child_count(parentItr) < row + count)
+			return false;
+
+		beginRemoveRows(parent, row, row + count - 1);
+		iterator toRemove = tree.child_at(parentItr, row);
+
+		for (int i = 0; i < count; ++i)
+		{
+			toRemove = tree.erase(toRemove);
+		}
+		endRemoveRows();
+
+		return true;
 	}
 
 	/**
@@ -225,7 +261,6 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 	//		INHERITED INTERFACE
 	//////////////////////////////////////////////////////////////////////////
-
 
 	virtual QModelIndex	index(int row, int column, const QModelIndex &parent = QModelIndex()) const
 	{
@@ -347,20 +382,6 @@ public:
 			list << index.child(i, 0);
 		}
 		return list;
-	}
-
-private:
-
-	// disallowed because child insertion on the Tree can't be done before Row, as called for in the
-	// QAbstractItemModel interface documentation: http://qt-project.org/doc/qt-4.8/qabstractitemmodel.html#insertRows
-	virtual bool insertRows(int row, int count, const QModelIndex &parent) override
-	{
-		return false;
-	}
-
-	virtual bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override
-	{
-		return false;
 	}
 
 protected:

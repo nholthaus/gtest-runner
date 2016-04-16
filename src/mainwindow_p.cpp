@@ -21,12 +21,11 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	q_ptr(q),
 	executableDock(new QDockWidget(q)),
 	executableDockFrame(new QFrame(q)),
-	executableTreeView(new QTreeView(q)),
+	executableTreeView(new QExecutableTreeView(q)),
 	executableModel(new QExecutableModel(q)),
 	testCaseProxyModel(new QBottomUpSortFilterProxy(q)),
 	addTestButton(new QPushButton(q)),
 	fileWatcher(new QFileSystemWatcher(q)),
-	executableAdvancedSettingsDialog(new QExecutableSettingsDialog(q)),
 	centralFrame(new QFrame(q)),
 	testCaseFilterEdit(new QLineEdit(q)),
 	testCaseTreeView(new QTreeView(q)),
@@ -57,20 +56,17 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	executableDock->setWidget(executableDockFrame);
 
 	executableTreeView->setModel(executableModel);
-	executableTreeView->setDefaultDropAction(Qt::MoveAction);
-	executableTreeView->setDragDropMode(QAbstractItemView::InternalMove);
+	executableTreeView->setSelectionMode(QAbstractItemView::SingleSelection);
+	executableTreeView->setSelectionBehavior(QAbstractItemView::SelectRows);
+ 	executableTreeView->setDragDropMode(QTreeView::InternalMove);
 	executableTreeView->setHeaderHidden(true);
 	executableTreeView->setIndentation(0);
 	executableTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	executableTreeView->setItemDelegateForColumn(QExecutableModel::ProgressColumn, new QProgressBarDelegate(executableTreeView));
-	executableTreeView->setSelectionBehavior(QAbstractItemView::SelectRows);
-	executableTreeView->setSelectionMode(QAbstractItemView::SingleSelection);
 
 	executableDockFrame->setLayout(new QVBoxLayout);
 	executableDockFrame->layout()->addWidget(executableTreeView);
 	executableDockFrame->layout()->addWidget(addTestButton);
-
-	executableAdvancedSettingsDialog->setModal(false);
 
 	addTestButton->setText("Add Test Executable...");
 
@@ -108,6 +104,7 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	createTestMenu();
 	createOptionsMenu();
 	createWindowMenu();
+	createHelpMenu();
 	
 	createExecutableContextMenu();
 	createConsoleContextMenu();
@@ -332,27 +329,6 @@ void MainWindowPrivate::addTestExecutable(const QString& path, bool autorun, QDa
 
 	bool previousResults = loadTestResults(path, false);
 	bool outOfDate = lastModified < fileinfo.lastModified();
-
- 	QPushButton* advButton = new QPushButton();
-	advButton->setIcon(QIcon(":/images/hamburger"));
-	advButton->setToolTip("Advanced...");
-	advButton->setFixedSize(18, 18);
- 	executableTreeView->setIndexWidget(newRow, advButton);
-	connect(advButton, &QPushButton::clicked, [this, advButton]
-	{
-		if(!executableAdvancedSettingsDialog->isVisible())
-		{
-			QModelIndex index = executableTreeView->indexAt(executableTreeView->mapFromGlobal(QCursor::pos()));
-			auto pos = advButton->mapToGlobal(advButton->rect().bottomLeft());
-			executableAdvancedSettingsDialog->move(pos);
-			executableAdvancedSettingsDialog->setModelIndex(index);
-			executableAdvancedSettingsDialog->show();
-		}
-		else
-		{
-			executableAdvancedSettingsDialog->reject();
-		}
-	});
 
 	executableTreeView->setCurrentIndex(newRow);
 	for (int i = 0; i < executableModel->columnCount(); i++)
@@ -944,4 +920,54 @@ void MainWindowPrivate::createWindowMenu()
 	windowMenu->addAction(consoleDock->toggleViewAction());
 	
 	q->menuBar()->addMenu(windowMenu);
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: createHelpMenu
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::createHelpMenu()
+{
+	Q_Q(MainWindow);
+
+	helpMenu = new QMenu("Help");
+
+	aboutAction = new QAction("About...", helpMenu);
+
+	helpMenu->addAction(aboutAction);
+
+	connect(aboutAction, &QAction::triggered, [q]
+	{
+		QMessageBox msgBox;
+		msgBox.setWindowTitle("About");
+		msgBox.setIconPixmap(QPixmap(":images/logo").scaled(128, 128, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+		msgBox.setTextFormat(Qt::RichText);   //this is what makes the links clickable
+		msgBox.setText("Application: " + APPINFO::name + "<br>version: " + APPINFO::version +
+			"<br>Developer: Nic Holthaus" + "<br>Organization: " + APPINFO::organization + "<br>Website: <a href='" + APPINFO::oranizationDomain + "'>" + APPINFO::oranizationDomain + "</a>" + "<br><br>" + 
+			"The MIT License (MIT)<br><br>\
+			\
+			Copyright(c) 2016 Nic Holthaus<br><br>\
+			\
+			Permission is hereby granted, free of charge, to any person obtaining a copy	\
+			of this software and associated documentation files(the 'Software'), to deal	\
+			in the Software without restriction, including without limitation the rights	\
+			to use, copy, modify, merge, publish, distribute, sublicense, and / or sell		\
+			copies of the Software, and to permit persons to whom the Software is			\
+			furnished to do so, subject to the following conditions :	<br><br>			\
+																							\
+			The above copyright notice and this permission notice shall be included in all	\
+			copies or substantial portions of the Software.<br><br>							\
+																							\
+			THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR		\
+			IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,		\
+			FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE		\
+			AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER			\
+			LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,	\
+			OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE	\
+			SOFTWARE."
+			);
+		msgBox.setStandardButtons(QMessageBox::Ok);
+		msgBox.exec();
+	});
+
+	q->menuBar()->addMenu(helpMenu);
 }

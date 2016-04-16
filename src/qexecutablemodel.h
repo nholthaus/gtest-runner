@@ -135,19 +135,30 @@ public:
 	Q_INVOKABLE virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 	Q_INVOKABLE virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
 	Q_INVOKABLE virtual Qt::DropActions supportedDropActions() const override;
+	virtual Qt::DropActions supportedDragActions() const override;
 	virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
+	virtual bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
 	virtual QModelIndex removeRow(int row, const QModelIndex &parent = QModelIndex()) override;
+	virtual QModelIndex	index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
+	virtual bool moveRows(const QModelIndex &sourceParent, int sourceRow, int count, const QModelIndex &destinationParent, int destinationChild) override;
+	virtual QMap<int, QVariant> itemData(const QModelIndex &index) const override;
+	virtual bool setItemData(const QModelIndex &index, const QMap<int, QVariant> &roles) override;
+	virtual bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
+	virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override;
+	virtual QStringList mimeTypes() const override;
+	virtual QMimeData * mimeData(const QModelIndexList &indexes) const override;
+
 
 	/// return an index from a path
 	QModelIndex index(const QString& path) const;
-	virtual QModelIndex	index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
+
+
 
 private:
 
 	Q_DECLARE_PRIVATE(QExecutableModel);
 
 	QScopedPointer<QExecutableModelPrivate>	d_ptr;
-
 
 };	// CLASS: QExecutableModel
 

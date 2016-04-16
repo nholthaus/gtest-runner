@@ -120,6 +120,7 @@ Qt::ItemFlags GTestModel::flags(const QModelIndex &index) const
 
 	switch (index.column())
 	{
+	case Name:
 	default:
 		return QAbstractItemModel::flags(index);;
 	}

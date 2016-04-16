@@ -1,8 +1,10 @@
 #include "qexecutablemodel.h"
 
+#include <QByteArray>
 #include <QDebug>
 #include <QIcon>
 #include <QFileInfo>
+#include <QMimeData>
 
 //--------------------------------------------------------------------------------------------------
 //	CLASS: QExecutableModelPrivate
@@ -206,32 +208,24 @@ Q_INVOKABLE bool QExecutableModel::setData(const QModelIndex &index, const QVari
 }
 
 //--------------------------------------------------------------------------------------------------
-//	FUNCTION: supportedDropActions
-//--------------------------------------------------------------------------------------------------
-Q_INVOKABLE Qt::DropActions QExecutableModel::supportedDropActions() const
-{
-	return Qt::MoveAction;
-}
-
-//--------------------------------------------------------------------------------------------------
 //	FUNCTION: index
 //--------------------------------------------------------------------------------------------------
 QModelIndex QExecutableModel::index(const QString& path) const
 {
-	if(d_ptr->indexCache.contains(path))
-	{
-		QModelIndex index = d_ptr->indexCache[path];
-
-		// check the cache to see if we know the index
-		if (index.isValid())
-		{
-			// if it hasn't changed since last time
-			if (index.data(QExecutableModel::PathRole).toString() == path)
-			{
-				return index;
-			}
-		}
-	}
+// 	if(d_ptr->indexCache.contains(path))
+// 	{
+// 		QModelIndex index = d_ptr->indexCache[path];
+// 
+// 		// check the cache to see if we know the index
+// 		if (index.isValid())
+// 		{
+// 			// if it hasn't changed since last time
+// 			if (index.data(QExecutableModel::PathRole).toString() == path)
+// 			{
+// 				return index;
+// 			}
+// 		}
+// 	}
 
 	auto itr = std::find(begin(), end(), path);
 	QModelIndex index = iteratorToIndex(itr);
@@ -251,11 +245,182 @@ QModelIndex QExecutableModel::index(int row, int column, const QModelIndex &pare
 }
 
 //--------------------------------------------------------------------------------------------------
+//	FUNCTION: mimeTypes
+//--------------------------------------------------------------------------------------------------
+QStringList QExecutableModel::mimeTypes() const
+{
+	QStringList types;
+	types << "application/x.text.executableData.list";
+	return types;
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: mimeData
+//--------------------------------------------------------------------------------------------------
+QMimeData * QExecutableModel::mimeData(const QModelIndexList &indexes) const
+{
+	QMimeData *mimeData = new QMimeData();
+	QByteArray encodedData;
+
+	QDataStream stream(&encodedData, QIODevice::WriteOnly);
+
+	foreach(const QModelIndex &index, indexes) {
+		if (index.isValid() && index.column() == 0) 
+		{
+			QVariant PathRoleText = data(index, PathRole);
+			QVariant StateRoleText = data(index, StateRole);
+			QVariant LastModifiedRoleText = data(index, LastModifiedRole);
+			QVariant ProgressRoleText = data(index, ProgressRole);
+			QVariant FilterRoleText = data(index, FilterRole);
+			QVariant RepeatTestsRoleText = data(index, RepeatTestsRole);
+			QVariant RunDisabledTestsRoleText = data(index, RunDisabledTestsRole);
+			QVariant ShuffleRoleText = data(index, ShuffleRole);
+			QVariant RandomSeedRoleText = data(index, RandomSeedRole);
+			QVariant ArgsRoleText = data(index, ArgsRole);
+			QVariant NameRoleText = data(index, NameRole);
+			QVariant AutorunRoleText = data(index, AutorunRole);
+			stream << PathRoleText << StateRoleText << LastModifiedRoleText << ProgressRoleText << FilterRoleText << RepeatTestsRoleText <<
+				RunDisabledTestsRoleText << ShuffleRoleText << RandomSeedRoleText << ArgsRoleText << NameRoleText << AutorunRoleText;
+		}
+	}
+
+	mimeData->setData("application/x.text.executableData.list", encodedData);
+	return mimeData;
+
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: dropMimeData
+//--------------------------------------------------------------------------------------------------
+bool QExecutableModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent)
+{
+	if (action == Qt::IgnoreAction)
+		return true;
+
+	if (!(supportedDragActions() & action))
+		return false;
+
+	if (data->hasFormat("application/x.text.executableData.list"))
+	{
+		QByteArray encodedData = data->data("application/x.text.executableData.list");
+		QDataStream stream(&encodedData, QIODevice::ReadOnly);
+		QList<QMap<int, QVariant>> newItems;
+		int count = 0;
+
+		while (!stream.atEnd()) {
+			QMap<int, QVariant> itemData;
+			stream >> itemData[PathRole];
+			stream >> itemData[StateRole];
+			stream >> itemData[LastModifiedRole];
+			stream >> itemData[ProgressRole];	// doesn't seem to be there
+			stream >> itemData[FilterRole];
+			stream >> itemData[RepeatTestsRole];
+			stream >> itemData[RunDisabledTestsRole];
+			stream >> itemData[ShuffleRole];
+			stream >> itemData[RandomSeedRole];
+			stream >> itemData[ArgsRole];
+			stream >> itemData[NameRole];
+			stream >> itemData[AutorunRole];
+			newItems.push_back(itemData);
+			++count;
+		}
+
+		if (row < 0)
+			row = rowCount(parent);
+
+		insertRows(row, count, parent);
+
+		for (int i = 0; i < count; ++i)
+		{
+			setItemData(index(row + i, 0, parent), newItems[i]);
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: itemData
+//--------------------------------------------------------------------------------------------------
+QMap<int, QVariant> QExecutableModel::itemData(const QModelIndex &index) const
+{
+	auto itr = indexToIterator(index);
+	QMap<int, QVariant> ret;
+	ret[PathRole] = itr->path;
+	ret[StateRole] = itr->state;
+	ret[LastModifiedRole] = itr->lastModified;
+	ret[ProgressRole] = itr->progress;
+	ret[FilterRole] = itr->filter;
+	ret[RepeatTestsRole] = itr->repeat;
+	ret[RunDisabledTestsRole] = itr->runDisabled;
+	ret[ShuffleRole] = itr->shuffle;
+	ret[RandomSeedRole] = itr->randomSeed;
+	ret[ArgsRole] = itr->otherArgs;
+	ret[AutorunRole] = itr->autorun;
+	return ret;
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: setItemData
+//--------------------------------------------------------------------------------------------------
+bool QExecutableModel::setItemData(const QModelIndex &index, const QMap<int, QVariant> &roles)
+{
+	Q_D(QExecutableModel);
+	// invalidate the cache on a remove
+	d->indexCache.clear();
+
+	auto itr = indexToIterator(index);
+	itr->path = roles[PathRole].toString();
+	itr->state = (ExecutableData::States)roles[StateRole].toInt();
+	itr->lastModified = roles[LastModifiedRole].toDateTime();
+	itr->progress = roles[ProgressRole].toInt();
+	itr->filter = roles[FilterRole].toString();
+	itr->repeat = roles[RepeatTestsRole].toInt();
+	itr->runDisabled = (Qt::CheckState)roles[RunDisabledTestsRole].toInt();
+	itr->shuffle = (Qt::CheckState)roles[ShuffleRole].toInt();
+	itr->randomSeed = roles[RandomSeedRole].toInt();
+	itr->otherArgs = roles[ArgsRole].toString();
+	itr->autorun = roles[AutorunRole].toBool();
+	return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: moveRows
+//--------------------------------------------------------------------------------------------------
+bool QExecutableModel::moveRows(const QModelIndex &sourceParent, int sourceRow, int count, const QModelIndex &destinationParent, int destinationChild)
+{
+	throw std::logic_error("The method or operation is not implemented.");
+}
+
+// --------------------------------------------------------------------------------------------------
+// 	FUNCTION: supportedDragActions
+// --------------------------------------------------------------------------------------------------
+Qt::DropActions QExecutableModel::supportedDragActions() const
+{
+	return Qt::MoveAction;
+}
+
+// --------------------------------------------------------------------------------------------------
+// 	FUNCTION: supportedDropActions
+// --------------------------------------------------------------------------------------------------
+Q_INVOKABLE Qt::DropActions QExecutableModel::supportedDropActions() const
+{
+	return Qt::MoveAction;
+}
+
+//--------------------------------------------------------------------------------------------------
 //	FUNCTION: flags
 //--------------------------------------------------------------------------------------------------
 Qt::ItemFlags QExecutableModel::flags(const QModelIndex &index) const
 {
-	Qt::ItemFlags f = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+	Qt::ItemFlags f;
+
+	if (index.isValid())
+		f = Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled;
+	else
+		f = Qt::ItemIsDropEnabled;
 
 	switch (index.column())
 	{
@@ -267,6 +432,28 @@ Qt::ItemFlags QExecutableModel::flags(const QModelIndex &index) const
 	}
 
 	return f;
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: insertRows
+//--------------------------------------------------------------------------------------------------
+bool QExecutableModel::insertRows(int row, int count, const QModelIndex &parent /*= QModelIndex()*/)
+{
+	Q_D(QExecutableModel);
+	// invalidate the cache on a remove
+	d->indexCache.clear();
+	return QTreeModel::insertRows(row, count, parent);
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: removeRows
+//--------------------------------------------------------------------------------------------------
+bool QExecutableModel::removeRows(int row, int count, const QModelIndex &parent /*= QModelIndex()*/)
+{
+	Q_D(QExecutableModel);
+	// invalidate the cache on a remove
+	d->indexCache.clear();
+	return QTreeModel::removeRows(row, count, parent);
 }
 
 //--------------------------------------------------------------------------------------------------
