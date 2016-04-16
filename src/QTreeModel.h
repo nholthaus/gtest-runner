@@ -262,7 +262,6 @@ public:
 	//		INHERITED INTERFACE
 	//////////////////////////////////////////////////////////////////////////
 
-
 	virtual QModelIndex	index(int row, int column, const QModelIndex &parent = QModelIndex()) const
 	{
 		if (!hasIndex(row, column, parent))
