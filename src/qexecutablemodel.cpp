@@ -280,7 +280,7 @@ QMimeData * QExecutableModel::mimeData(const QModelIndexList &indexes) const
 			QVariant ArgsRoleText = data(index, ArgsRole);
 			QVariant NameRoleText = data(index, NameRole);
 			QVariant AutorunRoleText = data(index, AutorunRole);
-			stream << PathRoleText << StateRoleText << LastModifiedRoleText << FilterRoleText << RepeatTestsRoleText <<
+			stream << PathRoleText << StateRoleText << LastModifiedRoleText << ProgressRoleText << FilterRoleText << RepeatTestsRoleText <<
 				RunDisabledTestsRoleText << ShuffleRoleText << RandomSeedRoleText << ArgsRoleText << NameRoleText << AutorunRoleText;
 		}
 	}
@@ -307,21 +307,33 @@ bool QExecutableModel::dropMimeData(const QMimeData *data, Qt::DropAction action
 		QDataStream stream(&encodedData, QIODevice::ReadOnly);
 		QList<QMap<int, QVariant>> newItems;
 		int count = 0;
-
+		qDebug() << "DROP MIME DATA";
 		while (!stream.atEnd()) {
 			QMap<int, QVariant> itemData;
 			stream >> itemData[PathRole];
+			qDebug() << itemData[PathRole];
 			stream >> itemData[StateRole];
+			qDebug() << itemData[StateRole];
 			stream >> itemData[LastModifiedRole];
-			stream >> itemData[ProgressRole];
+			qDebug() << itemData[LastModifiedRole];
+			stream >> itemData[ProgressRole];	// doesn't seem to be there
+			qDebug() << itemData[ProgressRole];
 			stream >> itemData[FilterRole];
+			qDebug() << itemData[FilterRole];
 			stream >> itemData[RepeatTestsRole];
+			qDebug() << itemData[RepeatTestsRole];
 			stream >> itemData[RunDisabledTestsRole];
+			qDebug() << itemData[RunDisabledTestsRole];
 			stream >> itemData[ShuffleRole];
+			qDebug() << itemData[ShuffleRole];
 			stream >> itemData[RandomSeedRole];
+			qDebug() << itemData[RandomSeedRole];
 			stream >> itemData[ArgsRole];
+			qDebug() << itemData[ArgsRole];
 			stream >> itemData[NameRole];
+			qDebug() << itemData[NameRole];
 			stream >> itemData[AutorunRole];
+			qDebug() << itemData[AutorunRole];
 			newItems.push_back(itemData);
 			qDebug() << itemData;
 			++count;

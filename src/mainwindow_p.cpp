@@ -2,7 +2,6 @@
 #include "QStdOutSyntaxHighlighter.h"
 #include "mainwindow_p.h"
 #include "executableModelDelegate.h"
-#include "modeltest.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -57,13 +56,10 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	executableDock->setWindowTitle("Test Executables");
 	executableDock->setWidget(executableDockFrame);
 
-	ModelTest(executableModel, this);
-
 	executableTreeView->setModel(executableModel);
 	executableTreeView->setSelectionMode(QAbstractItemView::SingleSelection);
 	executableTreeView->setSelectionBehavior(QAbstractItemView::SelectRows);
  	executableTreeView->setDragDropMode(QTreeView::InternalMove);
-// 	executableTreeView->setDefaultDropAction(Qt::MoveAction);
 	executableTreeView->setHeaderHidden(true);
 	executableTreeView->setIndentation(0);
 	executableTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
