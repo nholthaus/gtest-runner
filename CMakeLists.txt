@@ -120,7 +120,6 @@ src/QBottomUpSortFilterProxy.h
 src/QStdOutSyntaxHighlighter.h
 src/tree.h
 src/QTreeModel.h
-src/modelTest.h
 )
 
 # .cpp files
@@ -135,7 +134,6 @@ src/GTestFailureModel.cpp
 src/gtestModel.cpp
 src/qexecutablemodel.cpp
 src/QBottomUpSortFilterProxy.cpp
-src/modelTest.cpp
 )
 
 # on windows, append headers to source so they show up in visual studio
