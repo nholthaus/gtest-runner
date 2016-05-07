@@ -34,14 +34,23 @@ QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 	DomItem *item = static_cast<DomItem*>(index.internalPointer());
 	QString message = item->node().attributes().namedItem("message").nodeValue();
 
-	static QRegExp filerx("(.*)[:]([0-9]+)");
-	static QRegExp valueofrx("[Vv]alue of: ([^\n]*)|[VDd]eath test: ([^\n]*)");
-	static QRegExp actualrx("[Aa]ctual[:][ ]([^\n]*)|[Rr]esult[:][ ]([^\n]*)|(Failed)");
-	static QRegExp expectedrx("[Ee]xpected[:][ ](.*)([\n]|[,][ ]actual)|[Ee]rror msg[:]\n(.*)");
-	static QRegExp whichisrx("[Ww]hich is: ([^\n]*)");
-	static QRegExp nearrx("The difference between (.*) and (.*) is (.*), which exceeds (.*), where\n(.*) evaluates to(.*),\n(.*) evaluates to(.*), and\n(.*) evaluates to(.*).");
-	static QRegExp predrx("\n(.*) evaluates to (.*), where\n(.*)");
-	static QRegExp sehrx("(.*)\n(.*) with (code|description) (.*) thrown in the test body");
+	static QRegularExpression filerx("(.*)[:]([0-9]+)");
+	static QRegularExpression valueofrx("[Vv]alue of: ([^\n]*)|[VDd]eath test: ([^\n]*)");
+	static QRegularExpression actualrx("[Aa]ctual[:][ ]([^\n]*)|[Rr]esult[:][ ]([^\n]*)|(Failed)");
+	static QRegularExpression expectedrx("[Ee]xpected[:][ ](.*?)([,][ ]actual|$)|[Ee]rror msg[:]\n(.*)", QRegularExpression::MultilineOption);
+	static QRegularExpression whichisrx("[Ww]hich is: ([^\n]*)");
+	static QRegularExpression nearrx("The difference between (.*) and (.*) is (.*), which exceeds (.*), where\n(.*) evaluates to(.*),\n(.*) evaluates to(.*), and\n(.*) evaluates to(.*).");
+	static QRegularExpression predrx("\n(.*) evaluates to (.*), where\n(.*)");
+	static QRegularExpression sehrx("(.*)\n(.*) with (code|description) (.*) thrown in the test body");
+
+	QRegularExpressionMatch fileMatch;
+	QRegularExpressionMatch valueofMatch;
+	QRegularExpressionMatch actualMatch;
+	QRegularExpressionMatch expectedMatch;
+	QRegularExpressionMatch whichisMatch;
+	QRegularExpressionMatch nearMatch;
+	QRegularExpressionMatch predMatch;
+	QRegularExpressionMatch sehMatch;
 
 	QString filename;
 
@@ -51,58 +60,58 @@ QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 		switch (index.column())
 		{
 		case 0:
-			filerx.indexIn(message);
-			filename = QFileInfo(filerx.cap(1)).fileName();
+			fileMatch = filerx.match(message);
+			filename = QFileInfo(fileMatch.captured(1)).fileName();
 			if (!filename.isEmpty()) return filename;
-			sehrx.indexIn(message);
-			return sehrx.cap(1);
+			sehMatch = sehrx.match(message);
+			return sehMatch.captured(1);
 		case 1:
-			filerx.indexIn(message);
-			return filerx.cap(2);
+			fileMatch = filerx.match(message);
+			return fileMatch.captured(2);
 			break;
 		case 2:
-			valueofrx.indexIn(message);
-			for (int i = 1; i <= valueofrx.captureCount(); ++i)
-				if (!valueofrx.cap(i).isEmpty()) return valueofrx.cap(i);
-			nearrx.indexIn(message);
-			if(!nearrx.cap(7).isEmpty()) return nearrx.cap(7);
-			predrx.indexIn(message);
-			if (!predrx.cap(1).isEmpty())  return predrx.cap(1);
-			sehrx.indexIn(message);
-			return sehrx.cap(2);
+			valueofMatch = valueofrx.match(message);
+			for (int i = 1; i <= valueofMatch.lastCapturedIndex(); ++i)
+				if (!valueofMatch.captured(i).isEmpty()) return valueofMatch.captured(i);
+			nearMatch = nearrx.match(message);
+			if (!nearMatch.captured(7).isEmpty()) return nearMatch.captured(7);
+			predMatch = predrx.match(message);
+			if (!predMatch.captured(1).isEmpty())  return predMatch.captured(1);
+			sehMatch = sehrx.match(message);
+			return sehMatch.captured(2);
 		case 3:
-			actualrx.indexIn(message);
-			for (int i = 1; i <= actualrx.captureCount(); ++i)
-				if (!actualrx.cap(i).isEmpty()) return actualrx.cap(i);
-			nearrx.indexIn(message);
-			if (!nearrx.cap(8).isEmpty()) return nearrx.cap(8);
-			predrx.indexIn(message);
-			if(!predrx.cap(2).isEmpty()) return predrx.cap(2);
-			sehrx.indexIn(message);
-			return sehrx.cap(4);
+			actualMatch = actualrx.match(message);
+			for (int i = 1; i <= actualMatch.lastCapturedIndex(); ++i)
+				if (!actualMatch.captured(i).isEmpty()) return actualMatch.captured(i);
+			nearMatch = nearrx.match(message);
+			if (!nearMatch.captured(8).isEmpty()) return nearMatch.captured(8);
+			predMatch = predrx.match(message);
+			if (!predMatch.captured(2).isEmpty()) return predMatch.captured(2);
+			sehMatch = sehrx.match(message);
+			return sehMatch.captured(4);
 		case 4:
-			expectedrx.indexIn(message);
-			for (int i = 1; i <= expectedrx.captureCount(); ++i)
-				if (!expectedrx.cap(i).isEmpty()) return expectedrx.cap(i);
-			nearrx.indexIn(message);
-			if (!nearrx.cap(5).isEmpty()) return nearrx.cap(5);
-			predrx.indexIn(message);
-			if (!predrx.cap(1).isEmpty()) return "true";
+			expectedMatch = expectedrx.match(message);
+			for (int i = 1; i <= expectedMatch.lastCapturedIndex(); ++i)
+				if (!expectedMatch.captured(i).isEmpty()) return expectedMatch.captured(i);
+			nearMatch = nearrx.match(message);
+			if (!nearMatch.captured(5).isEmpty()) return nearMatch.captured(5);
+			predMatch = predrx.match(message);
+			if (!predMatch.captured(1).isEmpty()) return "true";
 			return QVariant();
 		case 5:
-			whichisrx.indexIn(message);
-			for (int i = 1; i <= whichisrx.captureCount(); ++i)
-				if (!whichisrx.cap(i).isEmpty()) return whichisrx.cap(i);
-			nearrx.indexIn(message);
-			if (!nearrx.cap(6).isEmpty()) return nearrx.cap(6);
-			predrx.indexIn(message);
-			return predrx.cap(3);
+			whichisMatch = whichisrx.match(message);
+			for (int i = 1; i <= whichisMatch.lastCapturedIndex(); ++i)
+				if (!whichisMatch.captured(i).isEmpty()) return whichisMatch.captured(i);
+			nearMatch = nearrx.match(message);
+			if (!nearMatch.captured(6).isEmpty()) return nearMatch.captured(6);
+			predMatch = predrx.match(message);
+			return predMatch.captured(3);
 		case 6:
-			nearrx.indexIn(message);
-			return nearrx.cap(3);
+			nearMatch = nearrx.match(message);
+			return nearMatch.captured(3);
 		case 7:
-			nearrx.indexIn(message);
-			return nearrx.cap(10);
+			nearMatch = nearrx.match(message);
+			return nearMatch.captured(10);
 		default:
 			return QVariant();
 		}
@@ -122,11 +131,11 @@ QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 	case MessageRole:
 		return message;
 	case PathRole:
-		filerx.indexIn(message);
-		return QFileInfo(filerx.cap(1)).canonicalFilePath();
+		fileMatch = filerx.match(message);
+		return QFileInfo(fileMatch.captured(1)).canonicalFilePath();
 	case LineRole:
-		filerx.indexIn(message);
-		return filerx.cap(2);
+		fileMatch = filerx.match(message);
+		return fileMatch.captured(2);
 	default:
 		return QVariant();
 	}
