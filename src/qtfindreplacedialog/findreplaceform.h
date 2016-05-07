@@ -47,7 +47,7 @@ class QSettings;
   *
   * You can take a look at the \ref examples page.
   */
-class FINDREPLACESHARED_EXPORT FindReplaceForm : public QWidget {
+class  FindReplaceForm : public QWidget {
     Q_OBJECT
 public:
     FindReplaceForm(QWidget *parent = 0);

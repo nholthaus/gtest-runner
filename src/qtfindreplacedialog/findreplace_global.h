@@ -8,10 +8,4 @@
 
 #include <QtCore/qglobal.h>
 
-#if defined(FINDREPLACE_LIBRARY)
-#  define FINDREPLACESHARED_EXPORT Q_DECL_EXPORT
-#else
-#  define FINDREPLACESHARED_EXPORT Q_DECL_IMPORT
-#endif
-
 #endif // FINDREPLACE_GLOBAL_H

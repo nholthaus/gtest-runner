@@ -22,7 +22,7 @@ class QSettings;
   *
   * It relies on a FindReplaceForm object (see that class for the functionalities provided).
   */
-class FINDREPLACESHARED_EXPORT FindReplaceDialog : public QDialog {
+class  FindReplaceDialog : public QDialog {
     Q_OBJECT
 public:
     FindReplaceDialog(QWidget *parent = 0);

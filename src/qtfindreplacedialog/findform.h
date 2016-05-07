@@ -17,7 +17,7 @@
   * The form for the find dialog (it is basically the same
   * as FindReplaceForm without the replace related widgets).
   */
-class FINDREPLACESHARED_EXPORT FindForm : public FindReplaceForm {
+class  FindForm : public FindReplaceForm {
     Q_OBJECT
 public:
     FindForm(QWidget *parent = 0);
