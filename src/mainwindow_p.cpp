@@ -36,6 +36,7 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 	consoleDock(new QDockWidget(q)),
 	consoleTextEdit(new QTextEdit(q)),
 	consoleHighlighter(new QStdOutSyntaxHighlighter(consoleTextEdit)),
+	consoleFindDialog(new FindDialog(consoleTextEdit)),
 	systemTrayIcon(new QSystemTrayIcon(QIcon(":/images/logo"), q)),
 	mostRecentFailurePath("")
 {
@@ -105,6 +106,8 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 	consoleTextEdit->setPalette(p);
 	consoleTextEdit->setReadOnly(true);
 
+	consoleFindDialog->setTextEdit(consoleTextEdit);
+	
 	systemTrayIcon->show();
 
 	createTestMenu();
@@ -599,6 +602,7 @@ void MainWindowPrivate::saveSettings() const
 	QSettings settings(APPINFO::organization, APPINFO::name);
 	settings.setValue("geometry", q->saveGeometry());
 	settings.setValue("windowState", q->saveState());
+	consoleFindDialog->writeSettings(settings);
 
 	// save executable information
 	settings.beginWriteArray("tests");
@@ -636,6 +640,7 @@ void MainWindowPrivate::loadSettings()
 	QSettings settings(APPINFO::organization, APPINFO::name);
 	q->restoreGeometry(settings.value("geometry").toByteArray());
 	q->restoreState(settings.value("windowState").toByteArray());
+	consoleFindDialog->readSettings(settings);
 
 	int size = settings.beginReadArray("tests");
 	for (int i = 0; i < size; ++i)
@@ -842,17 +847,30 @@ void MainWindowPrivate::createConsoleContextMenu()
 
 	consoleTextEdit->setContextMenuPolicy(Qt::CustomContextMenu);
 
-	clearConsoleAction = new QAction("Clear", /*consoleContextMenu*/this);
+	clearConsoleAction = new QAction("Clear", this);
+	consoleFindShortcut = new QShortcut(QKeySequence("Ctrl+F"), q);
+	consoleFindAction = new QAction("Find...", this);
+	consoleFindAction->setShortcut(consoleFindShortcut->key());
 
 	connect(consoleTextEdit, &QTextEdit::customContextMenuRequested, [this, q](const QPoint& pos)
 	{
 		QScopedPointer<QMenu> consoleContextMenu(consoleTextEdit->createStandardContextMenu(consoleTextEdit->mapToGlobal(pos)));
+		consoleContextMenu->addSeparator();
+		consoleContextMenu->addAction(consoleFindAction);
 		consoleContextMenu->addSeparator();
 		consoleContextMenu->addAction(clearConsoleAction);
 		consoleContextMenu->exec(consoleTextEdit->mapToGlobal(pos));
 	});
 
 	connect(clearConsoleAction, &QAction::triggered, consoleTextEdit, &QTextEdit::clear);
+	connect(consoleFindShortcut, &QShortcut::activated, consoleFindAction, &QAction::trigger);
+	connect(consoleFindAction, &QAction::triggered, [this, q]
+		{
+			consoleDock->setVisible(true);
+			consoleDock->raise();
+			consoleFindDialog->show();
+		}
+	);
 }
 
 //--------------------------------------------------------------------------------------------------

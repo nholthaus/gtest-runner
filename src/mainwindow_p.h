@@ -48,6 +48,8 @@
 #include "appinfo.h"
 #include "gtestModel.h"
 
+#include <finddialog.h>
+
 #include <atomic>
 #include <condition_variable>
 #include <map>
@@ -76,6 +78,7 @@
 #include <QProcess>
 #include <QPushButton>
 #include <QSettings>
+#include <QShortcut>
 #include <QStandardItem>
 #include <QStandardItemModel>
 #include <QStandardPaths>
@@ -126,7 +129,7 @@ public:
 	QDockWidget*							consoleDock;							///< Console emulator
 	QTextEdit*								consoleTextEdit;						///< Console emulator text edit
 	QStdOutSyntaxHighlighter*				consoleHighlighter;						///< Console syntax highlighter.
-
+	FindDialog*								consoleFindDialog;						///< Dialog to find stuff in the console.
 	QSystemTrayIcon*						systemTrayIcon;							///< System Tray Icon.
 
 	// Menus
@@ -152,6 +155,8 @@ public:
 	QAction*								testCaseViewCollapseAllAction;			///< Collapses all nodes in the test case tree view.
 
 	QMenu*									consoleContextMenu;						///< Context menu for the console dock;
+	QShortcut*								consoleFindShortcut;					///< Global Ctrl-F to activate the find dialog.
+	QAction*								consoleFindAction;						///< Finds text in the console.
 	QAction*								clearConsoleAction;						///< Clears the console window.
 	
 	QMenu*									helpMenu;								///< Help menu
