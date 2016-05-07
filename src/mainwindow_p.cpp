@@ -842,15 +842,13 @@ void MainWindowPrivate::createConsoleContextMenu()
 
 	consoleTextEdit->setContextMenuPolicy(Qt::CustomContextMenu);
 
-	consoleContextMenu = consoleTextEdit->createStandardContextMenu();
-
-	clearConsoleAction = new QAction("Clear", consoleContextMenu);
-
-	consoleContextMenu->addSeparator();
-	consoleContextMenu->addAction(clearConsoleAction);
+	clearConsoleAction = new QAction("Clear", /*consoleContextMenu*/this);
 
 	connect(consoleTextEdit, &QTextEdit::customContextMenuRequested, [this, q](const QPoint& pos)
 	{
+		QScopedPointer<QMenu> consoleContextMenu(consoleTextEdit->createStandardContextMenu(consoleTextEdit->mapToGlobal(pos)));
+		consoleContextMenu->addSeparator();
+		consoleContextMenu->addAction(clearConsoleAction);
 		consoleContextMenu->exec(consoleTextEdit->mapToGlobal(pos));
 	});
 
