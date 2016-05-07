@@ -54,6 +54,7 @@ public:
 	{
 		PathRole = Qt::UserRole,
 		LineRole = Qt::UserRole + 1,
+		MessageRole = Qt::UserRole + 2,
 	};
 
 public:

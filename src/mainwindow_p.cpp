@@ -35,6 +35,8 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 	failureProxyModel(new QBottomUpSortFilterProxy(q)),
 	consoleDock(new QDockWidget(q)),
 	consoleTextEdit(new QTextEdit(q)),
+//	consolePrevFailure(new QPushButton(q)),
+//	consoleNextFailure(new QPushButton(q)),
 	consoleHighlighter(new QStdOutSyntaxHighlighter(consoleTextEdit)),
 	consoleFindDialog(new FindDialog(consoleTextEdit)),
 	systemTrayIcon(new QSystemTrayIcon(QIcon(":/images/logo"), q)),
@@ -247,11 +249,16 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 	});
 
 	// copy failure line to clipboard (to support IDE Ctrl-G + Ctrl-V)
+	// also, highlight it in the console model
 	connect(failureTreeView, &QTreeView::clicked, [this](const QModelIndex& index)
 	{
 		if (index.isValid())
 		{
 			QApplication::clipboard()->setText(index.data(GTestFailureModel::LineRole).toString());
+			QString findString = index.data(GTestFailureModel::PathRole).toString() + ":" + index.data(GTestFailureModel::LineRole).toString();
+			consoleTextEdit->find(findString, QTextDocument::FindBackward);
+			consoleTextEdit->find(findString);
+			consoleTextEdit->ensureCursorVisible();
 		}
 	});
 

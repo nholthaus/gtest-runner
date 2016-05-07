@@ -127,6 +127,8 @@ public:
 	QStatusBar*								statusBar;								///< status
 
 	QDockWidget*							consoleDock;							///< Console emulator
+	QPushButton*							consolePrevFailure;						///< Jumps the the previous failure.
+	QPushButton*							consoleNextFailure;						///< Jumps the the next failure.
 	QTextEdit*								consoleTextEdit;						///< Console emulator text edit
 	QStdOutSyntaxHighlighter*				consoleHighlighter;						///< Console syntax highlighter.
 	FindDialog*								consoleFindDialog;						///< Dialog to find stuff in the console.
