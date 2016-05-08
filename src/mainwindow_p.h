@@ -127,8 +127,11 @@ public:
 	QStatusBar*								statusBar;								///< status
 
 	QDockWidget*							consoleDock;							///< Console emulator
-	QPushButton*							consolePrevFailure;						///< Jumps the the previous failure.
-	QPushButton*							consoleNextFailure;						///< Jumps the the next failure.
+	QFrame*									consoleFrame;							///< Console Dock frame.
+	QVBoxLayout*							consoleButtonLayout;					///< Layout for the console dock buttons.
+	QHBoxLayout*							consoleLayout;							///< Console Dock Layout.
+	QPushButton*							consolePrevFailureButton;						///< Jumps the the previous failure.
+	QPushButton*							consoleNextFailureButton;						///< Jumps the the next failure.
 	QTextEdit*								consoleTextEdit;						///< Console emulator text edit
 	QStdOutSyntaxHighlighter*				consoleHighlighter;						///< Console syntax highlighter.
 	FindDialog*								consoleFindDialog;						///< Dialog to find stuff in the console.
@@ -212,6 +215,8 @@ protected:
 
 	QModelIndex getTestIndexDialog(const QString& label, bool running = false);
 
+	void scrollToConsoleCursor();
+	
 };	// CLASS: MainWindowPrivate
 
 

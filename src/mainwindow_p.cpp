@@ -12,6 +12,7 @@
 #include <QInputDialog>
 #include <QMenuBar>
 #include <QTimer>
+#include <QScrollBar>
 #include <QStyle>
 
 //--------------------------------------------------------------------------------------------------
@@ -35,8 +36,11 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 	failureProxyModel(new QBottomUpSortFilterProxy(q)),
 	consoleDock(new QDockWidget(q)),
 	consoleTextEdit(new QTextEdit(q)),
-//	consolePrevFailure(new QPushButton(q)),
-//	consoleNextFailure(new QPushButton(q)),
+	consoleFrame(new QFrame(q)),
+	consoleButtonLayout(new QVBoxLayout(q)),
+	consoleLayout(new QHBoxLayout(q)),
+	consolePrevFailureButton(new QPushButton(q)),
+	consoleNextFailureButton(new QPushButton(q)),
 	consoleHighlighter(new QStdOutSyntaxHighlighter(consoleTextEdit)),
 	consoleFindDialog(new FindDialog(consoleTextEdit)),
 	systemTrayIcon(new QSystemTrayIcon(QIcon(":/images/logo"), q)),
@@ -99,8 +103,27 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 	consoleDock->setObjectName("consoleDock");
 	consoleDock->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::TopDockWidgetArea | Qt::RightDockWidgetArea | Qt::LeftDockWidgetArea);
 	consoleDock->setWindowTitle("Console Output");
-	consoleDock->setWidget(consoleTextEdit);
+	consoleDock->setWidget(consoleFrame);
+	
+	consoleFrame->setLayout(consoleLayout);
+	
+	consoleLayout->addLayout(consoleButtonLayout);
+	consoleLayout->addWidget(consoleTextEdit);
+	consoleTextEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	
+	consoleButtonLayout->addWidget(consolePrevFailureButton);
+	consoleButtonLayout->addWidget(consoleNextFailureButton);
 
+	consolePrevFailureButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+	consolePrevFailureButton->setMaximumWidth(20);
+	consolePrevFailureButton->setIcon(q->style()->standardIcon(QStyle::SP_ArrowUp));
+	consolePrevFailureButton->setToolTip("Show Previous Test-case Failure");
+	
+	consoleNextFailureButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+	consoleNextFailureButton->setMaximumWidth(20);
+	consoleNextFailureButton->setIcon(q->style()->standardIcon(QStyle::SP_ArrowDown));
+	consoleNextFailureButton->setToolTip("Show Next Test-case Failure");
+	
 	consoleTextEdit->setFont(consolas);
 	QPalette p = consoleTextEdit->palette();
 	p.setColor(QPalette::Base, Qt::black);
@@ -258,7 +281,7 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 			QString findString = index.data(GTestFailureModel::PathRole).toString() + ":" + index.data(GTestFailureModel::LineRole).toString();
 			consoleTextEdit->find(findString, QTextDocument::FindBackward);
 			consoleTextEdit->find(findString);
-			consoleTextEdit->ensureCursorVisible();
+			scrollToConsoleCursor();
 		}
 	});
 
@@ -294,6 +317,66 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 		if (!mostRecentFailurePath.isEmpty())
 			selectTest(mostRecentFailurePath);
 	});
+
+	// find the previous failure when the button is pressed
+	connect(consolePrevFailureButton, &QPushButton::pressed, [this, q]
+	{
+		QRegularExpression regex("\\[\\s+RUN\\s+\\]((?!OK).)*?\\[\\s+FAILED\\s+\\]", QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption);
+		auto matches = regex.globalMatch(consoleTextEdit->toPlainText());
+
+		QRegularExpressionMatch match;
+		QTextCursor c = consoleTextEdit->textCursor();
+		
+		while(matches.hasNext())
+		{
+			
+			auto nextMatch = matches.peekNext();
+			if(nextMatch.capturedEnd() >= c.position())
+			{
+				break;
+			}
+			match = matches.next();
+		}
+		
+		if(match.capturedStart() > 0)
+		{
+			c.setPosition(match.capturedStart());
+			consoleTextEdit->setTextCursor(c);
+			scrollToConsoleCursor();
+			c.setPosition(match.capturedEnd(), QTextCursor::KeepAnchor);
+			consoleTextEdit->setTextCursor(c);
+		}
+	});
+	
+	// find the next failure when the button is pressed
+	connect(consoleNextFailureButton, &QPushButton::pressed, [this, q]
+	{
+		QRegularExpression regex("\\[\\s+RUN\\s+\\]((?!OK).)*?\\[\\s+FAILED\\s+\\]", QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption);
+		auto matches = regex.globalMatch(consoleTextEdit->toPlainText());
+		
+		QRegularExpressionMatch match;
+		QTextCursor c = consoleTextEdit->textCursor();
+		
+		while(matches.hasNext())
+		{
+			match = matches.next();
+			if(match.capturedEnd() >= c.position())
+			{
+				if(matches.hasNext())
+					match = matches.next();
+				break;
+			}
+		}
+		
+		if(match.capturedStart() > 0)
+		{
+			c.setPosition(match.capturedStart());
+			consoleTextEdit->setTextCursor(c);
+			scrollToConsoleCursor();
+			c.setPosition(match.capturedEnd(), QTextCursor::KeepAnchor);
+			consoleTextEdit->setTextCursor(c);
+		}
+	});
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -314,7 +397,7 @@ void MainWindowPrivate::addTestExecutable(const QString& path, bool autorun, QDa
 	Qt::CheckState shuffle /*= Qt::Unchecked*/, int randomSeed /*= 0*/, QString otherArgs /*= ""*/)
 {
 	QFileInfo fileinfo(path);
-	qDebug() << path;
+
 	if (!fileinfo.exists())
 		return;
 
@@ -609,7 +692,6 @@ void MainWindowPrivate::saveSettings() const
 	QSettings settings(APPINFO::organization, APPINFO::name);
 	settings.setValue("geometry", q->saveGeometry());
 	settings.setValue("windowState", q->saveState());
-	consoleFindDialog->writeSettings(settings);
 
 	// save executable information
 	settings.beginWriteArray("tests");
@@ -647,7 +729,6 @@ void MainWindowPrivate::loadSettings()
 	QSettings settings(APPINFO::organization, APPINFO::name);
 	q->restoreGeometry(settings.value("geometry").toByteArray());
 	q->restoreState(settings.value("windowState").toByteArray());
-	consoleFindDialog->readSettings(settings);
 
 	int size = settings.beginReadArray("tests");
 	for (int i = 0; i < size; ++i)
@@ -1031,4 +1112,14 @@ void MainWindowPrivate::createHelpMenu()
 	});
 
 	q->menuBar()->addMenu(helpMenu);
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: scrollToConsoleCursor
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::scrollToConsoleCursor()
+{
+	int cursorY = consoleTextEdit->cursorRect().top();
+    QScrollBar *vbar = consoleTextEdit->verticalScrollBar();
+    vbar->setValue(vbar->value() + cursorY - 0);
 }

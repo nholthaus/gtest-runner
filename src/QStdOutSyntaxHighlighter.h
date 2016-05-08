@@ -64,7 +64,7 @@ public:
 		HighlightingRule rule;
 
  		blockFormat.setForeground(QColor("#00ff00"));
- 		rule.pattern = QRegExp("\\[.*\\]");
+ 		rule.pattern = QRegExp("\\[((?!\\s+DEATH\\s+).)*\\]");
  		rule.format = blockFormat;
 		highlightingRules.append(rule);
 
@@ -99,6 +99,7 @@ private:
 		QRegExp					pattern;
 		QTextCharFormat			format;
 	};
+
 	QVector<HighlightingRule>	highlightingRules;
 
 	QTextCharFormat				errorFormat;													///< Highlight style for errors.
