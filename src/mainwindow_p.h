@@ -48,6 +48,8 @@
 #include "appinfo.h"
 #include "gtestModel.h"
 
+#include <finddialog.h>
+
 #include <atomic>
 #include <condition_variable>
 #include <map>
@@ -76,6 +78,7 @@
 #include <QProcess>
 #include <QPushButton>
 #include <QSettings>
+#include <QShortcut>
 #include <QStandardItem>
 #include <QStandardItemModel>
 #include <QStandardPaths>
@@ -124,9 +127,14 @@ public:
 	QStatusBar*								statusBar;								///< status
 
 	QDockWidget*							consoleDock;							///< Console emulator
+	QFrame*									consoleFrame;							///< Console Dock frame.
+	QVBoxLayout*							consoleButtonLayout;					///< Layout for the console dock buttons.
+	QHBoxLayout*							consoleLayout;							///< Console Dock Layout.
+	QPushButton*							consolePrevFailureButton;						///< Jumps the the previous failure.
+	QPushButton*							consoleNextFailureButton;						///< Jumps the the next failure.
 	QTextEdit*								consoleTextEdit;						///< Console emulator text edit
 	QStdOutSyntaxHighlighter*				consoleHighlighter;						///< Console syntax highlighter.
-
+	FindDialog*								consoleFindDialog;						///< Dialog to find stuff in the console.
 	QSystemTrayIcon*						systemTrayIcon;							///< System Tray Icon.
 
 	// Menus
@@ -152,6 +160,8 @@ public:
 	QAction*								testCaseViewCollapseAllAction;			///< Collapses all nodes in the test case tree view.
 
 	QMenu*									consoleContextMenu;						///< Context menu for the console dock;
+	QShortcut*								consoleFindShortcut;					///< Global Ctrl-F to activate the find dialog.
+	QAction*								consoleFindAction;						///< Finds text in the console.
 	QAction*								clearConsoleAction;						///< Clears the console window.
 	
 	QMenu*									helpMenu;								///< Help menu
@@ -179,23 +189,18 @@ signals:
 
 public:
 
-	explicit MainWindowPrivate(MainWindow* q);
+	explicit MainWindowPrivate(QStringList tests, bool reset, MainWindow* q);
 
 	QString xmlPath(const QString& testPath) const;
-
 	void addTestExecutable(const QString& path, bool autorun, QDateTime lastModified, QString filter = "", int repeat = 0, Qt::CheckState runDisabled = Qt::Unchecked, Qt::CheckState shuffle = Qt::Unchecked, int randomSeed = 0, QString otherArgs = "");
-
 	void runTestInThread(const QString& pathToTest, bool notify);
-
 	bool loadTestResults(const QString& testPath, bool notify);
-
 	void selectTest(const QString& testPath);
-
 	void saveSettings() const;
-
 	void loadSettings();
-
 	void removeTest(const QModelIndex &index);
+	void clearData();
+	void clearSettings();
 
 protected:
 
@@ -210,6 +215,8 @@ protected:
 
 	QModelIndex getTestIndexDialog(const QString& label, bool running = false);
 
+	void scrollToConsoleCursor();
+	
 };	// CLASS: MainWindowPrivate
 
 

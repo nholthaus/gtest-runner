@@ -56,7 +56,7 @@ class MainWindow : public QMainWindow
 {
 public:
 
-	explicit MainWindow();
+	explicit MainWindow(QStringList tests, bool reset);
 	virtual ~MainWindow();
 
 private:

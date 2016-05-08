@@ -12,12 +12,13 @@
 #include <QInputDialog>
 #include <QMenuBar>
 #include <QTimer>
+#include <QScrollBar>
 #include <QStyle>
 
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: MainWindowPrivate
 //--------------------------------------------------------------------------------------------------
-MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
+MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* q) :
 	q_ptr(q),
 	executableDock(new QDockWidget(q)),
 	executableDockFrame(new QFrame(q)),
@@ -35,11 +36,23 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	failureProxyModel(new QBottomUpSortFilterProxy(q)),
 	consoleDock(new QDockWidget(q)),
 	consoleTextEdit(new QTextEdit(q)),
+	consoleFrame(new QFrame(q)),
+	consoleButtonLayout(new QVBoxLayout(q)),
+	consoleLayout(new QHBoxLayout(q)),
+	consolePrevFailureButton(new QPushButton(q)),
+	consoleNextFailureButton(new QPushButton(q)),
 	consoleHighlighter(new QStdOutSyntaxHighlighter(consoleTextEdit)),
+	consoleFindDialog(new FindDialog(consoleTextEdit)),
 	systemTrayIcon(new QSystemTrayIcon(QIcon(":/images/logo"), q)),
 	mostRecentFailurePath("")
 {
 	qRegisterMetaType<QVector<int>>("QVector<int>");
+
+	if (reset)
+	{
+		clearData();
+		clearSettings();
+	}
 
 	QFontDatabase fontDB;
 	fontDB.addApplicationFont(":/fonts/consolas");
@@ -90,8 +103,27 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	consoleDock->setObjectName("consoleDock");
 	consoleDock->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::TopDockWidgetArea | Qt::RightDockWidgetArea | Qt::LeftDockWidgetArea);
 	consoleDock->setWindowTitle("Console Output");
-	consoleDock->setWidget(consoleTextEdit);
+	consoleDock->setWidget(consoleFrame);
+	
+	consoleFrame->setLayout(consoleLayout);
+	
+	consoleLayout->addLayout(consoleButtonLayout);
+	consoleLayout->addWidget(consoleTextEdit);
+	consoleTextEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	
+	consoleButtonLayout->addWidget(consolePrevFailureButton);
+	consoleButtonLayout->addWidget(consoleNextFailureButton);
 
+	consolePrevFailureButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+	consolePrevFailureButton->setMaximumWidth(20);
+	consolePrevFailureButton->setIcon(q->style()->standardIcon(QStyle::SP_ArrowUp));
+	consolePrevFailureButton->setToolTip("Show Previous Test-case Failure");
+	
+	consoleNextFailureButton->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+	consoleNextFailureButton->setMaximumWidth(20);
+	consoleNextFailureButton->setIcon(q->style()->standardIcon(QStyle::SP_ArrowDown));
+	consoleNextFailureButton->setToolTip("Show Next Test-case Failure");
+	
 	consoleTextEdit->setFont(consolas);
 	QPalette p = consoleTextEdit->palette();
 	p.setColor(QPalette::Base, Qt::black);
@@ -99,6 +131,8 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	consoleTextEdit->setPalette(p);
 	consoleTextEdit->setReadOnly(true);
 
+	consoleFindDialog->setTextEdit(consoleTextEdit);
+	
 	systemTrayIcon->show();
 
 	createTestMenu();
@@ -238,11 +272,21 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 	});
 
 	// copy failure line to clipboard (to support IDE Ctrl-G + Ctrl-V)
+	// also, highlight it in the console model
 	connect(failureTreeView, &QTreeView::clicked, [this](const QModelIndex& index)
 	{
 		if (index.isValid())
 		{
 			QApplication::clipboard()->setText(index.data(GTestFailureModel::LineRole).toString());
+			// yay, the path strings are TOTALLY different between the different OS's
+#ifdef _MSC_VER
+			QString findString = QDir::toNativeSeparators(index.data(GTestFailureModel::PathRole).toString()) + "(" + index.data(GTestFailureModel::LineRole).toString() + ")";
+#else
+			QString findString = index.data(GTestFailureModel::PathRole).toString() + ":" + index.data(GTestFailureModel::LineRole).toString();
+#endif
+			consoleTextEdit->find(findString, QTextDocument::FindBackward);
+			consoleTextEdit->find(findString);
+			scrollToConsoleCursor();
 		}
 	});
 
@@ -278,6 +322,66 @@ MainWindowPrivate::MainWindowPrivate(MainWindow* q) :
 		if (!mostRecentFailurePath.isEmpty())
 			selectTest(mostRecentFailurePath);
 	});
+
+	// find the previous failure when the button is pressed
+	connect(consolePrevFailureButton, &QPushButton::pressed, [this, q]
+	{
+		QRegularExpression regex("\\[\\s+RUN\\s+\\]((?!OK).)*?\\[\\s+FAILED\\s+\\]", QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption);
+		auto matches = regex.globalMatch(consoleTextEdit->toPlainText());
+
+		QRegularExpressionMatch match;
+		QTextCursor c = consoleTextEdit->textCursor();
+		
+		while(matches.hasNext())
+		{
+			
+			auto nextMatch = matches.peekNext();
+			if(nextMatch.capturedEnd() >= c.position())
+			{
+				break;
+			}
+			match = matches.next();
+		}
+		
+		if(match.capturedStart() > 0)
+		{
+			c.setPosition(match.capturedStart());
+			consoleTextEdit->setTextCursor(c);
+			scrollToConsoleCursor();
+			c.setPosition(match.capturedEnd(), QTextCursor::KeepAnchor);
+			consoleTextEdit->setTextCursor(c);
+		}
+	});
+	
+	// find the next failure when the button is pressed
+	connect(consoleNextFailureButton, &QPushButton::pressed, [this, q]
+	{
+		QRegularExpression regex("\\[\\s+RUN\\s+\\]((?!OK).)*?\\[\\s+FAILED\\s+\\]", QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption);
+		auto matches = regex.globalMatch(consoleTextEdit->toPlainText());
+		
+		QRegularExpressionMatch match;
+		QTextCursor c = consoleTextEdit->textCursor();
+		
+		while(matches.hasNext())
+		{
+			match = matches.next();
+			if(match.capturedEnd() >= c.position())
+			{
+				if(matches.hasNext())
+					match = matches.next();
+				break;
+			}
+		}
+		
+		if(match.capturedStart() > 0)
+		{
+			c.setPosition(match.capturedStart());
+			consoleTextEdit->setTextCursor(c);
+			scrollToConsoleCursor();
+			c.setPosition(match.capturedEnd(), QTextCursor::KeepAnchor);
+			consoleTextEdit->setTextCursor(c);
+		}
+	});
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -300,6 +404,12 @@ void MainWindowPrivate::addTestExecutable(const QString& path, bool autorun, QDa
 	QFileInfo fileinfo(path);
 
 	if (!fileinfo.exists())
+		return;
+
+	if (!fileinfo.isExecutable() || !fileinfo.isFile())
+		return;
+
+	if (executableModel->index(path).isValid())
 		return;
 
 	if (lastModified == QDateTime())
@@ -587,7 +697,8 @@ void MainWindowPrivate::saveSettings() const
 	QSettings settings(APPINFO::organization, APPINFO::name);
 	settings.setValue("geometry", q->saveGeometry());
 	settings.setValue("windowState", q->saveState());
-
+	consoleFindDialog->writeSettings(settings);
+	
 	// save executable information
 	settings.beginWriteArray("tests");
 	for (auto itr = executableModel->begin(); itr != executableModel->end(); ++itr)
@@ -624,6 +735,7 @@ void MainWindowPrivate::loadSettings()
 	QSettings settings(APPINFO::organization, APPINFO::name);
 	q->restoreGeometry(settings.value("geometry").toByteArray());
 	q->restoreState(settings.value("windowState").toByteArray());
+	consoleFindDialog->readSettings(settings);
 
 	int size = settings.beginReadArray("tests");
 	for (int i = 0; i < size; ++i)
@@ -680,6 +792,32 @@ void MainWindowPrivate::removeTest(const QModelIndex &index)
 
 		executableModel->removeRow(index.row(), index.parent());
 	}
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: clearData
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::clearData()
+{
+	QDir dataDir(QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first());
+	if (dataDir.exists())
+	{
+		dataDir.removeRecursively();
+		for (int i = 0; i < executableModel->rowCount(); ++i)
+		{
+			QModelIndex index = executableModel->index(i, 0);
+			executableModel->setData(index, ExecutableData::NOT_RUNNING, QExecutableModel::StateRole);
+		}
+	}
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: clearSettings
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::clearSettings()
+{
+	QSettings settings(APPINFO::organization, APPINFO::name);
+	settings.clear();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -804,19 +942,30 @@ void MainWindowPrivate::createConsoleContextMenu()
 
 	consoleTextEdit->setContextMenuPolicy(Qt::CustomContextMenu);
 
-	consoleContextMenu = consoleTextEdit->createStandardContextMenu();
-
-	clearConsoleAction = new QAction("Clear", consoleContextMenu);
-
-	consoleContextMenu->addSeparator();
-	consoleContextMenu->addAction(clearConsoleAction);
+	clearConsoleAction = new QAction("Clear", this);
+	consoleFindShortcut = new QShortcut(QKeySequence("Ctrl+F"), q);
+	consoleFindAction = new QAction("Find...", this);
+	consoleFindAction->setShortcut(consoleFindShortcut->key());
 
 	connect(consoleTextEdit, &QTextEdit::customContextMenuRequested, [this, q](const QPoint& pos)
 	{
+		QScopedPointer<QMenu> consoleContextMenu(consoleTextEdit->createStandardContextMenu(consoleTextEdit->mapToGlobal(pos)));
+		consoleContextMenu->addSeparator();
+		consoleContextMenu->addAction(consoleFindAction);
+		consoleContextMenu->addSeparator();
+		consoleContextMenu->addAction(clearConsoleAction);
 		consoleContextMenu->exec(consoleTextEdit->mapToGlobal(pos));
 	});
 
 	connect(clearConsoleAction, &QAction::triggered, consoleTextEdit, &QTextEdit::clear);
+	connect(consoleFindShortcut, &QShortcut::activated, consoleFindAction, &QAction::trigger);
+	connect(consoleFindAction, &QAction::triggered, [this, q]
+		{
+			consoleDock->setVisible(true);
+			consoleDock->raise();
+			consoleFindDialog->show();
+		}
+	);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -970,4 +1119,14 @@ void MainWindowPrivate::createHelpMenu()
 	});
 
 	q->menuBar()->addMenu(helpMenu);
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: scrollToConsoleCursor
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::scrollToConsoleCursor()
+{
+	int cursorY = consoleTextEdit->cursorRect().top();
+    QScrollBar *vbar = consoleTextEdit->verticalScrollBar();
+    vbar->setValue(vbar->value() + cursorY - 0);
 }

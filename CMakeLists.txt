@@ -121,6 +121,12 @@ src/QBottomUpSortFilterProxy.h
 src/QStdOutSyntaxHighlighter.h
 src/tree.h
 src/QTreeModel.h
+src/qtfindreplacedialog/finddialog.h
+src/qtfindreplacedialog/findform.h
+src/qtfindreplacedialog/findreplace_global.h
+src/qtfindreplacedialog/findreplacedialog.h
+src/qtfindreplacedialog/findreplaceform.h
+src/qtfindreplacedialog/findreplace_global.h
 )
 
 # .cpp files
@@ -136,6 +142,10 @@ src/gtestModel.cpp
 src/qexecutablemodel.cpp
 src/qexecutabletreeview.cpp
 src/QBottomUpSortFilterProxy.cpp
+src/qtfindreplacedialog/finddialog.cpp
+src/qtfindreplacedialog/findform.cpp
+src/qtfindreplacedialog/findreplacedialog.cpp
+src/qtfindreplacedialog/findreplaceform.cpp
 )
 
 # on windows, append headers to source so they show up in visual studio
@@ -173,6 +183,7 @@ list(APPEND RESOURCES
 
 list(APPEND INCLUDE_DIRS
 ${CMAKE_CURRENT_BINARY_DIR}
+${CMAKE_CURRENT_SOURCE_DIR}/src/qtfindreplacedialog/
 )
 
 # Remove duplicate include directories

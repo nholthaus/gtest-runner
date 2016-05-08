@@ -10,7 +10,7 @@
 //--------------------------------------------------------------------------------------------------
 //	FUNCTION: MainWindow
 //--------------------------------------------------------------------------------------------------
-MainWindow::MainWindow() : QMainWindow(), d_ptr(new MainWindowPrivate(this))
+MainWindow::MainWindow(QStringList tests, bool reset) : QMainWindow(), d_ptr(new MainWindowPrivate(tests, reset, this))
 {
 	Q_D(MainWindow);
 
@@ -37,6 +37,13 @@ MainWindow::MainWindow() : QMainWindow(), d_ptr(new MainWindowPrivate(this))
 
 	// restore settings
 	d->loadSettings();
+
+	// add tests from the command line
+	for (auto itr = tests.begin(); itr != tests.end(); ++itr)
+	{
+		QFileInfo info(*itr);
+		d->addTestExecutable(info.absoluteFilePath(), true, info.lastModified());
+	}
 }
 
 //--------------------------------------------------------------------------------------------------

@@ -128,6 +128,8 @@ QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 		}
 	case Qt::ToolTipRole:
 		return message;
+	case MessageRole:
+		return message;
 	case PathRole:
 		fileMatch = filerx.match(message);
 		return QFileInfo(fileMatch.captured(1)).canonicalFilePath();
