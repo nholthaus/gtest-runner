@@ -278,7 +278,12 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 		if (index.isValid())
 		{
 			QApplication::clipboard()->setText(index.data(GTestFailureModel::LineRole).toString());
+			// yay, the path strings are TOTALLY different between the different OS's
+#ifdef _MSC_VER
+			QString findString = QDir::toNativeSeparators(index.data(GTestFailureModel::PathRole).toString()) + "(" + index.data(GTestFailureModel::LineRole).toString() + ")";
+#else
 			QString findString = index.data(GTestFailureModel::PathRole).toString() + ":" + index.data(GTestFailureModel::LineRole).toString();
+#endif
 			consoleTextEdit->find(findString, QTextDocument::FindBackward);
 			consoleTextEdit->find(findString);
 			scrollToConsoleCursor();
