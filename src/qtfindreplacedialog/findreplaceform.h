@@ -112,6 +112,8 @@ public slots:
 protected:
     void changeEvent(QEvent *e);
 
+	virtual bool event(QEvent *e) override;
+	
     /// shows an error in the dialog
     void showError(const QString &error);
 

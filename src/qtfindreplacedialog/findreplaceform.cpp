@@ -69,6 +69,20 @@ void FindReplaceForm::changeEvent(QEvent *e)
     }
 }
 
+bool FindReplaceForm::event(QEvent *e)
+{
+    switch (e->type()) 
+	{
+	case QEvent::Show:
+		ui->textToFind->setSelection(0, ui->textToFind->text().length());
+		qDebug() << "show event";
+		break;
+	default:
+        break;
+    }
+	return QWidget::event(e);
+}
+
 void FindReplaceForm::textToFindChanged() {
     ui->findButton->setEnabled(ui->textToFind->text().size() > 0);
 }

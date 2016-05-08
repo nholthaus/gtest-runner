@@ -697,7 +697,8 @@ void MainWindowPrivate::saveSettings() const
 	QSettings settings(APPINFO::organization, APPINFO::name);
 	settings.setValue("geometry", q->saveGeometry());
 	settings.setValue("windowState", q->saveState());
-
+	consoleFindDialog->writeSettings(settings);
+	
 	// save executable information
 	settings.beginWriteArray("tests");
 	for (auto itr = executableModel->begin(); itr != executableModel->end(); ++itr)
@@ -734,6 +735,7 @@ void MainWindowPrivate::loadSettings()
 	QSettings settings(APPINFO::organization, APPINFO::name);
 	q->restoreGeometry(settings.value("geometry").toByteArray());
 	q->restoreState(settings.value("windowState").toByteArray());
+	consoleFindDialog->readSettings(settings);
 
 	int size = settings.beginReadArray("tests");
 	for (int i = 0; i < size; ++i)
