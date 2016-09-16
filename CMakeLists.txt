@@ -82,13 +82,11 @@ find_package(Threads REQUIRED)
 #	COMPILE FLAGS
 #-------------------------------------------------------------------------------
 
-set(CXX_STANDARD_REQUIRED ON)
-set(CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 14)
 
 if(WIN32)
 	set(GUI_TYPE WIN32)
-else(WIN32)
-	add_compile_options(--std=c++14)
 endif(WIN32)
 
 #-------------------------------------------------------------------------------
