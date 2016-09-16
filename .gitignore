@@ -6,6 +6,9 @@
 #kdevelop
 *.kdev4
 
+#vscode
+.vscode
+
 # Compiled Object files
 *.slo
 *.lo
