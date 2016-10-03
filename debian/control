@@ -1,0 +1,11 @@
+Source: gtest-runner
+Section: devel
+Priority: optional
+Maintainer: Nic Holthaus <nholthaus@gmail.com>
+Build-Depends: cmake,  qt57-meta-full, git
+Homepage: https://github.com/nholthaus/gtest-runner
+
+Package: gtest-runner
+Architecture: any
+Depends: qt57-meta-full
+Description: A cross-platform, Qt5 based Graphical User Interface for Google Test unit tests
