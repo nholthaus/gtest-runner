@@ -21,7 +21,6 @@ if(GIT_FOUND)
 	  OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 	execute_process(
-#	  COMMAND ${GIT_EXECUTABLE} describe --tag
 	  COMMAND ${GIT_EXECUTABLE} describe --abbrev=0 --tags
 	  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	  OUTPUT_VARIABLE VERSION
@@ -217,7 +216,10 @@ add_executable(${TARGET_NAME} ${GUI_TYPE} ${SOURCE_FILES} ${RESOURCES})
 # link libraries
 target_link_libraries(${TARGET_NAME} ${LIBRARIES})
 
-# Executable installation
+# Use the automatically determined RPATH values
+set_target_properties(${TARGET_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# the RPATH to be used when installing, but only if it's not a system directory
 INSTALL(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)
 INCLUDE(InstallRequiredSystemLibraries)
 
