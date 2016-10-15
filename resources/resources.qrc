@@ -11,4 +11,48 @@
 		<file alias="schemas/gtest.xsd">schemas/gtest.xsd</file>
 		<file alias="fonts/consolas">fonts/consola.ttf</file>
 	</qresource>
+  <qresource prefix="qss_icons">
+    <file>images/up_arrow_disabled.png</file>
+    <file>images/Hmovetoolbar.png</file>
+    <file>images/stylesheet-branch-end.png</file>
+    <file>images/branch_closed-on.png</file>
+    <file>images/stylesheet-vline.png</file>
+    <file>images/branch_closed.png</file>
+    <file>images/branch_open-on.png</file>
+    <file>images/transparent.png</file>
+    <file>images/right_arrow_disabled.png</file>
+    <file>images/sizegrip.png</file>
+    <file>images/close.png</file>
+    <file>images/close-hover.png</file>
+    <file>images/close-pressed.png</file>
+    <file>images/down_arrow.png</file>
+    <file>images/Vmovetoolbar.png</file>
+    <file>images/left_arrow.png</file>
+    <file>images/stylesheet-branch-more.png</file>
+    <file>images/up_arrow.png</file>
+    <file>images/right_arrow.png</file>
+    <file>images/left_arrow_disabled.png</file>
+    <file>images/Hsepartoolbar.png</file>
+    <file>images/branch_open.png</file>
+    <file>images/Vsepartoolbar.png</file>
+    <file>images/down_arrow_disabled.png</file>
+    <file>images/undock.png</file>
+    <file>images/checkbox_checked_disabled.png</file>
+    <file>images/checkbox_checked_focus.png</file>
+    <file>images/checkbox_checked.png</file>
+    <file>images/checkbox_indeterminate.png</file>
+    <file>images/checkbox_indeterminate_focus.png</file>
+    <file>images/checkbox_unchecked_disabled.png</file>
+    <file>images/checkbox_unchecked_focus.png</file>
+    <file>images/checkbox_unchecked.png</file>
+    <file>images/radio_checked_disabled.png</file>
+    <file>images/radio_checked_focus.png</file>
+    <file>images/radio_checked.png</file>
+    <file>images/radio_unchecked_disabled.png</file>
+    <file>images/radio_unchecked_focus.png</file>
+    <file>images/radio_unchecked.png</file>
+  </qresource>
+  <qresource>
+    <file alias="styles/qdarkstyle">styles/qdarkstyle.qss</file>
+  </qresource>
 </RCC>

@@ -138,8 +138,9 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 	createTestMenu();
 	createOptionsMenu();
 	createWindowMenu();
+	createThemeMenu();
 	createHelpMenu();
-	
+
 	createExecutableContextMenu();
 	createConsoleContextMenu();
 	createTestCaseViewContextMenu();
@@ -1069,6 +1070,51 @@ void MainWindowPrivate::createWindowMenu()
 	windowMenu->addAction(consoleDock->toggleViewAction());
 	
 	q->menuBar()->addMenu(windowMenu);
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: createThemeMenu
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::createThemeMenu()
+{
+	Q_Q(MainWindow);
+
+	themeMenu = new QMenu("Theme");
+
+	defaultThemeAction = new QAction("Default Theme", themeMenu);
+	defaultThemeAction->setObjectName("defaultThemeAction");
+	defaultThemeAction->setCheckable(true);
+	connect(defaultThemeAction, &QAction::triggered, [&]()
+	{
+		qApp->setStyleSheet("");
+	});
+
+	darkThemeAction = new QAction("Dark Theme", themeMenu);
+	darkThemeAction->setObjectName("darkThemeAction");
+	darkThemeAction->setCheckable(true);
+	connect(darkThemeAction, &QAction::triggered, [&]()
+	{
+		QFile f(":styles/qdarkstyle");
+		if (!f.exists())
+		{
+			printf("Unable to set stylesheet, file not found\n");
+		}
+		else
+		{
+			f.open(QFile::ReadOnly | QFile::Text);
+			QTextStream ts(&f);
+			qApp->setStyleSheet(ts.readAll());
+		}
+	});
+
+	themeMenu->addAction(defaultThemeAction);
+	themeMenu->addAction(darkThemeAction);
+
+	themeActionGroup = new QActionGroup(themeMenu);
+	themeActionGroup->addAction(defaultThemeAction);
+	themeActionGroup->addAction(darkThemeAction);
+
+	q->menuBar()->addMenu(themeMenu);
 }
 
 //--------------------------------------------------------------------------------------------------
