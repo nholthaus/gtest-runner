@@ -35,8 +35,8 @@ QVariant GTestFailureModel::data(const QModelIndex &index, int role) const
 	QString message = item->node().attributes().namedItem("message").nodeValue();
 
 	static QRegularExpression filerx("(.*)[:]([0-9]+)");
-	static QRegularExpression valueofrx("[Vv]alue of: ([^\n]*)|[VDd]eath test: ([^\n]*)");
-	static QRegularExpression actualrx("[Aa]ctual[:][ ]([^\n]*)|[Rr]esult[:][ ]([^\n]*)|(Failed)");
+	static QRegularExpression valueofrx("[Vv]alue of: ([^\n]*)|[Dd]eath test: ([^\n]*)|[Tt]o be equal to: ([^\n]*)");
+	static QRegularExpression actualrx("[Aa]ctual[:][ ]([^\n]*)|[Rr]esult[:][ ]([^\n]*)|(Failed)|[Tt]o be equal to: .*?[\n]\\s*Which is: ([^\n]*)", QRegularExpression::MultilineOption);
 	static QRegularExpression expectedrx("[Ee]xpected[:][ ](.*?)([,][ ]actual|$)|[Ee]rror msg[:]\n(.*)", QRegularExpression::MultilineOption);
 	static QRegularExpression whichisrx("[Ww]hich is: ([^\n]*)");
 	static QRegularExpression nearrx("The difference between (.*) and (.*) is (.*), which exceeds (.*), where\n(.*) evaluates to(.*),\n(.*) evaluates to(.*), and\n(.*) evaluates to(.*).");
