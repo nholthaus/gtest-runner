@@ -219,8 +219,9 @@ target_link_libraries(${TARGET_NAME} ${LIBRARIES})
 # Use the automatically determined RPATH values
 set_target_properties(${TARGET_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-# the RPATH to be used when installing, but only if it's not a system directory
 INSTALL(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)
+INSTALL(FILES ${CMAKE_SOURCE_DIR}/resources/desktop/gtest-runner.desktop DESTINATION share/applications)
+INSTALL(FILES ${CMAKE_SOURCE_DIR}/resources/desktop/gtest-runner.png DESTINATION share/icons)
 INCLUDE(InstallRequiredSystemLibraries)
 
 # Windows specific build steps
