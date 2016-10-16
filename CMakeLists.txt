@@ -82,7 +82,7 @@ find_package(Threads REQUIRED)
 #-------------------------------------------------------------------------------
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 if(WIN32)
 	set(GUI_TYPE WIN32)
