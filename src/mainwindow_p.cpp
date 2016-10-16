@@ -13,6 +13,7 @@
 #include <QMenuBar>
 #include <QTimer>
 #include <QScrollBar>
+#include <QStack>
 #include <QStyle>
 
 //--------------------------------------------------------------------------------------------------
@@ -327,15 +328,14 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 	// find the previous failure when the button is pressed
 	connect(consolePrevFailureButton, &QPushButton::pressed, [this, q]
 	{
-		QRegularExpression regex("\\[\\s+RUN\\s+\\]((?!OK).)*?\\[\\s+FAILED\\s+\\]", QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption);
+		QRegularExpression regex("\\[\\s+RUN\\s+\\].*?[\n](.*?): ((?!OK).)*?\\[\\s+FAILED\\s+\\]", QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption);
 		auto matches = regex.globalMatch(consoleTextEdit->toPlainText());
 
 		QRegularExpressionMatch match;
 		QTextCursor c = consoleTextEdit->textCursor();
 		
 		while(matches.hasNext())
-		{
-			
+		{		
 			auto nextMatch = matches.peekNext();
 			if(nextMatch.capturedEnd() >= c.position())
 			{
@@ -346,10 +346,10 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 		
 		if(match.capturedStart() > 0)
 		{
-			c.setPosition(match.capturedStart());
+			c.setPosition(match.capturedStart(1));
 			consoleTextEdit->setTextCursor(c);
 			scrollToConsoleCursor();
-			c.setPosition(match.capturedEnd(), QTextCursor::KeepAnchor);
+			c.setPosition(match.capturedEnd(1), QTextCursor::KeepAnchor);
 			consoleTextEdit->setTextCursor(c);
 		}
 	});
@@ -357,7 +357,7 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 	// find the next failure when the button is pressed
 	connect(consoleNextFailureButton, &QPushButton::pressed, [this, q]
 	{
-		QRegularExpression regex("\\[\\s+RUN\\s+\\]((?!OK).)*?\\[\\s+FAILED\\s+\\]", QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption);
+		QRegularExpression regex("\\[\\s+RUN\\s+\\].*?[\n](.*?): ((?!OK).)*?\\[\\s+FAILED\\s+\\]", QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption);
 		auto matches = regex.globalMatch(consoleTextEdit->toPlainText());
 		
 		QRegularExpressionMatch match;
@@ -376,10 +376,10 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 		
 		if(match.capturedStart() > 0)
 		{
-			c.setPosition(match.capturedStart());
+			c.setPosition(match.capturedStart(1));
 			consoleTextEdit->setTextCursor(c);
 			scrollToConsoleCursor();
-			c.setPosition(match.capturedEnd(), QTextCursor::KeepAnchor);
+			c.setPosition(match.capturedEnd(1), QTextCursor::KeepAnchor);
 			consoleTextEdit->setTextCursor(c);
 		}
 	});
@@ -672,6 +672,17 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath, bool notify)
 //--------------------------------------------------------------------------------------------------
 void MainWindowPrivate::selectTest(const QString& testPath)
 {
+	QStack<QString> selectionStack;
+
+	// Store the path the current selection on a stack
+	QModelIndex index = testCaseTreeView->selectionModel()->currentIndex();
+	while (index != QModelIndex())
+	{
+		selectionStack.push(index.data(GTestModel::Name).toString());
+		index = index.parent();
+	}
+
+	// Delete the old test case and failure models and make new ones
 	delete testCaseProxyModel->sourceModel();
 	delete failureProxyModel->sourceModel();
 	testCaseTreeView->setSortingEnabled(false);
@@ -683,9 +694,31 @@ void MainWindowPrivate::selectTest(const QString& testPath)
 	// make sure the right entry is selected
 	executableTreeView->setCurrentIndex(executableModel->index(testPath));
 	
+	// resize the columns
 	for (int i = 0; i < testCaseTreeView->model()->columnCount(); i++)
 	{
 		testCaseTreeView->resizeColumnToContents(i);
+	}
+
+	// reset the test case selection
+	auto originalStackSize = selectionStack.size();
+	index = testCaseTreeView->model()->index(0, 0);
+	for (int i = 0; i < originalStackSize; ++i)	// don't use a while-loop in case the test changed and what we are searching for doesn't exist
+	{
+		QModelIndexList matches = testCaseTreeView->model()->match(index, GTestModel::Name, selectionStack.pop(), 1, Qt::MatchRecursive);
+		if (matches.size() > 0)
+		{
+			index = matches.first();
+		}
+		else
+		{
+			index = QModelIndex();
+		}
+	}
+
+	if (index.isValid())
+	{
+		testCaseTreeView->selectionModel()->setCurrentIndex(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
 	}
 }
 
