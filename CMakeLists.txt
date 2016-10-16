@@ -2,7 +2,7 @@
 #	CMAKE SETTINGS
 #-------------------------------------------------------------------------------
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.8)
 set(QT_MINIMUM_VERSION 5.3.0)
 
 #-------------------------------------------------------------------------------
@@ -82,7 +82,7 @@ find_package(Threads REQUIRED)
 #-------------------------------------------------------------------------------
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 11)
 
 if(WIN32)
 	set(GUI_TYPE WIN32)
@@ -258,11 +258,11 @@ else(WIN32)
 	SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Nic Holthaus")
 	SET(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)	
 	# Deb packages can't have the 'v' in the version name
-	string(REGEX MATCH [0-9][.][0-9][.][0-9] VERSION_NUM ${APPLICATION_VERSION})
+	string(REGEX MATCH "[0-9][.][0-9][.][0-9]" VERSION_NUM "${APPLICATION_VERSION}")
 	set(CPACK_PACKAGE_VERSION ${VERSION_NUM})
 endif()
 
-set(CPACK_PACKAGE_CONTACT "Nic Holthaus nholthaus@gmail.com")
+set(CPACK_PACKAGE_CONTACT "Nic Holthaus <nholthaus@gmail.com>")
 set(CPACK_PACKAGE_NAME ${APPLICATION_NAME})
 set(CPACK_PACKAGE_VENDOR ${APPLICATION_ORGANIZATION})
 SET(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
