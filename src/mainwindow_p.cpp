@@ -234,11 +234,14 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 	// filter test results when the filter is changed
 	connect(testCaseFilterEdit, &QLineEdit::textChanged, this, [this](const QString& text)
 	{
-		testCaseProxyModel->setFilterRegExp(text);
-		testCaseTreeView->expandAll();
-		for (int i = 0; i < testCaseProxyModel->columnCount(); ++i)
+		if (QRegExp(text).isValid())
 		{
-			testCaseTreeView->resizeColumnToContents(i);
+			testCaseProxyModel->setFilterRegExp(text);
+			testCaseTreeView->expandAll();
+			for (int i = 0; i < testCaseProxyModel->columnCount(); ++i)
+			{
+				testCaseTreeView->resizeColumnToContents(i);
+			}
 		}
 	});
 
