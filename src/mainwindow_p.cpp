@@ -724,6 +724,7 @@ void MainWindowPrivate::saveSettings() const
 		settings.setValue("notifyOnFailure", notifyOnFailureAction->isChecked());
 		settings.setValue("notifyOnSuccess", notifyOnSuccessAction->isChecked());
 		settings.setValue("theme", themeActionGroup->checkedAction()->objectName());
+		settings.setValue("testDirectory", m_testDirectory);
 	}
 	settings.endGroup();
 }
@@ -762,6 +763,7 @@ void MainWindowPrivate::loadSettings()
 		if (!settings.value("notifyOnFailure").isNull()) notifyOnFailureAction->setChecked(settings.value("notifyOnFailure").toBool());
 		if (!settings.value("notifyOnSuccess").isNull()) notifyOnSuccessAction->setChecked(settings.value("notifyOnSuccess").toBool());
 		settings.value("theme").isNull() ? defaultThemeAction->setChecked(true) : themeMenu->findChild<QAction*>(settings.value("theme").toString())->trigger();
+		settings.value("testDirectory").isNull() ? m_testDirectory = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first() : m_testDirectory = settings.value("testDirectory").toString();
 	}
 	settings.endGroup();
 }
@@ -1003,10 +1005,15 @@ void MainWindowPrivate::createTestMenu()
 #else
 		filter = "Text Executables (*)";
 #endif
-		QString filename = QFileDialog::getOpenFileName(q_ptr, "Select Test Executable", QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first(), filter);
+		QString filename = QFileDialog::getOpenFileName(q_ptr, "Select Test Executable", m_testDirectory, filter);
 
 		if (filename.isEmpty())
 			return;
+		else
+		{
+			QFileInfo info(filename);
+			m_testDirectory = info.absoluteDir().absolutePath();
+		}
 
 		QModelIndex existingIndex = executableModel->index(filename);
 		if (!existingIndex.isValid())

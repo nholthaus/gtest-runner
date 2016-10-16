@@ -224,6 +224,10 @@ protected:
 
 	void scrollToConsoleCursor();
 	
+private:
+
+	QString m_testDirectory;
+
 };	// CLASS: MainWindowPrivate
 
 
