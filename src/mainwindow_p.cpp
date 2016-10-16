@@ -723,6 +723,7 @@ void MainWindowPrivate::saveSettings() const
 	{
 		settings.setValue("notifyOnFailure", notifyOnFailureAction->isChecked());
 		settings.setValue("notifyOnSuccess", notifyOnSuccessAction->isChecked());
+		settings.setValue("theme", themeActionGroup->checkedAction()->objectName());
 	}
 	settings.endGroup();
 }
@@ -760,6 +761,7 @@ void MainWindowPrivate::loadSettings()
 	{
 		if (!settings.value("notifyOnFailure").isNull()) notifyOnFailureAction->setChecked(settings.value("notifyOnFailure").toBool());
 		if (!settings.value("notifyOnSuccess").isNull()) notifyOnSuccessAction->setChecked(settings.value("notifyOnSuccess").toBool());
+		settings.value("theme").isNull() ? defaultThemeAction->setChecked(true) : themeMenu->findChild<QAction*>(settings.value("theme").toString())->trigger();
 	}
 	settings.endGroup();
 }
