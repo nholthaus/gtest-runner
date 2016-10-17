@@ -57,10 +57,12 @@ sudo apt-get update
 sudo apt-get install gtest-runner
 ```
 
+Of course, you can also [build gtest-runner from source](BUILD.md#ubuntu-16.04-xenial-build).
+
 ## Other Linux Distributions
 
 Please see the instructions on [how to build gtest-runner from source](#build-instructions).
 
 # Build Instructions
 
-See the [Build Instructions wiki page](https://github.com/nholthaus/gtest-runner/wiki/Build-Instructions) for information on how to build gtest-runner from source on your platform.
+See the [Build Instructions](BUILD.md) for information on how to build gtest-runner from source on your platform.
