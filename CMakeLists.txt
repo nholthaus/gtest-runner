@@ -84,10 +84,12 @@ find_package(Threads REQUIRED)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 14)
 
-if(WIN32)
+if(MSVC)
 	set(GUI_TYPE WIN32)
 	add_compile_options(/MP)
-endif(WIN32)
+elseif(CMAKE_COMPILER_IS_GNUCXX)
+	add_compile_options(-std=c++14)
+endif(MSVC)
 
 #-------------------------------------------------------------------------------
 #	CONFIGURATION

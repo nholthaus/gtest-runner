@@ -86,7 +86,11 @@ int main(int argc, char *argv[])
 
 	if (parser.isSet(versionOption))
 	{
+#if (QT_VERSION >= QT_VERSION_CHECK(5,4,0))
 		parser.showVersion();
+#else
+		qDebug() << "gtest-runner" << APPINFO::version;
+#endif
 		exit(0);
 	}
 
