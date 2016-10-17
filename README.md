@@ -30,7 +30,7 @@ A Qt5 based automated test-runner and Graphical User Interface for Google Test u
 
 # Features
 
-gtest-runner is an automated test runner that will ensure you are always looking at the latest test results, whenever you build a gtest executable. Check the [features wiki page](https://github.com/nholthaus/gtest-runner/wiki/Features) to see what else gtest-runner is capable of.
+`gtest-runner` is an automated test runner that will ensure you are always looking at the latest test results, whenever you build a gtest executable. Check the [features guide](FEATURES.md) to see what else `gtest-runner` is capable of.
 
 # Supported Platforms
 
