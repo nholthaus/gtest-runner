@@ -86,6 +86,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 if(WIN32)
 	set(GUI_TYPE WIN32)
+	add_compile_options(/MP)
 endif(WIN32)
 
 #-------------------------------------------------------------------------------
