@@ -23,13 +23,16 @@
 - [Test case window](#test-case-window)
 	- [Detailed failure information](#detailed-failure-information)
 	- [Sort failures](#sort-failures)
-	- [Search failures](#search-failures)
+	- [Filter failures](#filter-failures)
 - [Failure window](#failure-window)
 	- [Jump to console output](#jump-to-console-output)
 	- [Open in IDE](#open-in-ide)
+	- [Full GTest error message](#full-gtest-error-message)
 - [Console Window](#console-window)
 	- [Search](#search)
 	- [Next/previous failure](#nextprevious-failure)
+	- [Clear output from previous runs](#clear-output-from-previous-runs)
+	- [Cout](#cout)
 
 <!-- /TOC -->
 
@@ -87,9 +90,11 @@ A Qt5 based automated test-runner and Graphical User Interface for Google Test u
 
 # Test Executable dock
 
+![Test Executable Dock](resources/screenshots/testExecutableDock.png)
+
 ## Drag-and-drop
 
-- To add a test executable to watch, simply drag-and-drop the file anywhere on the `gtest-runner` GUI.
+- To add a test executable to watch, simply drag-and-drop the test executable file anywhere on the `gtest-runner` GUI.
 
 ## Easily add and remove tests
 
@@ -136,11 +141,18 @@ A Qt5 based automated test-runner and Graphical User Interface for Google Test u
 
 # Test case window
 
+![Test Case Window](resources/screenshots/testCase.png)
+
 ## Detailed failure information
+
+![Detailed failure information](resources/screenshots/detailedFailureInfo.png)
+
+- Clicking on any failed test case will display detailed information about each `EXPECT/ASSERT` failure in the `Failures` window.
+- _Note:_ No detailed information is available for test cases which pass or are disabled.
 
 ## Sort failures
 
-## Search failures
+## Filter failures
 
 # Failure window
 
@@ -148,10 +160,15 @@ A Qt5 based automated test-runner and Graphical User Interface for Google Test u
 
 ## Open in IDE
 
+## Full GTest error message
+
 # Console Window
 
 ## Search
 
 ## Next/previous failure
 
+## Clear output from previous runs
+
+## Cout
 
