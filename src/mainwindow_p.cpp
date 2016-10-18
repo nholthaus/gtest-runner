@@ -237,10 +237,13 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 		if (QRegExp(text).isValid())
 		{
 			testCaseProxyModel->setFilterRegExp(text);
-			testCaseTreeView->expandAll();
-			for (int i = 0; i < testCaseProxyModel->columnCount(); ++i)
+			if(testCaseProxyModel->rowCount())
 			{
-				testCaseTreeView->resizeColumnToContents(i);
+				testCaseTreeView->expandAll();
+				for (int i = 0; i < testCaseProxyModel->columnCount(); ++i)
+				{
+					testCaseTreeView->resizeColumnToContents(i);
+				}
 			}
 		}
 	});
@@ -248,6 +251,9 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 	// create a failure model when a test is clicked
 	connect(testCaseTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected)
 	{
+		if (selected.indexes().size() == 0)
+			return;
+
 		auto index = testCaseProxyModel->mapToSource(selected.indexes().first());
 		DomItem* item = static_cast<DomItem*>(index.internalPointer());
 

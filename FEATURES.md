@@ -132,7 +132,8 @@ A Qt5 based automated test-runner and Graphical User Interface for Google Test u
 
 ![Path](resources/screenshots/path.png)
 
-- Mousing over any of the test executables will show the full path to the test as a tooltip. This can be useful for disambiguating multiple tests with the same name. On Windows, `Debug` and `Release` builds
+- Mousing over any of the test executables will show the full path to the test as a tooltip. This can be useful for disambiguating multiple tests with the same name. On Windows, `Debug` and `Release` builds are differentiated automatically.
+
 # Test case window
 
 ## Detailed failure information
