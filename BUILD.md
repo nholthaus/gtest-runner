@@ -27,8 +27,8 @@ Building the gtest-runner from source requires having the following programs ins
   * _Recommended_: [Qt 5.6](http://www.qt.io/download/) in order to support high-DPI monitors.
   * _Minimum_: Qt 5.3 for non high-DPI monitors.
 * CMake
-  * _Recommended_: [CMake 3.5.1](https://cmake.org/download/)
-  * _Minimum_: CMake 3.0
+  * _Recommended_: [CMake 3.6.2](https://cmake.org/download/)
+  * _Minimum_: CMake 2.8.12
 * _OPTIONAL_
   * git 2.7.0 or later
   * NSIS 3.0 or later if you want to build the .exe installer.
@@ -66,7 +66,7 @@ _Make sure you've installed all the [prerequisites](https://github.com/nholthaus
   * `cmake --target PACKAGE --config Release --build .`  
   * `cd Release`
   * Run the installer using `gtest-runner-v[VERSION]-[TARGET].exe`, where version is the gtest-version that you downloaded, and target is win32 or win64 depending on your platform. If you're not sure what to use, type the `dir` command to see which executable was generated.
-    * example: `gtest-runner-v1.0.0-win32.exe`
+    * example: `gtest-runner-v1.4.0-win32.exe`
 
 The installer is used to create program shortcuts and links in your application menu. If you prefer not to use the installer (or can't use it), you can still run `gtest-runner.exe` directly from the Release directory.
 
@@ -74,10 +74,10 @@ The installer is used to create program shortcuts and links in your application 
 
 1. Open a terminal window
 2. Clone the repository and checkout the latest version of the code
-  - `git clone git@github.com:nholthaus/gtest-runner.git ~/gtest-runner`
+  - `git clone https://github.com/nholthaus/gtest-runner.git ~/gtest-runner`
   - `cd ~/gtest-runner`
   - `git tag -l` to see the available versions
-  - `git checkout [version]`, where [version] was the newest version tag, example: `git checkout v1.0.0`
+  - `git checkout [version]`, where [version] was the newest version tag, example: `git checkout v1.4.0`
 3. Build and install the code
   - `cd ~/gtest-runner`
   - `mkdir build`
@@ -92,10 +92,10 @@ You can now run the gtest-runner by typing `gtest-runner` into your console.
 
 1. Open a terminal window
 2. Clone the repository and checkout the latest version of the code
-  - `git clone git@github.com:nholthaus/gtest-runner.git ~/gtest-runner`
+  - `git clone https://github.com/nholthaus/gtest-runner.git ~/gtest-runner`
   - `cd ~/gtest-runner`
   - `git tag -l` to see the available versions
-  - `git checkout [version]`, where [version] was the newest version tag, example: `git checkout v1.0.0`
+  - `git checkout [version]`, where [version] was the newest version tag, example: `git checkout v1.4.0`
 3. Build and install the code
   - `cd ~/gtest-runner`
   - `mkdir build`
@@ -110,21 +110,21 @@ You can now run the gtest-runner by typing `gtest-runner` into your console.
 
 1. Open a terminal window
 2. Clone the repository and checkout the latest version of the code
-  - `git clone git@github.com:nholthaus/gtest-runner.git ~/gtest-runner`
+  - `git clone https://github.com/nholthaus/gtest-runner.git ~/gtest-runner`
   - `cd ~/gtest-runner`
   - `git tag -l`
-  - `git checkout [version]`, where [version] was the newest version tag, example: `git checkout v1.0.0`
+  - `git checkout [version]`, where [version] was the newest version tag, example: `git checkout v1.4.0`
 3. Get gcc 4.9.3 (skip this step if you already have it, or have a newer version)
   - `sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y`
   - `sudo apt-get update -qq`
   - `sudo apt-get install g++-4.9 -y`
   - `export CXX="g++-4.9"`
 4. Get Qt 5.6 (skip this step if you already have it, or have a newer version)
-  - `sudo add-apt-repository ppa:beineri/opt-qt56-trusty -y`
+  - `sudo add-apt-repository ppa:beineri/opt-qt57-trusty -y`
   - `sudo apt-get update -qq`
-  - `sudo apt-get install qt56base -y`
-  - `sudo apt-get install qt56xmlpatterns -y`
-  - `source /opt/qt56/bin/qt56-env.sh`
+  - `sudo apt-get install qt57base -y`
+  - `sudo apt-get install qt57xmlpatterns -y`
+  - `source /opt/qt57/bin/qt57-env.sh`
 5. Get CMake 3.4.3 (skip this step if you already have it, or have a newer version)
   - `sudo add-apt-repository ppa:george-edison55/cmake-3.x -y`
   - `sudo apt-get update -qq`
@@ -145,7 +145,7 @@ Follow the instructions for the [Ubuntu 14.04 Build](https://github.com/nholthau
 
 Steps 3-5:
   - use your systems package manager to get the prerequisites.
-  - if they are not available, download and build them from source. Make sure to set your `QTDIR`, and make sure your `LD_LIBRARY_PATH` environment variable includes `$QTDIR/lib`. Make sure your `PATH` variable includes the the cmake `bin` directory.
+  - if they are not available, download and build them from source. Make sure to set your `QTDIR`. Make sure your `PATH` variable includes the the cmake `bin` directory.
 
 # OS X Build
 

@@ -152,23 +152,62 @@ A Qt5 based automated test-runner and Graphical User Interface for Google Test u
 
 ## Sort failures
 
+![Sort](resources/screenshots/sort.png)
+
+- The test case list can be sorted by any column. The default sort is the to show the tests in order. To change sort, just click on any of the column headers. Click the header again the alternate between ascending/descending order.
+- _Note:_ The current sort column is indicated by the arrow ofabove the column title (in this example, `Failures`).
+
 ## Filter failures
+
+![filter](resources/screenshots/filter.png)
+
+- Filter the test cases displayed by typing into the filter text box. Only matching results will be shown.
+- _Note:_ The filter text edit accepts regex filters as well!
 
 # Failure window
 
+![failure window](resources/screenshots/failureWindow.png)
+
 ## Jump to console output
+
+![Jump to console output](resources/screenshots/jumpToConsole.png)
+
+- Single clicking any failure in the failure window will automatically jump to the corresponding output in the gtest console.
 
 ## Open in IDE
 
+- Double clicking any failure will automatically open the file in your IDE (or whichever program is associated with the file extension). It will also copy the line number of the failure to the clipboard. In almost every editor, you can then quickly jump to the failure location with the shortcut `Ctrl-G, Ctrl-V, ENTER`.
+
 ## Full GTest error message
+
+![Full error](resources/screenshots/fullError.png)
+
+- Hovering the mouse over any failure will show a tool-tip with the original, un-parsed gtest error message.
 
 # Console Window
 
+![Console](resources/screenshots/console.png)
+
 ## Search
+
+![Find](resources/screenshots/find.png)
+
+- Open a `Find` window with the keyboard shortcut `Ctrl-F`, or by right clicking in the console window and selecting it from the menu. You can use the `Find` dialog to search the console output for specific failures or `std::cout` messages.
 
 ## Next/previous failure
 
+![Next/previous failure](resources/screenshots/nextprev.png)
+
+- Use the buttons on the left side of the console window to quickly scroll to the next or previous failure.
+
 ## Clear output from previous runs
+
+![Clear](resources/screenshots/clear.png)
+
+- Is your console output getting cluttered with too many runs? Easily clear it by selecting the clear option from the right-click context menu.
 
 ## Cout
 
+![Cout](resources/screenshots/cout.png)
+
+- Like to mix `std::cout` debuggin with your gtests? No problem! All of your custom error messages are visible in the console window.
