@@ -57,6 +57,7 @@
 #include <thread>
 
 #include <QAction>
+#include <QActionGroup>
 #include <QApplication>
 #include <QDateTime>
 #include <QDebug>
@@ -164,6 +165,11 @@ public:
 	QAction*								consoleFindAction;						///< Finds text in the console.
 	QAction*								clearConsoleAction;						///< Clears the console window.
 	
+	QMenu*									themeMenu;								///< Menu for selecting themes.
+	QActionGroup*							themeActionGroup;						///< Action group for selecting a theme option.
+	QAction*								defaultThemeAction;						///< System default theme.
+	QAction*								darkThemeAction;						///< Dark theme.
+
 	QMenu*									helpMenu;								///< Help menu
 	QAction*								aboutAction;							///< Shows the programs 'about' window
 
@@ -208,6 +214,7 @@ protected:
 	void createOptionsMenu();
 	void createWindowMenu();
 	void createHelpMenu();
+	void createThemeMenu();
 
 	void createExecutableContextMenu();
 	void createTestCaseViewContextMenu();
@@ -217,6 +224,10 @@ protected:
 
 	void scrollToConsoleCursor();
 	
+private:
+
+	QString m_testDirectory;
+
 };	// CLASS: MainWindowPrivate
 
 

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=gtest-runner
+Comment=Google Test UI and Runner
+Exec=gtest-runner
+Icon=../icons/gtest-runner.png
+MimeType=image/x-gtest-runner;
+Categories=Development;

@@ -13,6 +13,7 @@
 #include <QMenuBar>
 #include <QTimer>
 #include <QScrollBar>
+#include <QStack>
 #include <QStyle>
 
 //--------------------------------------------------------------------------------------------------
@@ -138,8 +139,9 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 	createTestMenu();
 	createOptionsMenu();
 	createWindowMenu();
+	createThemeMenu();
 	createHelpMenu();
-	
+
 	createExecutableContextMenu();
 	createConsoleContextMenu();
 	createTestCaseViewContextMenu();
@@ -232,17 +234,26 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 	// filter test results when the filter is changed
 	connect(testCaseFilterEdit, &QLineEdit::textChanged, this, [this](const QString& text)
 	{
-		testCaseProxyModel->setFilterRegExp(text);
-		testCaseTreeView->expandAll();
-		for (int i = 0; i < testCaseProxyModel->columnCount(); ++i)
+		if (QRegExp(text).isValid())
 		{
-			testCaseTreeView->resizeColumnToContents(i);
+			testCaseProxyModel->setFilterRegExp(text);
+			if(testCaseProxyModel->rowCount())
+			{
+				testCaseTreeView->expandAll();
+				for (int i = 0; i < testCaseProxyModel->columnCount(); ++i)
+				{
+					testCaseTreeView->resizeColumnToContents(i);
+				}
+			}
 		}
 	});
 
 	// create a failure model when a test is clicked
 	connect(testCaseTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, [this](const QItemSelection& selected, const QItemSelection& deselected)
 	{
+		if (selected.indexes().size() == 0)
+			return;
+
 		auto index = testCaseProxyModel->mapToSource(selected.indexes().first());
 		DomItem* item = static_cast<DomItem*>(index.internalPointer());
 
@@ -326,15 +337,14 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 	// find the previous failure when the button is pressed
 	connect(consolePrevFailureButton, &QPushButton::pressed, [this, q]
 	{
-		QRegularExpression regex("\\[\\s+RUN\\s+\\]((?!OK).)*?\\[\\s+FAILED\\s+\\]", QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption);
+		QRegularExpression regex("\\[\\s+RUN\\s+\\].*?[\n](.*?): ((?!OK).)*?\\[\\s+FAILED\\s+\\]", QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption);
 		auto matches = regex.globalMatch(consoleTextEdit->toPlainText());
 
 		QRegularExpressionMatch match;
 		QTextCursor c = consoleTextEdit->textCursor();
 		
 		while(matches.hasNext())
-		{
-			
+		{		
 			auto nextMatch = matches.peekNext();
 			if(nextMatch.capturedEnd() >= c.position())
 			{
@@ -345,10 +355,10 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 		
 		if(match.capturedStart() > 0)
 		{
-			c.setPosition(match.capturedStart());
+			c.setPosition(match.capturedStart(1));
 			consoleTextEdit->setTextCursor(c);
 			scrollToConsoleCursor();
-			c.setPosition(match.capturedEnd(), QTextCursor::KeepAnchor);
+			c.setPosition(match.capturedEnd(1), QTextCursor::KeepAnchor);
 			consoleTextEdit->setTextCursor(c);
 		}
 	});
@@ -356,7 +366,7 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 	// find the next failure when the button is pressed
 	connect(consoleNextFailureButton, &QPushButton::pressed, [this, q]
 	{
-		QRegularExpression regex("\\[\\s+RUN\\s+\\]((?!OK).)*?\\[\\s+FAILED\\s+\\]", QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption);
+		QRegularExpression regex("\\[\\s+RUN\\s+\\].*?[\n](.*?): ((?!OK).)*?\\[\\s+FAILED\\s+\\]", QRegularExpression::MultilineOption | QRegularExpression::DotMatchesEverythingOption);
 		auto matches = regex.globalMatch(consoleTextEdit->toPlainText());
 		
 		QRegularExpressionMatch match;
@@ -375,10 +385,10 @@ MainWindowPrivate::MainWindowPrivate(QStringList tests, bool reset, MainWindow* 
 		
 		if(match.capturedStart() > 0)
 		{
-			c.setPosition(match.capturedStart());
+			c.setPosition(match.capturedStart(1));
 			consoleTextEdit->setTextCursor(c);
 			scrollToConsoleCursor();
-			c.setPosition(match.capturedEnd(), QTextCursor::KeepAnchor);
+			c.setPosition(match.capturedEnd(1), QTextCursor::KeepAnchor);
 			consoleTextEdit->setTextCursor(c);
 		}
 	});
@@ -671,6 +681,17 @@ bool MainWindowPrivate::loadTestResults(const QString& testPath, bool notify)
 //--------------------------------------------------------------------------------------------------
 void MainWindowPrivate::selectTest(const QString& testPath)
 {
+	QStack<QString> selectionStack;
+
+	// Store the path the current selection on a stack
+	QModelIndex index = testCaseTreeView->selectionModel()->currentIndex();
+	while (index != QModelIndex())
+	{
+		selectionStack.push(index.data(GTestModel::Name).toString());
+		index = index.parent();
+	}
+
+	// Delete the old test case and failure models and make new ones
 	delete testCaseProxyModel->sourceModel();
 	delete failureProxyModel->sourceModel();
 	testCaseTreeView->setSortingEnabled(false);
@@ -682,9 +703,31 @@ void MainWindowPrivate::selectTest(const QString& testPath)
 	// make sure the right entry is selected
 	executableTreeView->setCurrentIndex(executableModel->index(testPath));
 	
+	// resize the columns
 	for (int i = 0; i < testCaseTreeView->model()->columnCount(); i++)
 	{
 		testCaseTreeView->resizeColumnToContents(i);
+	}
+
+	// reset the test case selection
+	auto originalStackSize = selectionStack.size();
+	index = testCaseTreeView->model()->index(0, 0);
+	for (int i = 0; i < originalStackSize; ++i)	// don't use a while-loop in case the test changed and what we are searching for doesn't exist
+	{
+		QModelIndexList matches = testCaseTreeView->model()->match(index, GTestModel::Name, selectionStack.pop(), 1, Qt::MatchRecursive);
+		if (matches.size() > 0)
+		{
+			index = matches.first();
+		}
+		else
+		{
+			index = QModelIndex();
+		}
+	}
+
+	if (index.isValid())
+	{
+		testCaseTreeView->selectionModel()->setCurrentIndex(index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
 	}
 }
 
@@ -722,6 +765,8 @@ void MainWindowPrivate::saveSettings() const
 	{
 		settings.setValue("notifyOnFailure", notifyOnFailureAction->isChecked());
 		settings.setValue("notifyOnSuccess", notifyOnSuccessAction->isChecked());
+		settings.setValue("theme", themeActionGroup->checkedAction()->objectName());
+		settings.setValue("testDirectory", m_testDirectory);
 	}
 	settings.endGroup();
 }
@@ -759,6 +804,8 @@ void MainWindowPrivate::loadSettings()
 	{
 		if (!settings.value("notifyOnFailure").isNull()) notifyOnFailureAction->setChecked(settings.value("notifyOnFailure").toBool());
 		if (!settings.value("notifyOnSuccess").isNull()) notifyOnSuccessAction->setChecked(settings.value("notifyOnSuccess").toBool());
+		settings.value("theme").isNull() ? defaultThemeAction->setChecked(true) : themeMenu->findChild<QAction*>(settings.value("theme").toString())->trigger();
+		settings.value("testDirectory").isNull() ? m_testDirectory = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first() : m_testDirectory = settings.value("testDirectory").toString();
 	}
 	settings.endGroup();
 }
@@ -1000,10 +1047,15 @@ void MainWindowPrivate::createTestMenu()
 #else
 		filter = "Text Executables (*)";
 #endif
-		QString filename = QFileDialog::getOpenFileName(q_ptr, "Select Test Executable", QStandardPaths::standardLocations(QStandardPaths::HomeLocation).first(), filter);
+		QString filename = QFileDialog::getOpenFileName(q_ptr, "Select Test Executable", m_testDirectory, filter);
 
 		if (filename.isEmpty())
 			return;
+		else
+		{
+			QFileInfo info(filename);
+			m_testDirectory = info.absoluteDir().absolutePath();
+		}
 
 		QModelIndex existingIndex = executableModel->index(filename);
 		if (!existingIndex.isValid())
@@ -1069,6 +1121,51 @@ void MainWindowPrivate::createWindowMenu()
 	windowMenu->addAction(consoleDock->toggleViewAction());
 	
 	q->menuBar()->addMenu(windowMenu);
+}
+
+//--------------------------------------------------------------------------------------------------
+//	FUNCTION: createThemeMenu
+//--------------------------------------------------------------------------------------------------
+void MainWindowPrivate::createThemeMenu()
+{
+	Q_Q(MainWindow);
+
+	themeMenu = new QMenu("Theme");
+
+	defaultThemeAction = new QAction("Default Theme", themeMenu);
+	defaultThemeAction->setObjectName("defaultThemeAction");
+	defaultThemeAction->setCheckable(true);
+	connect(defaultThemeAction, &QAction::triggered, [&]()
+	{
+		qApp->setStyleSheet("");
+	});
+
+	darkThemeAction = new QAction("Dark Theme", themeMenu);
+	darkThemeAction->setObjectName("darkThemeAction");
+	darkThemeAction->setCheckable(true);
+	connect(darkThemeAction, &QAction::triggered, [&]()
+	{
+		QFile f(":styles/qdarkstyle");
+		if (!f.exists())
+		{
+			printf("Unable to set stylesheet, file not found\n");
+		}
+		else
+		{
+			f.open(QFile::ReadOnly | QFile::Text);
+			QTextStream ts(&f);
+			qApp->setStyleSheet(ts.readAll());
+		}
+	});
+
+	themeMenu->addAction(defaultThemeAction);
+	themeMenu->addAction(darkThemeAction);
+
+	themeActionGroup = new QActionGroup(themeMenu);
+	themeActionGroup->addAction(defaultThemeAction);
+	themeActionGroup->addAction(darkThemeAction);
+
+	q->menuBar()->addMenu(themeMenu);
 }
 
 //--------------------------------------------------------------------------------------------------

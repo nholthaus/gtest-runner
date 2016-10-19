@@ -2,7 +2,7 @@
 #	CMAKE SETTINGS
 #-------------------------------------------------------------------------------
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.8.12)
 set(QT_MINIMUM_VERSION 5.3.0)
 
 #-------------------------------------------------------------------------------
@@ -84,9 +84,12 @@ find_package(Threads REQUIRED)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 14)
 
-if(WIN32)
+if(MSVC)
 	set(GUI_TYPE WIN32)
-endif(WIN32)
+	add_compile_options(/MP)
+elseif(CMAKE_COMPILER_IS_GNUCXX)
+	add_compile_options(-std=c++14)
+endif(MSVC)
 
 #-------------------------------------------------------------------------------
 #	CONFIGURATION
@@ -219,8 +222,9 @@ target_link_libraries(${TARGET_NAME} ${LIBRARIES})
 # Use the automatically determined RPATH values
 set_target_properties(${TARGET_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-# the RPATH to be used when installing, but only if it's not a system directory
 INSTALL(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)
+INSTALL(FILES ${CMAKE_SOURCE_DIR}/resources/desktop/gtest-runner.desktop DESTINATION share/applications)
+INSTALL(FILES ${CMAKE_SOURCE_DIR}/resources/desktop/gtest-runner.png DESTINATION share/icons)
 INCLUDE(InstallRequiredSystemLibraries)
 
 # Windows specific build steps
@@ -257,11 +261,11 @@ else(WIN32)
 	SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Nic Holthaus")
 	SET(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)	
 	# Deb packages can't have the 'v' in the version name
-	string(REGEX MATCH [0-9][.][0-9][.][0-9] VERSION_NUM ${APPLICATION_VERSION})
+	string(REGEX MATCH "[0-9][.][0-9][.][0-9]" VERSION_NUM "${APPLICATION_VERSION}")
 	set(CPACK_PACKAGE_VERSION ${VERSION_NUM})
 endif()
 
-set(CPACK_PACKAGE_CONTACT "Nic Holthaus nholthaus@gmail.com")
+set(CPACK_PACKAGE_CONTACT "Nic Holthaus <nholthaus@gmail.com>")
 set(CPACK_PACKAGE_NAME ${APPLICATION_NAME})
 set(CPACK_PACKAGE_VENDOR ${APPLICATION_ORGANIZATION})
 SET(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
