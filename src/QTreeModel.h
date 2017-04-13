@@ -1,8 +1,8 @@
 //--------------------------------------------------------------------------------------------------
 // 
-///	@PROJECT	gtest-runner
+/// @PROJECT	gtest-runner
 /// @BRIEF		A Qt abstract item model with an internal tree data structure
-///	@DETAILS	
+/// @DETAILS	
 //
 //--------------------------------------------------------------------------------------------------
 //
