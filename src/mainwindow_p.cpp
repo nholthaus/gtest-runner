@@ -1043,9 +1043,9 @@ void MainWindowPrivate::createTestMenu()
 	{
 		QString filter;
 #ifdef Q_OS_WIN32
-		filter = "Text Executables (*.exe)";
+		filter = "Test Executables (*.exe)";
 #else
-		filter = "Text Executables (*)";
+		filter = "Test Executables (*)";
 #endif
 		QString filename = QFileDialog::getOpenFileName(q_ptr, "Select Test Executable", m_testDirectory, filter);
 
