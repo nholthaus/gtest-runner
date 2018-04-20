@@ -107,7 +107,7 @@ configure_file(src/appinfo.h.in appinfo.h @ONLY NEWLINE_STYLE UNIX)
 #-------------------------------------------------------------------------------
 
 qt5_wrap_ui(UI_HDRS
-src/qtfindreplacedialog/findreplaceddialog.ui
+src/qtfindreplacedialog/findreplacedialog.ui
 src/qtfindreplacedialog/findreplaceform.ui
 )
 
