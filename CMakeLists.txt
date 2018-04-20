@@ -106,6 +106,11 @@ configure_file(src/appinfo.h.in appinfo.h @ONLY NEWLINE_STYLE UNIX)
 #	SOURCE CODE
 #-------------------------------------------------------------------------------
 
+qt5_wrap_ui(UI_HDRS
+src/qtfindreplacedialog/findreplaceddialog.ui
+src/qtfindreplacedialog/findreplaceform.ui
+)
+
 # .h files
 list(APPEND HEADER_FILES
 src/mainwindow.h
@@ -214,7 +219,7 @@ list(REMOVE_DUPLICATES LIBRARIES)
 include_directories(${INCLUDE_DIRS})
 
 # Generate the executable
-add_executable(${TARGET_NAME} ${GUI_TYPE} ${SOURCE_FILES} ${RESOURCES})
+add_executable(${TARGET_NAME} ${GUI_TYPE} ${SOURCE_FILES} ${UI_HDRS} ${RESOURCES})
 
 # link libraries
 target_link_libraries(${TARGET_NAME} ${LIBRARIES})
