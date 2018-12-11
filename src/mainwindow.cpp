@@ -100,6 +100,12 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *e)
 //--------------------------------------------------------------------------------------------------
 void MainWindow::dropEvent(QDropEvent *e)
 {
-	QFileInfo info(e->mimeData()->urls().first().toLocalFile());
-	d_ptr->addTestExecutable(info.absoluteFilePath(), true, info.lastModified());
+ 	if (e->mimeData()->hasUrls()) 
+ 	{
+     	foreach (QUrl url, e->mimeData()->urls())
+     	{
+ 			QFileInfo info(url.toLocalFile());
+			d_ptr->addTestExecutable(info.absoluteFilePath(), true, info.lastModified());
+     	}
+ 	}
 }
