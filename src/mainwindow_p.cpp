@@ -1047,21 +1047,29 @@ void MainWindowPrivate::createTestMenu()
 #else
 		filter = "Test Executables (*)";
 #endif
-		QString filename = QFileDialog::getOpenFileName(q_ptr, "Select Test Executable", m_testDirectory, filter);
+		QString filename = "";
+		QStringList filenames = QFileDialog::getOpenFileNames(q_ptr, "Select Test Executable", m_testDirectory, filter);
 
-		if (filename.isEmpty())
+		if (filenames.isEmpty())
 			return;
 		else
 		{
-			QFileInfo info(filename);
-			m_testDirectory = info.absoluteDir().absolutePath();
+			foreach(QString filename, filenames)
+			{
+				QFileInfo info(filename);
+				m_testDirectory = info.absoluteDir().absolutePath();
+
+				QModelIndex existingIndex = executableModel->index(filename);
+				if (!existingIndex.isValid())
+					addTestExecutable(filename, true, QFileInfo(filename).lastModified());
+				else
+					executableTreeView->setCurrentIndex(existingIndex);
+			}
+
+			
 		}
 
-		QModelIndex existingIndex = executableModel->index(filename);
-		if (!existingIndex.isValid())
-			addTestExecutable(filename, true, QFileInfo(filename).lastModified());
-		else
-			executableTreeView->setCurrentIndex(existingIndex);
+		
 	});
 
 	connect(selectAndRemoveTestAction, &QAction::triggered, [this]
