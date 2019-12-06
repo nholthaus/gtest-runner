@@ -155,6 +155,7 @@ public:
 	QAction*								selectAndKillTest;						///< Selects and kills a running test.
 	QAction*								selectAndRemoveTestAction;				///< Remove a test after choosing it from a list.
 	QAction*								selectAndRunTest;						///< Run a test after selecting it from a list.																	///< program options.
+	QAction*								selectAndRunAllTest;					///< Run all tests in the list.
 
 	QMenu*									testCaseViewContextMenu;				///< Context menu for the test case tree view
 	QAction*								testCaseViewExpandAllAction;			///< expands all nodes in the test case tree view

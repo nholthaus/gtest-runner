@@ -565,6 +565,10 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 		QString otherArgs = executableModel->data(index, QExecutableModel::ArgsRole).toString();
 		if(!otherArgs.isEmpty()) arguments << otherArgs;
 
+		// Set working directory to be the same as the executable
+		// (common standard for tests to find test-data files)
+		testProcess.setWorkingDirectory(QFileInfo(pathToTest).dir().path());
+
 		// Start the test
 		testProcess.start(pathToTest, arguments);
 
@@ -1028,6 +1032,8 @@ void MainWindowPrivate::createTestMenu()
 	selectAndRemoveTestAction = new QAction(q->style()->standardIcon(QStyle::SP_TrashIcon), "Remove Test...", testMenu);
 	selectAndRunTest = new QAction(q->style()->standardIcon(QStyle::SP_BrowserReload), "Run Test...", testMenu);
 	selectAndRunTest->setShortcut(QKeySequence(Qt::SHIFT + Qt::Key_F5));
+	selectAndRunAllTest = new QAction(q->style()->standardIcon(QStyle::SP_BrowserReload), "Run All Test...", testMenu);
+	selectAndRunAllTest->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_F5));
 	selectAndKillTest = new QAction(q->style()->standardIcon(QStyle::SP_DialogCloseButton), "Kill Test...", testMenu);
 	selectAndKillTest->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_F5));
 
@@ -1035,6 +1041,7 @@ void MainWindowPrivate::createTestMenu()
 	testMenu->addAction(selectAndRemoveTestAction);
 	testMenu->addSeparator();
 	testMenu->addAction(selectAndRunTest);
+	testMenu->addAction(selectAndRunAllTest);
 	testMenu->addAction(selectAndKillTest);
 
 	q->menuBar()->addMenu(testMenu);
@@ -1082,6 +1089,15 @@ void MainWindowPrivate::createTestMenu()
 		QModelIndex index = getTestIndexDialog("Select Test to run:");
 		if(index.isValid())
 			runTestInThread(index.data(QExecutableModel::PathRole).toString(), false);
+	});
+
+	connect(selectAndRunAllTest, &QAction::triggered, [this]
+	{
+		for (size_t i = 0; i < executableTreeView->model()->rowCount(); ++i)
+		{
+			QModelIndex index = executableTreeView->model()->index(i, 0);
+			runTestInThread(index.data(QExecutableModel::PathRole).toString(), false);
+		}
 	});
 
 	connect(selectAndKillTest, &QAction::triggered, [this, q]
