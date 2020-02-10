@@ -552,6 +552,8 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 
 		QString repeat = executableModel->data(index, QExecutableModel::RepeatTestsRole).toString();
 		if (repeat != "0" && repeat != "1") arguments << "--gtest_repeat=" + repeat;
+		double repeatCount = 1;
+		if (repeat.toInt() > 1) repeatCount = repeat.toInt();
 
 		int runDisabled = executableModel->data(index, QExecutableModel::RunDisabledTestsRole).toInt();
 		if (runDisabled) arguments << "--gtest_also_run_disabled_tests";
@@ -599,6 +601,7 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 				rx.indexIn(output);
 				tests = rx.cap(1).toInt();
 				first = false;
+				tests *= repeatCount;
 			}
 			else
 			{
