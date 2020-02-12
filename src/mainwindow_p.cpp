@@ -600,6 +600,7 @@ void MainWindowPrivate::runTestInThread(const QString& pathToTest, bool notify)
 				static QRegExp rx("([0-9]+) tests");
 				rx.indexIn(output);
 				tests = rx.cap(1).toInt();
+				if (!tests) tests = 1;
 				first = false;
 				tests *= repeatCount;
 			}
