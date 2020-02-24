@@ -85,8 +85,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 14)
 
 if(MSVC)
-	set(GUI_TYPE WIN32)
-	add_compile_options(/MP)
+  set(GUI_TYPE WIN32)
+  add_compile_options(/MP)
+elseif(APPLE)
+  set(GUI_TYPE MACOSX_BUNDLE)
 elseif(CMAKE_COMPILER_IS_GNUCXX)
 	add_compile_options(-std=c++14)
 endif(MSVC)
@@ -182,6 +184,13 @@ list(APPEND RESOURCES
 	resources/resources.rc
 )
 
+# On macos, add icns to application bundle
+if(APPLE)
+  LIST(APPEND SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/logo.icns)
+  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/logo.icns PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+  set(MACOSX_BUNDLE_ICON_FILE "logo.icns")
+endif()
+
 #-------------------------------------------------------------------------------
 #	ADDITIONAL INCLUDE DIRECTORIES
 #-------------------------------------------------------------------------------
@@ -227,7 +236,11 @@ target_link_libraries(${TARGET_NAME} ${LIBRARIES})
 # Use the automatically determined RPATH values
 set_target_properties(${TARGET_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-INSTALL(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)
+if (APPLE)
+  INSTALL(TARGETS ${TARGET_NAME} BUNDLE DESTINATION bin)
+else()
+  INSTALL(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)
+endif()
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/resources/desktop/gtest-runner.desktop DESTINATION share/applications)
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/resources/desktop/gtest-runner.png DESTINATION share/icons)
 INCLUDE(InstallRequiredSystemLibraries)
