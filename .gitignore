@@ -3,6 +3,12 @@
 [Bb]uild
 [Mm][Ss][Vv][Cc]*
 
+#macos
+*.DS_Store
+
+#Qt Creator
+CMakeLists.txt.user
+
 #kdevelop
 *.kdev4
 
